@@ -1,0 +1,17 @@
+{
+  "name": "@primust/otel",
+  "version": "0.0.1",
+  "description": "Primust governance adapter for OpenTelemetry (TypeScript)",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "typescript": "^5.7.0"
+  }
+}
