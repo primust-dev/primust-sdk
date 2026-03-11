@@ -8,6 +8,15 @@ version = "0.0.1"
 description = "Python customer SDK (pip install primust)"
 requires-python = ">=3.11"
 license = "LicenseRef-Proprietary"
+dependencies = [
+  "httpx>=0.27.0",
+  "primust-artifact-core",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/primust"]

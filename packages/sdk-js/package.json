@@ -10,5 +10,8 @@
     "test": "vitest run"
   },
   "files": ["dist"],
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*"
+  },
   "license": "UNLICENSED"
 }
