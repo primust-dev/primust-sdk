@@ -10,5 +10,11 @@
     "test": "vitest run"
   },
   "files": ["dist"],
+  "dependencies": {
+    "@noble/hashes": "^1.7.2",
+    "@primust/artifact-core": "workspace:*",
+    "@primust/runtime-core": "workspace:*",
+    "@primust/verifier": "workspace:*"
+  },
   "license": "UNLICENSED"
 }
