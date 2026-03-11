@@ -63,3 +63,16 @@ export type {
   DegradedStatus,
   SyncQueueCallbacks,
 } from './queue/sync_queue.js';
+
+// Lineage tokens (P7-C)
+export {
+  generateLineageToken,
+  validateLineageToken,
+} from './lineage.js';
+
+export type {
+  LineageToken,
+  LineageValidationResult,
+  DelegationContext,
+  BoundaryType,
+} from './lineage.js';

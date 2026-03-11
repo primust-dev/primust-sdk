@@ -464,6 +464,55 @@ export class SqliteStore {
     }));
   }
 
+  // ── Observation Surfaces ──
+
+  insertSurface(surface: {
+    surface_id: string;
+    org_id: string;
+    environment: string;
+    surface_type: string;
+    surface_name: string;
+    surface_version: string;
+    observation_mode: string;
+    scope_type: string;
+    scope_description: string;
+    surface_coverage_statement: string;
+    proof_ceiling: string;
+    gaps_detectable: string[];
+    gaps_not_detectable: string[];
+    registered_at: string;
+  }): void {
+    try {
+      this.db.prepare(`
+        INSERT OR IGNORE INTO observation_surfaces (
+          surface_id, org_id, environment, surface_type, surface_name, surface_version,
+          observation_mode, scope_type, scope_description, surface_coverage_statement,
+          proof_ceiling, gaps_detectable, gaps_not_detectable, registered_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        surface.surface_id, surface.org_id, surface.environment,
+        surface.surface_type, surface.surface_name, surface.surface_version,
+        surface.observation_mode, surface.scope_type, surface.scope_description,
+        surface.surface_coverage_statement, surface.proof_ceiling,
+        JSON.stringify(surface.gaps_detectable), JSON.stringify(surface.gaps_not_detectable),
+        surface.registered_at,
+      );
+    } catch (err) {
+      console.error('SqliteStore.insertSurface failed:', err);
+    }
+  }
+
+  getSurface(surfaceId: string): Record<string, unknown> | undefined {
+    const row = this.db.prepare(
+      'SELECT * FROM observation_surfaces WHERE surface_id = ?',
+    ).get(surfaceId) as Record<string, unknown> | undefined;
+    if (row) {
+      row.gaps_detectable = JSON.parse(row.gaps_detectable as string);
+      row.gaps_not_detectable = JSON.parse(row.gaps_not_detectable as string);
+    }
+    return row;
+  }
+
   // ── Schema inspection ──
 
   getTableColumns(tableName: string): string[] {
