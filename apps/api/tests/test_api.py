@@ -133,6 +133,17 @@ class TestAPI:
         assert vpec["state"] == "signed"
         assert "reliance_mode" not in json.dumps(vpec)
 
+        # KMS signature — no more stub_pending_kms
+        sig = vpec["signature"]
+        assert sig["signature"].startswith("test_kms:")
+        assert "stub_pending_kms" not in json.dumps(vpec)
+
+        # TSA timestamp anchor — real RFC 3161
+        tsa = vpec["timestamp_anchor"]
+        assert tsa["type"] == "rfc3161"
+        assert tsa["tsa"] == "digicert_us"
+        assert tsa["value"] is not None
+
         # Run should be closed
         run = mock_db.tables["process_runs"][0]
         assert run["state"] == "closed"

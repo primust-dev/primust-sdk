@@ -15,7 +15,8 @@ from pydantic import BaseModel
 
 from ..auth import AuthContext, require_jwt
 from ..banned import reject_banned_fields
-from ..db import execute, fetch_all, fetch_one
+from ..db import execute, fetch_all, fetch_one, get_region_config
+from ..kms import kms_sign
 
 router = APIRouter(prefix="/api/v1", tags=["packs"])
 
@@ -111,15 +112,14 @@ async def create_pack(
         "observation_summary": observation_summary,
         "gap_summary": gap_summary,
         "report_hash": report_hash,
-        "signature": {
-            "signer_id": "api_signer",
-            "kid": "kid_api",
-            "algorithm": "Ed25519",
-            "signature": "stub_pending_kms",
-            "signed_at": now,
-        },
+        "signature": None,  # placeholder — signed below
         "generated_at": now,
     }
+
+    # KMS-sign the evidence pack
+    region_config = get_region_config(auth.org_region)
+    pack_json = json.dumps(pack, sort_keys=True, separators=(",", ":"))
+    pack["signature"] = await kms_sign(pack_json, region_config.kms_key)
 
     # Store
     await execute(

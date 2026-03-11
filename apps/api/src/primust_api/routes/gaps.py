@@ -15,7 +15,8 @@ from pydantic import BaseModel
 
 from ..auth import AuthContext, require_jwt
 from ..banned import reject_banned_fields
-from ..db import execute, fetch_all, fetch_one
+from ..db import execute, fetch_all, fetch_one, get_region_config
+from ..kms import kms_sign
 
 router = APIRouter(prefix="/api/v1", tags=["gaps"])
 
@@ -113,6 +114,14 @@ async def waive_gap(
 
     waiver_id = f"waiver_{uuid.uuid4().hex[:16]}"
 
+    # KMS-sign the waiver
+    region_config = get_region_config(region)
+    waiver_content = json.dumps({
+        "waiver_id": waiver_id, "gap_id": gap_id,
+        "reason": body.reason, "expires_at": body.expires_at,
+    }, sort_keys=True, separators=(",", ":"))
+    waiver_sig = await kms_sign(waiver_content, region_config.kms_key)
+
     await execute(
         region,
         """INSERT INTO waivers
@@ -127,13 +136,7 @@ async def waive_gap(
         body.reason,
         body.compensating_control,
         body.expires_at,
-        json.dumps({
-            "signer_id": "api_signer",
-            "kid": "kid_api",
-            "algorithm": "Ed25519",
-            "signature": "stub_pending_kms",
-            "signed_at": now.isoformat(),
-        }),
+        json.dumps(waiver_sig),
         now.isoformat(),
     )
 

@@ -17,7 +17,9 @@ from pydantic import BaseModel, Field
 
 from ..auth import AuthContext, require_api_key
 from ..banned import reject_banned_fields
-from ..db import execute, fetch_all, fetch_one
+from ..db import execute, fetch_all, fetch_one, get_region_config
+from ..kms import kms_sign
+from ..tsa import get_timestamp_anchor
 
 
 async def _check_raw_body(request: Request) -> dict[str, Any]:
@@ -314,7 +316,7 @@ async def close_run(
     for rec in records:
         manifest_hashes[rec["manifest_id"]] = rec["manifest_hash"]
 
-    # Build VPEC
+    # Build VPEC (unsigned — signature and timestamp added below)
     vpec_id = f"vpec_{uuid.uuid4()}"
     vpec = {
         "vpec_id": vpec_id,
@@ -343,14 +345,8 @@ async def close_run(
             "public_key_url": "https://keys.primust.com/jwks",
             "org_region": region,
         },
-        "signature": {
-            "signer_id": "api_signer",
-            "kid": "kid_api",
-            "algorithm": "Ed25519",
-            "signature": "stub_pending_kms",
-            "signed_at": now,
-        },
-        "timestamp_anchor": {"type": "none", "tsa": "none", "value": None},
+        "signature": None,  # placeholder — signed below
+        "timestamp_anchor": None,  # placeholder — timestamped below
         "transparency_log": {
             "rekor_log_id": None,
             "rekor_entry_url": None,
@@ -366,6 +362,16 @@ async def close_run(
         },
         "test_mode": auth.test_mode,
     }
+
+    # GCP KMS signing
+    region_config = get_region_config(region)
+    vpec_json = json.dumps(vpec, sort_keys=True, separators=(",", ":"))
+    vpec["signature"] = await kms_sign(vpec_json, region_config.kms_key)
+
+    # DigiCert RFC 3161 timestamping
+    vpec["timestamp_anchor"] = await get_timestamp_anchor(
+        vpec_json, tsa_url=region_config.tsa_url
+    )
 
     # Close the run
     await execute(

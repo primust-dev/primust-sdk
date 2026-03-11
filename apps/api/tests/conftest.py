@@ -185,21 +185,65 @@ class InMemoryDB:
 _db = InMemoryDB()
 
 
+class _MockRegionConfig:
+    """Mock region config for tests."""
+    def __init__(self, region: str = "us") -> None:
+        self.region = region
+        self.kms_key = f"local-key-{region}"
+        self.tsa_url = "http://timestamp.digicert.com"
+        self.r2_bucket = f"primust-{region}"
+
+
+def _mock_get_region_config(region: str) -> _MockRegionConfig:
+    return _MockRegionConfig(region)
+
+
+async def _mock_kms_sign(document_json: str, kms_key_name: str, **kwargs: Any) -> dict[str, Any]:
+    """Mock KMS signing — returns deterministic local signature."""
+    import base64, hashlib
+    digest = hashlib.sha256(document_json.encode("utf-8")).digest()
+    sig = base64.urlsafe_b64encode(digest).decode("ascii")
+    now = datetime.now(timezone.utc).isoformat()
+    return {
+        "signer_id": kwargs.get("signer_id", "api_signer"),
+        "kid": kwargs.get("kid", "kid_api"),
+        "algorithm": "Ed25519",
+        "signature": f"test_kms:{sig}",
+        "signed_at": now,
+    }
+
+
+async def _mock_get_timestamp_anchor(document_json: str, **kwargs: Any) -> dict[str, Any]:
+    """Mock TSA — returns simulated RFC 3161 anchor."""
+    return {
+        "type": "rfc3161",
+        "tsa": "digicert_us",
+        "value": "dGVzdF90aW1lc3RhbXBfdG9rZW4=",  # base64("test_timestamp_token")
+    }
+
+
 @pytest.fixture(autouse=True)
 def mock_db():
-    """Mock all database calls with in-memory DB."""
+    """Mock all database calls, KMS signing, and TSA timestamping."""
     _db.reset()
     with (
         patch("primust_api.routes.runs.fetch_one", side_effect=_db.fetch_one),
         patch("primust_api.routes.runs.fetch_all", side_effect=_db.fetch_all),
         patch("primust_api.routes.runs.execute", side_effect=_db.execute),
+        patch("primust_api.routes.runs.kms_sign", side_effect=_mock_kms_sign),
+        patch("primust_api.routes.runs.get_timestamp_anchor", side_effect=_mock_get_timestamp_anchor),
+        patch("primust_api.routes.runs.get_region_config", side_effect=_mock_get_region_config),
         patch("primust_api.routes.vpecs.fetch_one", side_effect=_db.fetch_one),
         patch("primust_api.routes.packs.fetch_one", side_effect=_db.fetch_one),
         patch("primust_api.routes.packs.fetch_all", side_effect=_db.fetch_all),
         patch("primust_api.routes.packs.execute", side_effect=_db.execute),
+        patch("primust_api.routes.packs.kms_sign", side_effect=_mock_kms_sign),
+        patch("primust_api.routes.packs.get_region_config", side_effect=_mock_get_region_config),
         patch("primust_api.routes.gaps.fetch_one", side_effect=_db.fetch_one),
         patch("primust_api.routes.gaps.fetch_all", side_effect=_db.fetch_all),
         patch("primust_api.routes.gaps.execute", side_effect=_db.execute),
+        patch("primust_api.routes.gaps.kms_sign", side_effect=_mock_kms_sign),
+        patch("primust_api.routes.gaps.get_region_config", side_effect=_mock_get_region_config),
     ):
         yield _db
 
