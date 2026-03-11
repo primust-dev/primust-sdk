@@ -247,11 +247,11 @@
 
 | Status | Count |
 |--------|-------|
-| Extract | 3 |
+| Extract | 3 + 16 circuits |
 | Rewrite | 8 |
 | Defer | 8 |
-| Drop | 98 |
-| **Total** | **117** |
+| Drop | 98 + 1 circuit |
+| **Total** | **117 files + 17 circuits** |
 
 > **Post-audit reclassifications (2026-03-10):**
 > - `src/crypto/signing.ts`: Extract → **Rewrite** (Q1, Q2, Q4, Q6 — see SECURITY_AUDIT.md)
@@ -273,3 +273,55 @@
 7. `src/evidence/index.ts` → `evidence-pack`
 8. `src/policy/engine.ts` → `policy-engine`
 9. `src/policy/types.ts` → `policy-engine` types
+
+---
+
+## ZK Circuits (2026-03-11)
+
+> Source: `trustscope-api/circuits/` → copied to `references/trustscope-extraction/circuits/`
+>
+> **All circuits require Poseidon2 hash helper rewrite** during extraction:
+> TrustScope uses `std::hash::poseidon2_permutation` (low-level sponge with explicit IV).
+> Primust uses `poseidon2::Poseidon2::hash(inputs, length)` (high-level API).
+> These produce **different hash values**. Every extracted circuit must be rewritten to use the Primust convention.
+>
+> **Q10 applies to 5 circuits**: `range_proof`, `cross_org_session`, `cost_bound`, `tool_whitelist`, `custom_engine_coverage` —
+> comments/variable names reference "Pedersen" but actual computation is Poseidon2. No real Pedersen commitments; no homomorphic property concern.
+
+| TrustScope Circuit | Primust Equivalent | Status | Notes |
+|---|---|---|---|
+| hitl_approval_coverage | (none — skip_condition_proof is different) | Extract | Batch HITL approval coverage proof. Different proof goal from skip_condition_proof. |
+| policy_config_integrity | (none — config_epoch_continuity is different) | Extract | Batch policy stability proof. Different proof goal from config_epoch_continuity. |
+| tool_whitelist | none yet | Extract | Maps to manifest_id allowlist proof. Q10: "Pedersen" naming. |
+| chain_ordering | none yet | Extract | Maps to integrity chain ordering proof. |
+| pii_non_detection | none yet | Extract | PII non-detection proof. |
+| range_proof | none yet | Extract | Q10: "Pedersen" naming is actually Poseidon2. |
+| enforcement_rate | none yet | Extract | Enforcement rate proof. |
+| pipeline_coverage | none yet | Extract | Maps to coverage denominator proof. |
+| model_execution_coverage | none yet | Extract | Maps to manifest model_hash verification. |
+| temporal_comparison | none yet | Extract | Q10: "Pedersen" naming is actually Poseidon2. |
+| continuous_compliance | none yet | Extract | Continuous compliance proof. |
+| cost_bound | none yet | Extract | Q10: "Pedersen" naming is actually Poseidon2. |
+| cross_org_session | none yet | Extract | Cross-org governance proof. Q10: "Pedersen" naming. |
+| fleet_aggregate | none yet | Extract | Fleet aggregation proof. |
+| multi_framework | none yet | Extract | Multi-framework proof. |
+| custom_engine_coverage | none yet | Extract | Q10: "Pedersen" naming is actually Poseidon2. |
+| _poseidon2_test | N/A | Drop | Test circuit only. |
+
+### Extraction rules (per circuit)
+1. Replace all TrustScope field names with Primust canonical names (no `agent_id`, `trace_id`, `session_id`, `pipeline_id`)
+2. Replace `poseidon2_hash_2`/`poseidon2_hash_3` helpers with `poseidon2::Poseidon2::hash`
+3. Fix Q10 "Pedersen" naming in comments and variable names
+4. Keep all constraint logic intact — do not simplify or remove constraints
+5. Add to `CIRCUIT_REGISTRY` in `packages/zk-core/src/prover.ts`
+6. Write witness builder in `packages/zk-core/src/witnesses/`
+7. All existing tests must still pass
+8. Minimum 3 tests per extracted circuit
+
+### Side-by-side audit (2026-03-11)
+
+**hitl_approval_coverage vs skip_condition_proof (Circuit 18):**
+Not comparable. TrustScope proves batch HITL coverage (256 traces). Primust proves single skip condition justification. Different purpose. Both structurally sound. No gap_binding weakness in either.
+
+**policy_config_integrity vs config_epoch_continuity (Circuit 19):**
+Not extractable as replacement. TrustScope proves period stability (all N traces = same hash). Primust proves pairwise continuity with epoch transition support. TrustScope has no gap/transition concept. Primust version has gap_binding weakness (fixed 2026-03-11: added `transition_commitment_hash` public input).

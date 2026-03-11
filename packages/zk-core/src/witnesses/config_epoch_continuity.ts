@@ -76,10 +76,23 @@ export function buildConfigEpochWitness(
     }
   }
 
+  // Compute transition_commitment_hash for the public input
+  let transitionCommitmentHash: string;
+  if (epochTransitionExists) {
+    const tcInput = new Uint8Array(2 * 32);
+    tcInput.set(bigintToBytes32(transitionGapCommitment), 0);
+    tcInput.set(bigintToBytes32(blindingFactor), 32);
+    const { hash } = commit(tcInput, 'poseidon2');
+    transitionCommitmentHash = hash;
+  } else {
+    transitionCommitmentHash = '0';
+  }
+
   return {
     current_config_hash: currentConfigHash,
     prior_config_hash: priorConfigHash,
     epoch_transition_exists: epochTransitionExists,
+    transition_commitment_hash: transitionCommitmentHash,
     config_params: paddedParams,
     blinding_factor: blindingFactor,
     transition_gap_commitment: transitionGapCommitment,

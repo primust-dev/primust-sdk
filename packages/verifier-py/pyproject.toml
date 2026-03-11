@@ -7,7 +7,7 @@ name = "primust-verify"
 version = "0.0.1"
 description = "Offline verifier (pip install primust-verify)"
 requires-python = ">=3.11"
-license = "LicenseRef-Proprietary"
+license = "Apache-2.0"
 dependencies = [
     "primust-artifact-core",
     "PyNaCl>=1.5.0",

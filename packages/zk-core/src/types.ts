@@ -59,6 +59,7 @@ export interface ConfigEpochInputs {
   current_config_hash: string;
   prior_config_hash: string;
   epoch_transition_exists: boolean;
+  transition_commitment_hash: string;
   config_params: bigint[];
   blinding_factor: bigint;
   transition_gap_commitment: bigint;

@@ -1,0 +1,7 @@
+[package]
+name = "poseidon2_test"
+type = "bin"
+authors = ["test"]
+compiler_version = ">=0.30.0"
+
+[dependencies]

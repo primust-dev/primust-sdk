@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "echo 'no tests yet'"
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "^15.0.0",
@@ -15,7 +15,12 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
-    "typescript": "^5.6.0"
+    "@vitejs/plugin-react": "^5.1.4",
+    "jsdom": "^25.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   }
 }

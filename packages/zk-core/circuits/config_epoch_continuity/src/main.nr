@@ -27,6 +27,7 @@ fn main(
     current_config_hash: pub Field,
     prior_config_hash: pub Field,
     epoch_transition_exists: pub bool,
+    transition_commitment_hash: pub Field,
 
     // Private inputs
     config_params: [Field; 32],
@@ -38,7 +39,7 @@ fn main(
         assert(current_config_hash == prior_config_hash);
     }
 
-    // Constraint 2: If epoch transition exists, the gap commitment must be valid
+    // Constraint 2: If epoch transition, gap commitment must match public input
     if epoch_transition_exists {
         // transition_gap_commitment must not be zero (real gap record exists)
         assert(transition_gap_commitment != 0);
@@ -48,8 +49,13 @@ fn main(
             [transition_gap_commitment, blinding_factor],
             2,
         );
-        // The gap_binding must be deterministic (non-zero proves it was computed)
-        assert(gap_binding != 0);
+        // Gap binding must match the externally verifiable public input
+        assert(gap_binding == transition_commitment_hash);
+    }
+
+    // When no epoch transition, the public input must be zero
+    if !epoch_transition_exists {
+        assert(transition_commitment_hash == 0);
     }
 
     // Constraint 3: Poseidon2(config_params, blinding_factor) == current_config_hash

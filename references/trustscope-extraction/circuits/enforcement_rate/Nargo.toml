@@ -1,0 +1,7 @@
+[package]
+name = "enforcement_rate"
+type = "bin"
+authors = ["TrustScope"]
+compiler_version = ">=0.30.0"
+
+[dependencies]

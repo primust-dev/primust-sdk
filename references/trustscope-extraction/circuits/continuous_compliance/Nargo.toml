@@ -1,0 +1,7 @@
+[package]
+name = "continuous_compliance"
+type = "bin"
+authors = ["TrustScope"]
+compiler_version = ">=0.30.0"
+
+[dependencies]

@@ -1,6 +1,6 @@
 /**
  * Tests for config_epoch_continuity witness builder.
- * 4 MUST PASS tests.
+ * 6 MUST PASS tests.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -153,5 +153,45 @@ describe('config_epoch_continuity witness builder', () => {
     expect(witness.current_config_hash).toMatch(/^poseidon2:/);
     expect(witness.config_params).toHaveLength(32);
     expect(witness.blinding_factor).toBe(BLINDING);
+  });
+
+  it('MUST PASS: transition_commitment_hash binds gap commitment (soundness)', () => {
+    const run = makeProcessRun();
+    const prior = makePriorVpec('poseidon2:' + 'ff'.repeat(32));
+    const gapCommitment = 99999n;
+
+    const witness = buildConfigEpochWitness(
+      run,
+      prior,
+      CONFIG_PARAMS,
+      BLINDING,
+      gapCommitment,
+    );
+
+    // transition_commitment_hash must be non-zero when epoch transition exists
+    expect(witness.epoch_transition_exists).toBe(true);
+    expect(witness.transition_commitment_hash).toBeDefined();
+    expect(witness.transition_commitment_hash).not.toBe('0');
+    expect(witness.transition_commitment_hash).toMatch(/^poseidon2:/);
+
+    // A different blinding factor produces a different commitment hash
+    const witness2 = buildConfigEpochWitness(
+      run,
+      prior,
+      CONFIG_PARAMS,
+      43n,
+      gapCommitment,
+    );
+    expect(witness2.transition_commitment_hash).not.toBe(
+      witness.transition_commitment_hash,
+    );
+  });
+
+  it('MUST PASS: transition_commitment_hash is zero when no epoch transition', () => {
+    const run = makeProcessRun();
+    const witness = buildConfigEpochWitness(run, null, CONFIG_PARAMS, BLINDING);
+
+    expect(witness.epoch_transition_exists).toBe(false);
+    expect(witness.transition_commitment_hash).toBe('0');
   });
 });
