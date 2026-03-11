@@ -77,7 +77,20 @@ importers:
         specifier: ^0.6.2
         version: 0.6.2
 
-  packages/evidence-pack: {}
+  packages/evidence-pack:
+    dependencies:
+      '@noble/hashes':
+        specifier: ^1.7.2
+        version: 1.8.0
+      '@primust/artifact-core':
+        specifier: workspace:*
+        version: link:../artifact-core
+      '@primust/runtime-core':
+        specifier: workspace:*
+        version: link:../runtime-core
+      '@primust/verifier':
+        specifier: workspace:*
+        version: link:../verifier
 
   packages/policy-engine:
     dependencies:
@@ -119,7 +132,11 @@ importers:
         specifier: ^7.6.13
         version: 7.6.13
 
-  packages/sdk-js: {}
+  packages/sdk-js:
+    dependencies:
+      '@primust/artifact-core':
+        specifier: workspace:*
+        version: link:../artifact-core
 
   packages/verifier:
     dependencies:

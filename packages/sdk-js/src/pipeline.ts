@@ -201,6 +201,19 @@ export class Pipeline {
       skipRationaleHash = hash;
     }
 
+    // Enforce min_duration_seconds for review sessions at record() time
+    if ('reviewerKeyId' in checkSession) {
+      const rs = checkSession as ReviewSession;
+      const openedMs = new Date(rs.openedAt).getTime();
+      const nowMs = new Date(now).getTime();
+      const elapsedSec = (nowMs - openedMs) / 1000;
+      if (elapsedSec < rs.minDurationSeconds) {
+        throw new Error(
+          `Review duration ${elapsedSec.toFixed(1)}s is below minimum ${rs.minDurationSeconds}s (check_timing_suspect)`,
+        );
+      }
+    }
+
     // Build reviewer_credential for witnessed records
     let reviewerCredential: Record<string, unknown> | undefined;
     if (options.reviewerSignature && 'reviewerKeyId' in checkSession) {

@@ -197,6 +197,17 @@ class Pipeline:
 
         now = datetime.now(timezone.utc).isoformat()
 
+        # Enforce min_duration_seconds for review sessions at record() time
+        if isinstance(check_session, ReviewSession) and check_session.opened_at:
+            opened_dt = datetime.fromisoformat(check_session.opened_at)
+            now_dt = datetime.fromisoformat(now)
+            elapsed = (now_dt - opened_dt).total_seconds()
+            if elapsed < check_session.min_duration_seconds:
+                raise ValueError(
+                    f"Review duration {elapsed:.1f}s is below minimum "
+                    f"{check_session.min_duration_seconds}s (check_timing_suspect)"
+                )
+
         # Compute commitment hashes locally — raw content NEVER sent
         input_bytes = _to_bytes(input)
         commitment_hash, _ = commit(input_bytes)

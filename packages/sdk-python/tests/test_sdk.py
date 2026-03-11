@@ -177,7 +177,8 @@ class TestPythonSDK:
     ) -> None:
         """MUST PASS: reviewer display_content and rationale not in HTTP body."""
         session = pipeline.open_review(
-            "human_review", "manifest_004", reviewer_key_id="rev_key_001"
+            "human_review", "manifest_004", reviewer_key_id="rev_key_001",
+            min_duration_seconds=0,  # disable timing check for this test
         )
         display = {"screenshot": "base64_image_data_here", "context": "approval form"}
         rationale_text = "Approved because the risk is within acceptable bounds"
@@ -261,6 +262,25 @@ class TestPythonSDK:
         out1, alg = commit_output(b"output_data")
         assert alg == "poseidon2"
         assert out1.startswith("poseidon2:")
+
+    def test_sub_threshold_review_duration_raises(
+        self, pipeline: Pipeline, transport: MockTransport
+    ) -> None:
+        """MUST PASS: sub-threshold review duration raises check_timing_suspect."""
+        session = pipeline.open_review(
+            "quick_review", "manifest_008",
+            reviewer_key_id="rev_001",
+            min_duration_seconds=1800,  # 30 minutes
+        )
+
+        # Record immediately — elapsed ~0s, way below 1800s threshold
+        with pytest.raises(ValueError, match="check_timing_suspect"):
+            pipeline.record(
+                session,
+                input="data",
+                check_result="pass",
+                reviewer_signature="sig",
+            )
 
     def test_policy_config_drift_detection(
         self, pipeline: Pipeline, transport: MockTransport

@@ -191,6 +191,7 @@ describe('TypeScript SDK (P10-B)', () => {
 
     const session = await p.openReview('review_check', 'manifest_005', {
       reviewerKeyId: 'rev_key_001',
+      minDurationSeconds: 0, // disable timing check for this test
     });
 
     const display = { screenshot: 'base64_image_data', context: 'approval' };
@@ -225,6 +226,21 @@ describe('TypeScript SDK (P10-B)', () => {
 
     const session = await p.openCheck('hash_check', 'manifest_006');
     expect(session.manifestHash).toBe('manifest_006');
+  });
+
+  it('MUST PASS: sub-threshold review duration throws check_timing_suspect', async () => {
+    const { fetch } = createMockFetch();
+    const p = createPipeline(fetch);
+
+    const session = await p.openReview('quick_review', 'manifest_007', {
+      reviewerKeyId: 'rev_001',
+      minDurationSeconds: 1800, // 30 minutes
+    });
+
+    // Record immediately — elapsed ~0s, way below 1800s threshold
+    await expect(
+      p.record(session, 'data', 'pass', { reviewerSignature: 'sig' }),
+    ).rejects.toThrow('check_timing_suspect');
   });
 
   it('MUST PASS: identical golden vectors to P6-A (deterministic)', () => {
