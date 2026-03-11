@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/check_manifest/v3.0.0",
+  "title": "Primust CheckManifest",
+  "description": "Check manifest definition — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "manifest_id",
+    "manifest_hash",
+    "domain",
+    "name",
+    "semantic_version",
+    "check_type",
+    "implementation_type",
+    "supported_proof_level",
+    "evaluation_scope",
+    "evaluation_window_seconds",
+    "stages",
+    "aggregation_config",
+    "freshness_threshold_hours",
+    "benchmark",
+    "model_or_tool_hash",
+    "publisher",
+    "signer_id",
+    "kid",
+    "signed_at",
+    "signature"
+  ],
+  "properties": {
+    "manifest_id": { "type": "string" },
+    "manifest_hash": { "type": "string" },
+    "domain": {
+      "type": "string",
+      "enum": ["ai_agent", "cicd", "financial", "pharma", "generic"]
+    },
+    "name": { "type": "string" },
+    "semantic_version": { "type": "string" },
+    "check_type": { "type": "string" },
+    "implementation_type": {
+      "type": "string",
+      "enum": ["ml_model", "rule", "threshold", "approval_chain", "zkml_model", "custom"]
+    },
+    "supported_proof_level": {
+      "type": "string",
+      "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    },
+    "evaluation_scope": {
+      "type": "string",
+      "enum": ["per_run", "per_action_unit", "per_surface", "per_window"]
+    },
+    "evaluation_window_seconds": { "type": ["integer", "null"] },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage", "name", "type", "proof_level", "redacted"],
+        "properties": {
+          "stage": { "type": "integer" },
+          "name": { "type": "string" },
+          "type": {
+            "type": "string",
+            "enum": ["deterministic_rule", "ml_model", "zkml_model", "statistical_test", "custom_code", "human_review"]
+          },
+          "proof_level": {
+            "type": "string",
+            "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+          },
+          "redacted": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aggregation_config": {
+      "type": "object",
+      "required": ["method", "threshold"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["all_stages_must_pass", "worst_case", "threshold_vote", "sequential_gate"]
+        },
+        "threshold": { "type": ["number", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "freshness_threshold_hours": { "type": ["number", "null"] },
+    "benchmark": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["benchmark_id", "benchmark_hash", "precision", "recall", "f1", "test_dataset", "published_by"],
+          "properties": {
+            "benchmark_id": { "type": ["string", "null"] },
+            "benchmark_hash": { "type": ["string", "null"] },
+            "precision": { "type": ["number", "null"] },
+            "recall": { "type": ["number", "null"] },
+            "f1": { "type": ["number", "null"] },
+            "test_dataset": { "type": ["string", "null"] },
+            "published_by": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "model_or_tool_hash": { "type": ["string", "null"] },
+    "publisher": { "type": "string" },
+    "signer_id": { "type": "string" },
+    "kid": { "type": "string" },
+    "signed_at": { "type": "string", "format": "date-time" },
+    "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false,
+  "$defs": {
+    "SignatureEnvelopeRef": {
+      "type": "object",
+      "required": ["signer_id", "kid", "algorithm", "signature", "signed_at"],
+      "properties": {
+        "signer_id": { "type": "string" },
+        "kid": { "type": "string" },
+        "algorithm": { "type": "string", "const": "Ed25519" },
+        "signature": { "type": "string" },
+        "signed_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

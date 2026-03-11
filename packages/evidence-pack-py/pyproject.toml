@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "primust-evidence-pack"
+version = "0.0.1"
+description = "Merkle, pack assembly (Python)"
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/primust_evidence_pack"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/policy_pack/v3.0.0",
+  "title": "Primust PolicyPack",
+  "description": "Policy pack definition — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "policy_pack_id",
+    "org_id",
+    "name",
+    "version",
+    "checks",
+    "created_at",
+    "signer_id",
+    "kid",
+    "signature"
+  ],
+  "properties": {
+    "policy_pack_id": { "type": "string" },
+    "org_id": { "type": "string" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "manifest_id", "required", "evaluation_scope", "action_unit_count"],
+        "properties": {
+          "check_id": { "type": "string" },
+          "manifest_id": { "type": "string" },
+          "required": { "type": "boolean" },
+          "evaluation_scope": {
+            "type": "string",
+            "enum": ["per_run", "per_action_unit", "per_surface", "per_window"]
+          },
+          "action_unit_count": { "type": ["integer", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "signer_id": { "type": "string" },
+    "kid": { "type": "string" },
+    "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false,
+  "$defs": {
+    "SignatureEnvelopeRef": {
+      "type": "object",
+      "required": ["signer_id", "kid", "algorithm", "signature", "signed_at"],
+      "properties": {
+        "signer_id": { "type": "string" },
+        "kid": { "type": "string" },
+        "algorithm": { "type": "string", "const": "Ed25519" },
+        "signature": { "type": "string" },
+        "signed_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

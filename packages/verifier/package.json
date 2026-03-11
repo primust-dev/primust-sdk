@@ -1,0 +1,20 @@
+{
+  "name": "@primust/verifier",
+  "version": "0.0.1",
+  "description": "Offline and CLI verifier",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "primust-verify": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*"
+  },
+  "files": ["dist"],
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@primust/runtime-core",
+  "version": "0.0.1",
+  "description": "Local store, process runs, integrity chain",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*",
+    "better-sqlite3": "^12.6.2"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
+  }
+}

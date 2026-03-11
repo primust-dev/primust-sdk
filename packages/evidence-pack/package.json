@@ -1,0 +1,14 @@
+{
+  "name": "@primust/evidence-pack",
+  "version": "0.0.1",
+  "description": "Merkle, pack assembly, verification instructions",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "files": ["dist"],
+  "license": "UNLICENSED"
+}

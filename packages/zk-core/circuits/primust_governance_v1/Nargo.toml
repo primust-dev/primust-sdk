@@ -1,0 +1,6 @@
+[package]
+name = "primust_governance_v1"
+type = "bin"
+compiler_version = ">=0.34.0"
+
+[dependencies]

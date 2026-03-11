@@ -1,0 +1,21 @@
+{
+  "name": "@primust/dashboard",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Primust dashboard (app.primust.com) — calls API only, no direct DB",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "echo 'no tests yet'"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.0"
+  }
+}

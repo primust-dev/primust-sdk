@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/gap/v3.0.0",
+  "title": "Primust Gap",
+  "description": "Gap record — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "gap_id",
+    "run_id",
+    "gap_type",
+    "severity",
+    "state",
+    "details",
+    "detected_at",
+    "resolved_at"
+  ],
+  "properties": {
+    "gap_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "gap_type": {
+      "type": "string",
+      "enum": [
+        "check_not_executed",
+        "enforcement_override",
+        "engine_error",
+        "check_degraded",
+        "external_boundary_traversal",
+        "lineage_token_missing",
+        "admission_gate_override",
+        "check_timing_suspect",
+        "reviewer_credential_invalid",
+        "witnessed_display_missing",
+        "witnessed_rationale_missing",
+        "deterministic_consistency_violation",
+        "skip_rationale_missing",
+        "policy_config_drift",
+        "zkml_proof_pending_timeout",
+        "zkml_proof_failed",
+        "api_unavailable"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["Critical", "High", "Medium", "Low", "Informational"]
+    },
+    "state": {
+      "type": "string",
+      "enum": ["open", "investigating", "waived", "remediated", "resolved", "escalated"]
+    },
+    "details": { "type": "object" },
+    "detected_at": { "type": "string", "format": "date-time" },
+    "resolved_at": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/evidence_pack/v3.0.0",
+  "title": "Primust EvidencePack",
+  "description": "Evidence pack — provisional-frozen at schema_version 3.0.0. coverage_verified + coverage_pending + coverage_ungoverned = 100.",
+  "type": "object",
+  "required": [
+    "pack_id",
+    "org_id",
+    "period_start",
+    "period_end",
+    "artifact_ids",
+    "merkle_root",
+    "proof_distribution",
+    "coverage_verified_pct",
+    "coverage_pending_pct",
+    "coverage_ungoverned_pct",
+    "observation_summary",
+    "gap_summary",
+    "report_hash",
+    "signature",
+    "timestamp_anchor",
+    "generated_at"
+  ],
+  "properties": {
+    "pack_id": { "type": "string" },
+    "org_id": { "type": "string" },
+    "period_start": { "type": "string", "format": "date-time" },
+    "period_end": { "type": "string", "format": "date-time" },
+    "artifact_ids": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "merkle_root": { "type": "string" },
+    "proof_distribution": {
+      "type": "object",
+      "required": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"],
+      "properties": {
+        "mathematical": { "type": "number" },
+        "execution_zkml": { "type": "number" },
+        "execution": { "type": "number" },
+        "witnessed": { "type": "number" },
+        "attestation": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "coverage_verified_pct": { "type": "number" },
+    "coverage_pending_pct": { "type": "number" },
+    "coverage_ungoverned_pct": { "type": "number" },
+    "observation_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["surface_id", "surface_coverage_statement"],
+        "properties": {
+          "surface_id": { "type": "string" },
+          "surface_coverage_statement": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gap_summary": {
+      "type": "object",
+      "required": ["Critical", "High", "Medium", "Low", "Informational"],
+      "properties": {
+        "Critical": { "type": "integer" },
+        "High": { "type": "integer" },
+        "Medium": { "type": "integer" },
+        "Low": { "type": "integer" },
+        "Informational": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "report_hash": { "type": "string" },
+    "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" },
+    "timestamp_anchor": {
+      "type": "object",
+      "required": ["type", "tsa", "value"],
+      "properties": {
+        "type": { "type": "string", "enum": ["rfc3161", "none"] },
+        "tsa": { "type": "string", "enum": ["digicert_us", "digicert_eu", "none"] },
+        "value": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "generated_at": { "type": "string", "format": "date-time" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false,
+  "$defs": {
+    "SignatureEnvelopeRef": {
+      "type": "object",
+      "required": ["signer_id", "kid", "algorithm", "signature", "signed_at"],
+      "properties": {
+        "signer_id": { "type": "string" },
+        "kid": { "type": "string" },
+        "algorithm": { "type": "string", "const": "Ed25519" },
+        "signature": { "type": "string" },
+        "signed_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "primust"
+version = "0.0.1"
+description = "Python customer SDK (pip install primust)"
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/primust"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

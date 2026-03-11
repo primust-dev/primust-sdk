@@ -1,0 +1,6 @@
+[package]
+name = "skip_condition_proof"
+type = "bin"
+compiler_version = ">=0.34.0"
+
+[dependencies]

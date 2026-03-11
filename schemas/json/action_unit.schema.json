@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/action_unit/v3.0.0",
+  "title": "Primust ActionUnit",
+  "description": "Action unit record — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "action_unit_id",
+    "run_id",
+    "surface_id",
+    "action_type",
+    "recorded_at"
+  ],
+  "properties": {
+    "action_unit_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "surface_id": { "type": "string" },
+    "action_type": { "type": "string" },
+    "recorded_at": { "type": "string", "format": "date-time" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

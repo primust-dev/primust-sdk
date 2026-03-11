@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/policy_snapshot/v3.0.0",
+  "title": "Primust PolicySnapshot",
+  "description": "Policy snapshot — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "snapshot_id",
+    "policy_pack_id",
+    "policy_pack_version",
+    "effective_checks",
+    "snapshotted_at",
+    "policy_basis"
+  ],
+  "properties": {
+    "snapshot_id": { "type": "string" },
+    "policy_pack_id": { "type": "string" },
+    "policy_pack_version": { "type": "string" },
+    "effective_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check_id", "manifest_id", "manifest_hash", "required", "evaluation_scope", "action_unit_count"],
+        "properties": {
+          "check_id": { "type": "string" },
+          "manifest_id": { "type": "string" },
+          "manifest_hash": { "type": "string" },
+          "required": { "type": "boolean" },
+          "evaluation_scope": {
+            "type": "string",
+            "enum": ["per_run", "per_action_unit", "per_surface", "per_window"]
+          },
+          "action_unit_count": { "type": ["integer", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "snapshotted_at": { "type": "string", "format": "date-time" },
+    "policy_basis": {
+      "type": "string",
+      "enum": ["P1_self_declared", "P2_auditor_reviewed", "P3_regulator_mandated"]
+    }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

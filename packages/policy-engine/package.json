@@ -1,0 +1,20 @@
+{
+  "name": "@primust/policy-engine",
+  "version": "0.0.1",
+  "description": "Policy snapshot binding, manifest validation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*",
+    "@primust/runtime-core": "workspace:*",
+    "@primust/registry": "workspace:*",
+    "@noble/hashes": "^1.7.1"
+  },
+  "license": "UNLICENSED"
+}

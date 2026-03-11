@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/observation_surface/v3.0.0",
+  "title": "Primust ObservationSurface",
+  "description": "Observation surface registration — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "surface_id",
+    "org_id",
+    "environment",
+    "surface_type",
+    "surface_name",
+    "surface_version",
+    "observation_mode",
+    "scope_type",
+    "scope_description",
+    "surface_coverage_statement",
+    "proof_ceiling",
+    "gaps_detectable",
+    "gaps_not_detectable",
+    "registered_at"
+  ],
+  "properties": {
+    "surface_id": { "type": "string" },
+    "org_id": { "type": "string" },
+    "environment": { "type": "string" },
+    "surface_type": {
+      "type": "string",
+      "enum": ["in_process_adapter", "network_proxy", "log_collector", "api_gateway", "sidecar"]
+    },
+    "surface_name": { "type": "string" },
+    "surface_version": { "type": "string" },
+    "observation_mode": {
+      "type": "string",
+      "enum": ["pre_action", "post_action", "streaming", "batch"]
+    },
+    "scope_type": {
+      "type": "string",
+      "enum": ["full_workflow", "partial_workflow", "single_step", "external_boundary"]
+    },
+    "scope_description": { "type": "string" },
+    "surface_coverage_statement": { "type": "string" },
+    "proof_ceiling": {
+      "type": "string",
+      "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    },
+    "gaps_detectable": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "gaps_not_detectable": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "registered_at": { "type": "string", "format": "date-time" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

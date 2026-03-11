@@ -1,0 +1,16 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "primust-policy-engine"
+version = "0.0.1"
+description = "Policy snapshot binding (Python)"
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/primust_policy_engine"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

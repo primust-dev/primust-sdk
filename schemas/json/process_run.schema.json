@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/process_run/v3.0.0",
+  "title": "Primust ProcessRun",
+  "description": "Process run record — provisional-frozen at schema_version 3.0.0",
+  "type": "object",
+  "required": [
+    "run_id",
+    "workflow_id",
+    "org_id",
+    "surface_id",
+    "policy_snapshot_hash",
+    "process_context_hash",
+    "state",
+    "action_unit_count",
+    "started_at",
+    "closed_at",
+    "ttl_seconds"
+  ],
+  "properties": {
+    "run_id": { "type": "string" },
+    "workflow_id": { "type": "string" },
+    "org_id": { "type": "string" },
+    "surface_id": { "type": "string" },
+    "policy_snapshot_hash": { "type": "string" },
+    "process_context_hash": { "type": ["string", "null"] },
+    "state": {
+      "type": "string",
+      "enum": ["open", "closed", "partial", "cancelled", "auto_closed"]
+    },
+    "action_unit_count": { "type": "integer" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "closed_at": { "type": ["string", "null"], "format": "date-time" },
+    "ttl_seconds": { "type": "integer" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://primust.com/schemas/check_execution_record/v3.0.0",
+  "title": "Primust CheckExecutionRecord",
+  "description": "Check execution record — provisional-frozen at schema_version 3.0.0. Append-only after commit.",
+  "type": "object",
+  "required": [
+    "record_id",
+    "run_id",
+    "action_unit_id",
+    "manifest_id",
+    "manifest_hash",
+    "surface_id",
+    "commitment_hash",
+    "output_commitment",
+    "commitment_algorithm",
+    "commitment_type",
+    "check_result",
+    "proof_level_achieved",
+    "proof_pending",
+    "zkml_proof_pending",
+    "check_open_tst",
+    "check_close_tst",
+    "skip_rationale_hash",
+    "reviewer_credential",
+    "unverified_provenance",
+    "freshness_warning",
+    "chain_hash",
+    "idempotency_key",
+    "recorded_at"
+  ],
+  "properties": {
+    "record_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "action_unit_id": { "type": "string" },
+    "manifest_id": { "type": "string" },
+    "manifest_hash": { "type": "string" },
+    "surface_id": { "type": "string" },
+    "commitment_hash": { "type": "string" },
+    "output_commitment": { "type": ["string", "null"] },
+    "commitment_algorithm": {
+      "type": "string",
+      "enum": ["poseidon2", "sha256"]
+    },
+    "commitment_type": {
+      "type": "string",
+      "enum": ["input_commitment", "metadata_commitment", "foreign_event_commitment"]
+    },
+    "check_result": {
+      "type": "string",
+      "enum": ["pass", "fail", "error", "skipped", "degraded", "override", "not_applicable", "timed_out"]
+    },
+    "proof_level_achieved": {
+      "type": "string",
+      "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    },
+    "proof_pending": { "type": "boolean" },
+    "zkml_proof_pending": { "type": "boolean" },
+    "check_open_tst": { "type": ["string", "null"] },
+    "check_close_tst": { "type": ["string", "null"] },
+    "skip_rationale_hash": { "type": ["string", "null"] },
+    "reviewer_credential": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": [
+            "reviewer_key_id",
+            "key_binding",
+            "role",
+            "org_credential_ref",
+            "reviewer_signature",
+            "display_hash",
+            "rationale_hash",
+            "signed_content_hash",
+            "open_tst",
+            "close_tst"
+          ],
+          "properties": {
+            "reviewer_key_id": { "type": "string" },
+            "key_binding": { "type": "string", "enum": ["software", "hardware"] },
+            "role": { "type": "string" },
+            "org_credential_ref": { "type": ["string", "null"] },
+            "reviewer_signature": { "type": "string" },
+            "display_hash": { "type": "string" },
+            "rationale_hash": { "type": "string" },
+            "signed_content_hash": { "type": "string" },
+            "open_tst": { "type": "string" },
+            "close_tst": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "unverified_provenance": { "type": "boolean" },
+    "freshness_warning": { "type": "boolean" },
+    "chain_hash": { "type": "string" },
+    "idempotency_key": { "type": "string" },
+    "recorded_at": { "type": "string", "format": "date-time" }
+  },
+  "not": { "required": ["reliance_mode"] },
+  "additionalProperties": false
+}

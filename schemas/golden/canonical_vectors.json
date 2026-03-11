@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Golden test vectors for Primust canonical JSON serialization. Both TypeScript and Python implementations MUST produce identical output for every valid vector and MUST reject every invalid vector.",
+  "version": "1.0.0",
+  "vectors": [
+    {
+      "id": "flat-sorted",
+      "description": "Top-level keys sorted alphabetically",
+      "input": {"z": 1, "a": 2, "m": 3},
+      "expected": "{\"a\":2,\"m\":3,\"z\":1}"
+    },
+    {
+      "id": "nested-sorted",
+      "description": "Nested object keys sorted recursively at every depth",
+      "input": {"b": {"z": 1, "a": 2}, "a": 1},
+      "expected": "{\"a\":1,\"b\":{\"a\":2,\"z\":1}}"
+    },
+    {
+      "id": "deep-nested-sorted",
+      "description": "Three levels of nesting, all sorted recursively",
+      "input": {"c": {"b": {"z": true, "a": false}, "a": 1}, "a": "top"},
+      "expected": "{\"a\":\"top\",\"c\":{\"a\":1,\"b\":{\"a\":false,\"z\":true}}}"
+    },
+    {
+      "id": "array-preserves-order",
+      "description": "Arrays maintain element order (not sorted)",
+      "input": {"items": [3, 1, 2]},
+      "expected": "{\"items\":[3,1,2]}"
+    },
+    {
+      "id": "array-of-objects-sorted",
+      "description": "Objects inside arrays have their keys sorted",
+      "input": {"list": [{"z": 1, "a": 2}, {"b": 3, "a": 4}]},
+      "expected": "{\"list\":[{\"a\":2,\"z\":1},{\"a\":4,\"b\":3}]}"
+    },
+    {
+      "id": "null-value",
+      "description": "Null values are preserved as null",
+      "input": {"a": null, "b": 1},
+      "expected": "{\"a\":null,\"b\":1}"
+    },
+    {
+      "id": "boolean-values",
+      "description": "Boolean true/false serialized as JSON literals",
+      "input": {"flag": true, "active": false},
+      "expected": "{\"active\":false,\"flag\":true}"
+    },
+    {
+      "id": "empty-object",
+      "description": "Empty object",
+      "input": {},
+      "expected": "{}"
+    },
+    {
+      "id": "empty-array",
+      "description": "Empty array value",
+      "input": {"data": []},
+      "expected": "{\"data\":[]}"
+    },
+    {
+      "id": "string-escaping",
+      "description": "Strings with characters that require JSON escaping",
+      "input": {"msg": "line1\nline2", "quote": "he said \"hi\""},
+      "expected": "{\"msg\":\"line1\\nline2\",\"quote\":\"he said \\\"hi\\\"\"}"
+    },
+    {
+      "id": "integer-and-float",
+      "description": "Integer and float numbers",
+      "input": {"count": 42, "ratio": 3.14},
+      "expected": "{\"count\":42,\"ratio\":3.14}"
+    },
+    {
+      "id": "mixed-deep",
+      "description": "Complex mixed structure with nested arrays and objects",
+      "input": {
+        "meta": {"version": 1, "author": "test"},
+        "data": [{"z": [1, 2], "a": "first"}, null, true],
+        "id": "abc"
+      },
+      "expected": "{\"data\":[{\"a\":\"first\",\"z\":[1,2]},null,true],\"id\":\"abc\",\"meta\":{\"author\":\"test\",\"version\":1}}"
+    },
+    {
+      "id": "unicode-passthrough",
+      "description": "Unicode characters pass through without escaping (UTF-8 output)",
+      "input": {"name": "caf\u00e9", "emoji": "\u2764"},
+      "expected": "{\"emoji\":\"\u2764\",\"name\":\"caf\u00e9\"}"
+    },
+    {
+      "id": "no-whitespace",
+      "description": "Output must have no spaces, no newlines, no indentation",
+      "input": {"a": 1},
+      "expected": "{\"a\":1}"
+    }
+  ],
+  "hash_vectors": [
+    {
+      "id": "hash-flat",
+      "description": "SHA-256 of canonical form of a flat object",
+      "input": {"z": 1, "a": 2, "m": 3},
+      "canonical": "{\"a\":2,\"m\":3,\"z\":1}",
+      "sha256_hex": "ebba85cfdc0a724b6cc327ecc545faeb38b9fe02eca603b430eb872f5cf75370"
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "id": "reject-undefined-function",
+      "description": "Non-JSON-native types must raise, not coerce. If the language has a callable/function type, passing one must throw.",
+      "note": "Language-specific: TypeScript should reject functions; Python should reject arbitrary objects with no __json__ protocol."
+    },
+    {
+      "id": "reject-date-object",
+      "description": "Date objects must not be silently coerced to strings. Caller must convert to ISO 8601 string before passing.",
+      "note": "Both languages: new Date() / datetime.now() must raise TypeError or equivalent."
+    },
+    {
+      "id": "reject-bytes",
+      "description": "Raw bytes/Buffer/Uint8Array must not be silently coerced. Caller must base64url-encode first.",
+      "note": "TypeScript: Uint8Array/Buffer must throw. Python: bytes must throw."
+    },
+    {
+      "id": "reject-nan",
+      "description": "NaN is not valid JSON. Must raise.",
+      "note": "Both languages: NaN must throw, not serialize as null or string."
+    },
+    {
+      "id": "reject-infinity",
+      "description": "Infinity is not valid JSON. Must raise.",
+      "note": "Both languages: Infinity/-Infinity must throw."
+    }
+  ]
+}

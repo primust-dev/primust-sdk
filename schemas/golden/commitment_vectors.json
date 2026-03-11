@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Golden test vectors for Primust commitment layer. TypeScript and Python implementations MUST produce identical output for all vectors.",
+  "version": "1.0.0",
+  "vectors": [
+    {
+      "id": "poseidon2-empty",
+      "input_hex": "",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1"
+    },
+    {
+      "id": "poseidon2-1byte",
+      "input_hex": "42",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:172be1e9aba0b04df642f6208d5426ab2d3d4e0581d3ead025612b549a49a092"
+    },
+    {
+      "id": "poseidon2-31bytes",
+      "input_hex": "ababababababababababababababababababababababababababababababab",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:22378e78d14813dac1a10e003ea826ccb6432a28c02d45e62e82dde92a3f1555"
+    },
+    {
+      "id": "poseidon2-32bytes",
+      "input_hex": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:0d39d19348fe292db1b7959c9b9cafcc1ab96fa0affae86c3218c4309e825879"
+    },
+    {
+      "id": "poseidon2-64bytes",
+      "input_hex": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:10f2adcc5a497a4760a6633c07238dfaafcdb66c45cb2a2ab0f1c774a8fd85e2"
+    },
+    {
+      "id": "sha256-1byte",
+      "input_hex": "42",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c"
+    },
+    {
+      "id": "sha256-32bytes",
+      "input_hex": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:7969ec0fcb8b648dfde24b1d0ae24568d398dcc3a83b80a850f973238cdfd3d9"
+    },
+    {
+      "id": "merkle-1leaf",
+      "type": "merkle_root",
+      "input_hashes": [
+        "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103"
+      ],
+      "expected_root": "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103"
+    },
+    {
+      "id": "merkle-2leaves",
+      "type": "merkle_root",
+      "input_hashes": [
+        "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103",
+        "poseidon2:24f8c162c4a75a200f3d486f5910b1ab8fe297ce1cce94e55e2af0da0a421507"
+      ],
+      "expected_root": "poseidon2:28bf4c4329281a7861385ebece50b70b3e0701805320cf106375ba3d8d05fa94"
+    },
+    {
+      "id": "merkle-3leaves",
+      "type": "merkle_root",
+      "input_hashes": [
+        "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103",
+        "poseidon2:24f8c162c4a75a200f3d486f5910b1ab8fe297ce1cce94e55e2af0da0a421507",
+        "poseidon2:03e6b6fef92d73a41b5b228ab8ac77070e20b8eb246e601e4f8d1487729890a7"
+      ],
+      "expected_root": "poseidon2:00b35086fabadadca9fadc9e67abc0749beaf57d0191caef4f368bc149a82eaf"
+    }
+  ]
+}
