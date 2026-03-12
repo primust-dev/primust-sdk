@@ -203,7 +203,19 @@
           ]
         },
         "scope_description": { "type": "string" },
-        "surface_coverage_statement": { "type": "string" }
+        "surface_coverage_statement": { "type": "string" },
+        "coverage_provenance": {
+          "type": "object",
+          "properties": {
+            "surface_tier": { "type": "integer", "minimum": 1, "maximum": 3 },
+            "surface_type": { "type": "string" },
+            "honest_disclosure": {
+              "type": "string",
+              "description": "Plain-English disclosure of input data provenance and its implications for verifier confidence."
+            }
+          },
+          "description": "Provenance metadata for coverage data from this surface. Independent of check proof level."
+        }
       },
       "additionalProperties": false
     },

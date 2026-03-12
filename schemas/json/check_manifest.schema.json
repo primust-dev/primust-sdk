@@ -59,13 +59,20 @@
           "name": { "type": "string" },
           "type": {
             "type": "string",
-            "enum": ["deterministic_rule", "ml_model", "zkml_model", "statistical_test", "custom_code", "human_review", "policy_engine"]
+            "enum": ["deterministic_rule", "ml_model", "zkml_model", "statistical_test", "custom_code", "human_review", "policy_engine", "byollm", "open_source_ml", "hardware_attested"]
           },
           "proof_level": {
             "type": "string",
             "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
           },
-          "redacted": { "type": "boolean" }
+          "redacted": { "type": "boolean" },
+          "model_id": { "type": "string", "description": "For open_source_ml: public model card identifier" },
+          "model_version_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "For open_source_ml: sha256 of weights files" },
+          "tee_type": { "type": "string", "enum": ["sgx", "sev", "trustzone", "tpm"], "description": "For hardware_attested: TEE type" },
+          "enclave_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "For hardware_attested: sha256 of enclave code (MRENCLAVE)" },
+          "engine": { "type": "string", "enum": ["opa", "cedar"], "description": "For policy_engine: engine type" },
+          "policy_bundle_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "For policy_engine: sha256 of policy bundle" },
+          "committed_random_seed": { "type": "boolean", "description": "For statistical_test: true if random seed is committed for reproducibility" }
         },
         "additionalProperties": false
       }

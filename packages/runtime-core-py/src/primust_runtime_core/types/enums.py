@@ -25,6 +25,9 @@ StageType = Literal[
     "custom_code",
     "human_review",
     "policy_engine",
+    "byollm",
+    "open_source_ml",
+    "hardware_attested",
 ]
 
 EvaluationScope = Literal[

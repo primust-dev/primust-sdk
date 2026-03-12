@@ -52,7 +52,16 @@
       "type": "array",
       "items": { "type": "string" }
     },
-    "registered_at": { "type": "string", "format": "date-time" }
+    "registered_at": { "type": "string", "format": "date-time" },
+    "modality_id": {
+      "type": "string",
+      "description": "Observation modality identifier. Multi-modal platforms MUST register separate surfaces per modality."
+    },
+    "deployment_model": {
+      "type": "string",
+      "enum": ["cloud", "on_premises", "air_gapped", "edge", "hybrid"],
+      "description": "Deployment model affects proof ceiling. On-premises enables higher tiers than cloud for same platform."
+    }
   },
   "not": { "required": ["reliance_mode"] },
   "additionalProperties": false

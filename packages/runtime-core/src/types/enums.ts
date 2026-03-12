@@ -26,10 +26,13 @@ export type ImplementationType =
  *   deterministic_rule → mathematical
  *   zkml_model         → execution_zkml
  *   ml_model           → execution
- *   statistical_test   → mathematical or execution
+ *   statistical_test   → mathematical (if deterministic given inputs+seed) or execution
  *   custom_code        → execution (if code_hash) or attestation
  *   human_review       → witnessed (NEVER attestation — invariant 13)
  *   policy_engine      → mathematical
+ *   byollm             → attestation (opaque hosted API — hard ceiling, no upgrade path)
+ *   open_source_ml     → execution (self-hosted, weights hashable, model_version_hash required)
+ *   hardware_attested  → mathematical (TEE attestation quote verifiable against HW root of trust)
  */
 export type StageType =
   | 'deterministic_rule'
@@ -38,7 +41,10 @@ export type StageType =
   | 'statistical_test'
   | 'custom_code'
   | 'human_review'
-  | 'policy_engine';
+  | 'policy_engine'
+  | 'byollm'
+  | 'open_source_ml'
+  | 'hardware_attested';
 
 export type EvaluationScope =
   | 'per_run'

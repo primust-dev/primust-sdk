@@ -1,7 +1,15 @@
 """
-P11-C: OTEL Span Processor adapter tests (Python) — 6 MUST PASS.
+P11-C: OTEL Span Processor adapter tests (Python).
 
-Uses mock spans and mock Pipeline HTTP transport.
+Original 6 MUST PASS tests + OTL amendment coverage:
+  OTL-1: Per-span-type proof ceilings
+  OTL-2: Conditional commitment logic
+  OTL-3: span.kind as proof-level discriminator
+  OTL-4: gen_ai.evaluation.result → mathematical
+  OTL-5: Deprecated attribute filtering
+  OTL-6: Scoped attribute reading rules
+  OTL-7: MCP span recognition (via standard tool span path)
+  OTL-8: Per-tool manifest enforcement
 """
 
 from __future__ import annotations
@@ -18,9 +26,14 @@ from primust.pipeline import Pipeline
 from primust_otel import PrimustSpanProcessor
 from primust_otel.span_processor import (
     PROOF_LEVEL_MAP,
+    SPAN_TYPE_PROOF_CEILING,
+    SpanType,
     STATUS_OK,
     STATUS_ERROR,
     STATUS_UNSET,
+    SPAN_KIND_INTERNAL,
+    SPAN_KIND_CLIENT,
+    _PROHIBITED_ATTRIBUTES,
 )
 
 
@@ -80,6 +93,7 @@ class MockSpan:
     status: MockStatus | None = None
     start_time: int | None = None
     end_time: int | None = None
+    kind: int | None = None
 
 
 @pytest.fixture
@@ -101,6 +115,10 @@ def pipeline(transport: MockTransport) -> Pipeline:
         http_client=client,
     )
 
+
+# ---------------------------------------------------------------------------
+# Original MUST PASS tests
+# ---------------------------------------------------------------------------
 
 class TestOTELSpanProcessor:
     """P11-C: OTEL Span Processor adapter (Python)."""
@@ -156,9 +174,6 @@ class TestOTELSpanProcessor:
         )
         processor.on_end(span)
 
-        record_req = [r for r in transport.requests if "/records" in r["url"]]
-        # The proof_level_achieved is computed at record time based on session
-        # but the check is that our PROOF_LEVEL_MAP maps human_review → witnessed
         assert PROOF_LEVEL_MAP["human_review"] == "witnessed"
 
     def test_process_context_hash_propagated(
@@ -241,7 +256,6 @@ class TestOTELSpanProcessor:
         """on_end() catches exceptions — never raises into OTEL pipeline."""
         processor = PrimustSpanProcessor(pipeline=pipeline)
 
-        # Force an error by passing a broken span
         class BrokenSpan:
             name = "broken"
             attributes = None
@@ -249,9 +263,343 @@ class TestOTELSpanProcessor:
             status = None
             start_time = None
             end_time = None
+            kind = None
 
-        # Should not raise — exceptions are logged
         original_record = pipeline.record
         pipeline.record = None  # type: ignore — force AttributeError
         processor.on_end(BrokenSpan())  # type: ignore
         pipeline.record = original_record  # type: ignore
+
+
+# ---------------------------------------------------------------------------
+# OTL-1: Per-span-type proof ceilings
+# ---------------------------------------------------------------------------
+
+class TestSpanTypeClassification:
+    """OTL-1: Span type classification determines proof ceiling."""
+
+    def test_llm_inference_classified(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="chat_completion",
+            attributes={"gen_ai.request.model": "gpt-4"},
+        )
+        assert processor._classify_span(span) == SpanType.LLM_INFERENCE
+
+    def test_tool_internal_classified(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="execute_tool",
+            attributes={"gen_ai.tool.name": "search_db"},
+            kind=SPAN_KIND_INTERNAL,
+        )
+        assert processor._classify_span(span) == SpanType.TOOL_EXECUTION_INTERNAL
+
+    def test_tool_client_classified(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="execute_tool",
+            attributes={"gen_ai.tool.name": "remote_api"},
+            kind=SPAN_KIND_CLIENT,
+        )
+        assert processor._classify_span(span) == SpanType.TOOL_EXECUTION_CLIENT
+
+    def test_evaluation_classified(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="eval_step",
+            attributes={},
+            events=[MockEvent(
+                name="gen_ai.evaluation.result",
+                attributes={"gen_ai.evaluation.score": 0.95, "gen_ai.evaluation.name": "grounding"},
+            )],
+        )
+        assert processor._classify_span(span) == SpanType.EVALUATION
+
+    def test_unknown_fallback(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(name="random_op", attributes={"key": "val"})
+        assert processor._classify_span(span) == SpanType.UNKNOWN
+
+    def test_span_type_ceilings_correct(self) -> None:
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.LLM_INFERENCE] == "attestation"
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.TOOL_EXECUTION_INTERNAL] == "execution"
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.TOOL_EXECUTION_CLIENT] == "attestation"
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.EVALUATION] == "mathematical"
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.UNKNOWN] == "attestation"
+
+
+# ---------------------------------------------------------------------------
+# OTL-2: Conditional commitment logic
+# ---------------------------------------------------------------------------
+
+class TestConditionalCommitment:
+    """OTL-2: Commitment type varies by span type."""
+
+    def test_llm_span_metadata_commitment(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="chat",
+            attributes={"gen_ai.request.model": "claude-3"},
+            status=MockStatus(status_code=STATUS_OK),
+            start_time=1000000000,
+            end_time=2000000000,
+        )
+        payload, ctype = processor._compute_commitment_payload(span, SpanType.LLM_INFERENCE)
+        assert ctype == "metadata_commitment"
+        data = json.loads(payload)
+        assert data["model"] == "claude-3"
+        assert "gen_ai.request.model" not in data  # Structured, not raw attrs
+
+    def test_tool_internal_input_commitment(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="execute_tool",
+            attributes={
+                "gen_ai.tool.name": "search",
+                "gen_ai.tool.call.id": "call_123",
+                "gen_ai.tool.call.function.arguments": {"query": "test"},
+            },
+            kind=SPAN_KIND_INTERNAL,
+        )
+        payload, ctype = processor._compute_commitment_payload(span, SpanType.TOOL_EXECUTION_INTERNAL)
+        assert ctype == "input_commitment"
+        data = json.loads(payload)
+        assert data["tool_name"] == "search"
+        assert data["arguments"] == {"query": "test"}
+
+    def test_tool_client_metadata_commitment(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="remote_tool",
+            attributes={"gen_ai.tool.name": "remote_api"},
+            kind=SPAN_KIND_CLIENT,
+            status=MockStatus(status_code=STATUS_OK),
+            start_time=1000000000,
+            end_time=2000000000,
+        )
+        payload, ctype = processor._compute_commitment_payload(span, SpanType.TOOL_EXECUTION_CLIENT)
+        assert ctype == "metadata_commitment"
+
+    def test_eval_span_input_commitment(self) -> None:
+        processor = PrimustSpanProcessor(
+            pipeline=None,  # type: ignore
+            eval_thresholds={"grounding": 0.8},
+        )
+        span = MockSpan(
+            name="eval",
+            events=[MockEvent(
+                name="gen_ai.evaluation.result",
+                attributes={"gen_ai.evaluation.score": 0.95, "gen_ai.evaluation.name": "grounding"},
+            )],
+        )
+        payload, ctype = processor._compute_commitment_payload(span, SpanType.EVALUATION)
+        assert ctype == "input_commitment"
+        data = json.loads(payload)
+        assert data["eval_name"] == "grounding"
+        assert data["score"] == 0.95
+        assert data["threshold"] == 0.8
+
+
+# ---------------------------------------------------------------------------
+# OTL-3: span.kind discriminator
+# ---------------------------------------------------------------------------
+
+class TestSpanKindDiscriminator:
+    """OTL-3: span.kind determines whether input_commitment is computable."""
+
+    def test_internal_tool_gets_execution_ceiling(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="tool_call",
+            attributes={"gen_ai.tool.name": "db_query"},
+            kind=SPAN_KIND_INTERNAL,
+        )
+        span_type = processor._classify_span(span)
+        assert span_type == SpanType.TOOL_EXECUTION_INTERNAL
+        assert SPAN_TYPE_PROOF_CEILING[span_type] == "execution"
+
+    def test_client_tool_gets_attestation_ceiling(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="tool_call",
+            attributes={"gen_ai.tool.name": "remote_service"},
+            kind=SPAN_KIND_CLIENT,
+        )
+        span_type = processor._classify_span(span)
+        assert span_type == SpanType.TOOL_EXECUTION_CLIENT
+        assert SPAN_TYPE_PROOF_CEILING[span_type] == "attestation"
+
+
+# ---------------------------------------------------------------------------
+# OTL-4: gen_ai.evaluation.result → mathematical
+# ---------------------------------------------------------------------------
+
+class TestEvaluationMathematical:
+    """OTL-4: Evaluation events enable mathematical proof through OTEL."""
+
+    def test_eval_above_threshold_passes(
+        self, pipeline: Pipeline, transport: MockTransport
+    ) -> None:
+        processor = PrimustSpanProcessor(
+            pipeline=pipeline,
+            eval_thresholds={"factual_grounding": 0.8},
+        )
+        span = MockSpan(
+            name="eval_step",
+            attributes={},
+            events=[MockEvent(
+                name="gen_ai.evaluation.result",
+                attributes={
+                    "gen_ai.evaluation.score": 0.95,
+                    "gen_ai.evaluation.name": "factual_grounding",
+                },
+            )],
+            status=MockStatus(status_code=STATUS_OK),
+        )
+        processor.on_end(span)
+
+        record_req = [r for r in transport.requests if "/records" in r["url"]]
+        assert record_req[0]["body"]["check_result"] == "pass"
+
+    def test_eval_below_threshold_fails(
+        self, pipeline: Pipeline, transport: MockTransport
+    ) -> None:
+        processor = PrimustSpanProcessor(
+            pipeline=pipeline,
+            eval_thresholds={"factual_grounding": 0.8},
+        )
+        span = MockSpan(
+            name="eval_step",
+            attributes={},
+            events=[MockEvent(
+                name="gen_ai.evaluation.result",
+                attributes={
+                    "gen_ai.evaluation.score": 0.5,
+                    "gen_ai.evaluation.name": "factual_grounding",
+                },
+            )],
+            status=MockStatus(status_code=STATUS_OK),
+        )
+        processor.on_end(span)
+
+        record_req = [r for r in transport.requests if "/records" in r["url"]]
+        assert record_req[0]["body"]["check_result"] == "fail"
+
+    def test_eval_proof_level_mathematical(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="eval",
+            attributes={},
+            events=[MockEvent(name="gen_ai.evaluation.result", attributes={})],
+        )
+        proof_level = processor._resolve_proof_level(span, SpanType.EVALUATION)
+        assert proof_level == "mathematical"
+
+
+# ---------------------------------------------------------------------------
+# OTL-5 + OTL-6: Attribute scoping and deprecated names
+# ---------------------------------------------------------------------------
+
+class TestAttributeScoping:
+    """OTL-5 + OTL-6: Prohibited attributes never included in commitments."""
+
+    def test_prohibited_attributes_filtered(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="unknown_op",
+            attributes={
+                "gen_ai.input.messages": "SECRET PROMPT CONTENT",
+                "gen_ai.output.messages": "SECRET COMPLETION",
+                "gen_ai.system_instructions": "SECRET SYSTEM PROMPT",
+                "gen_ai.prompt": "DEPRECATED PROMPT",
+                "safe_key": "safe_value",
+            },
+        )
+        payload, _ = processor._compute_commitment_payload(span, SpanType.UNKNOWN)
+        assert "SECRET" not in payload
+        assert "DEPRECATED" not in payload
+        assert "safe_value" in payload
+
+    def test_prohibited_set_includes_deprecated(self) -> None:
+        assert "gen_ai.prompt" in _PROHIBITED_ATTRIBUTES
+        assert "gen_ai.completion" in _PROHIBITED_ATTRIBUTES
+        assert "input.value" in _PROHIBITED_ATTRIBUTES
+
+    def test_tool_args_always_readable(self) -> None:
+        """OTL-6: Tool arguments ARE readable (structured JSON, not messages)."""
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="tool",
+            attributes={
+                "gen_ai.tool.name": "search",
+                "gen_ai.tool.call.id": "call_1",
+                "gen_ai.tool.call.function.arguments": {"q": "hello"},
+            },
+            kind=SPAN_KIND_INTERNAL,
+        )
+        payload, ctype = processor._compute_commitment_payload(span, SpanType.TOOL_EXECUTION_INTERNAL)
+        data = json.loads(payload)
+        assert data["arguments"] == {"q": "hello"}
+        assert ctype == "input_commitment"
+
+
+# ---------------------------------------------------------------------------
+# OTL-8: Per-tool manifest enforcement
+# ---------------------------------------------------------------------------
+
+class TestPerToolManifest:
+    """OTL-8: Manifest resolved by tool name, not just span name."""
+
+    def test_manifest_resolved_by_tool_name(self) -> None:
+        processor = PrimustSpanProcessor(
+            pipeline=None,  # type: ignore
+            manifest_map={"search_db": "manifest_search_v1"},
+        )
+        span = MockSpan(
+            name="execute_tool",
+            attributes={"gen_ai.tool.name": "search_db"},
+        )
+        assert processor._resolve_manifest_id(span) == "manifest_search_v1"
+
+    def test_no_manifest_falls_back_to_auto(self) -> None:
+        processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
+        span = MockSpan(
+            name="unknown_tool",
+            attributes={"gen_ai.tool.name": "unregistered"},
+        )
+        assert processor._resolve_manifest_id(span) == "auto:unknown_tool"
+
+    def test_primust_manifest_id_overrides_all(self) -> None:
+        processor = PrimustSpanProcessor(
+            pipeline=None,  # type: ignore
+            manifest_map={"search": "manifest_search_v1"},
+        )
+        span = MockSpan(
+            name="search",
+            attributes={
+                "gen_ai.tool.name": "search",
+                "primust.manifest_id": "explicit_override_v2",
+            },
+        )
+        assert processor._resolve_manifest_id(span) == "explicit_override_v2"
+
+
+# ---------------------------------------------------------------------------
+# PCG-1: New stage types in proof level map
+# ---------------------------------------------------------------------------
+
+class TestNewStageTypes:
+    """PCG-1 + PCG-6: New stage types have correct proof level mappings."""
+
+    def test_byollm_attestation(self) -> None:
+        assert PROOF_LEVEL_MAP["byollm"] == "attestation"
+
+    def test_open_source_ml_execution(self) -> None:
+        assert PROOF_LEVEL_MAP["open_source_ml"] == "execution"
+
+    def test_hardware_attested_mathematical(self) -> None:
+        assert PROOF_LEVEL_MAP["hardware_attested"] == "mathematical"
+
+    def test_policy_engine_mathematical(self) -> None:
+        assert PROOF_LEVEL_MAP["policy_engine"] == "mathematical"
