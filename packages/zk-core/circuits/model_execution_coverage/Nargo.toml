@@ -1,0 +1,7 @@
+[package]
+name = "model_execution_coverage"
+type = "bin"
+authors = [""]
+
+[dependencies]
+poseidon = { git = "https://github.com/noir-lang/poseidon", tag = "v0.2.6" }

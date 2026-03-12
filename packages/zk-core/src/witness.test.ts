@@ -69,6 +69,9 @@ function setupRunWith10Records() {
       reviewer_credential: null,
       unverified_provenance: false,
       freshness_warning: false,
+      actor_id: null,
+      explanation_commitment: null,
+      bias_audit: null,
       idempotency_key: `idem_${i}`,
       recorded_at: '2026-03-10T00:00:00Z',
     });
@@ -97,7 +100,8 @@ describe('witness builder + prover', () => {
     const { store, runId, policySnapshotHash, commitmentHashes } =
       setupRunWith10Records();
     const witness = buildWitness(runId, store, policySnapshotHash);
-    const expectedRoot = buildCommitmentRoot(commitmentHashes);
+    // Witness uses Poseidon2 Merkle root for ZK circuit inputs
+    const expectedRoot = buildCommitmentRoot(commitmentHashes, 'poseidon2');
 
     expect(witness.commitment_root).toBe(expectedRoot);
     store.close();
@@ -175,7 +179,7 @@ describe('witness builder + prover', () => {
   it('MUST PASS: all 5 proof levels referenced correctly in prover_system mapping', () => {
     const levels = [
       'mathematical',
-      'execution_zkml',
+      'verifiable_inference',
       'execution',
       'witnessed',
       'attestation',
@@ -187,7 +191,7 @@ describe('witness builder + prover', () => {
         expect(routing).not.toBeNull();
         expect(routing!.prover).toBe('modal_cpu');
         expect(routing!.prover_system).toBe('ultrahonk');
-      } else if (level === 'execution_zkml') {
+      } else if (level === 'verifiable_inference') {
         expect(routing).not.toBeNull();
         expect(routing!.prover).toBe('modal_gpu');
         expect(routing!.prover_system).toBe('ezkl');

@@ -22,7 +22,7 @@ export const PROOF_TIMEOUT_MS = 300_000;
  * Route a proof level to the appropriate prover system.
  *
  * mathematical   → UltraHonk → Modal CPU
- * execution_zkml → EZKL      → Modal GPU (Tier 2)
+ * verifiable_inference → EZKL      → Modal GPU (Tier 2)
  * execution      → no ZK proof needed (returns null)
  * witnessed      → no ZK proof needed (returns null)
  * attestation    → no ZK proof needed (returns null)
@@ -31,7 +31,7 @@ export function routeProver(proofLevel: ProofLevel): ProverRouting | null {
   switch (proofLevel) {
     case 'mathematical':
       return { prover: 'modal_cpu', prover_system: 'ultrahonk' };
-    case 'execution_zkml':
+    case 'verifiable_inference':
       return { prover: 'modal_gpu', prover_system: 'ezkl' };
     case 'execution':
     case 'witnessed':
@@ -51,14 +51,17 @@ export async function proveAsync(
   runId: string,
   proofLevel: ProofLevel,
   client: ProverClient,
+  circuit: string = 'primust_governance_v1',
 ): Promise<ProofJobHandle | null> {
   const routing = routeProver(proofLevel);
   if (routing === null) return null;
 
+  const circuitRouting = getCircuitRouting(circuit);
+
   const config: ProverConfig = {
-    prover: routing.prover,
-    prover_system: routing.prover_system,
-    circuit: 'primust_governance_v1',
+    prover: circuitRouting?.prover ?? routing.prover,
+    prover_system: circuitRouting?.prover_system ?? routing.prover_system,
+    circuit,
     timeout_ms: PROOF_TIMEOUT_MS,
   };
 
@@ -122,6 +125,25 @@ export const CIRCUIT_REGISTRY: Record<string, ProverRouting> = {
   primust_governance_v1: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
   skip_condition_proof: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
   config_epoch_continuity: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+  coverage_check: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+  ordering_proof: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+  threshold_application: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+  policy_config_integrity: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+  model_execution_coverage: { prover: 'modal_cpu', prover_system: 'ultrahonk' },
+};
+
+/**
+ * Maps stage types to the circuits that should be proven.
+ * Used by multi-circuit proving to determine which circuits
+ * to run for a given pipeline close.
+ */
+export const STAGE_CIRCUIT_MAP: Record<string, string[]> = {
+  governance: ['primust_governance_v1', 'coverage_check', 'ordering_proof'],
+  policy: ['policy_config_integrity'],
+  threshold: ['threshold_application'],
+  skip: ['skip_condition_proof'],
+  config: ['config_epoch_continuity'],
+  model: ['model_execution_coverage'],
 };
 
 /**

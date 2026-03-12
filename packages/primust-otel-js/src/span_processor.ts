@@ -8,7 +8,7 @@
  *   LLM inference spans     → attestation (gen_ai.request.model is a name string)
  *   Tool execution INTERNAL → execution (input_commitment computable locally)
  *   Tool execution CLIENT   → attestation (crosses process boundary)
- *   Evaluation result spans → mathematical (deterministic threshold rule)
+ *   Evaluation result spans → execution (mathematical when ZK proofs are wired)
  *   Unknown                 → attestation (fallback)
  *
  * span.kind is the proof-level discriminator (OTL-3):
@@ -83,13 +83,13 @@ export const PROOF_LEVEL_MAP: Record<string, string> = {
   deterministic_rule: 'mathematical',
   policy_engine: 'mathematical',
   hardware_attested: 'mathematical',
-  zkml_model: 'execution_zkml',
+  zkml_model: 'verifiable_inference',
   ml_model: 'execution',
   open_source_ml: 'execution',
   statistical_test: 'execution',
   custom_code: 'execution',
-  human_review: 'witnessed',
-  byollm: 'attestation',
+  witnessed: 'witnessed',
+  llm_api: 'attestation',
   default: 'attestation',
 };
 
@@ -102,6 +102,18 @@ export const SPAN_TYPE_PROOF_CEILING: Record<SpanType, string> = {
   [SpanType.UNKNOWN]: 'attestation',
 };
 
+const PROOF_RANK: Record<string, number> = {
+  mathematical: 0,
+  verifiable_inference: 1,
+  execution: 2,
+  witnessed: 3,
+  attestation: 4,
+};
+
+function proofRank(level: string): number {
+  return PROOF_RANK[level] ?? 4;
+}
+
 export const SURFACE_DECLARATION = {
   surface_type: 'middleware_interceptor',
   surface_name: 'otel_span_processor',
@@ -112,7 +124,8 @@ export const SURFACE_DECLARATION = {
     'All OTEL-instrumented spans processed via SpanProcessor.onEnd(). ' +
     'Tool execution spans (INTERNAL kind) achieve execution-level proof. ' +
     'LLM inference spans achieve attestation-level proof. ' +
-    'gen_ai.evaluation.result events achieve mathematical-level proof. ' +
+    'gen_ai.evaluation.result events achieve execution-level proof ' +
+    '(upgradeable to mathematical when ZK proofs are wired). ' +
     'Covers LangChain, AutoGen, Semantic Kernel, smolagents, Haystack, ' +
     'Vertex AI, Amazon Bedrock, CrewAI, MCP clients.',
 };
@@ -357,12 +370,12 @@ export class PrimustSpanProcessor {
 
     const stageType = String(attrs['primust.stage_type'] ?? '');
     if (stageType && stageType in PROOF_LEVEL_MAP) {
-      return PROOF_LEVEL_MAP[stageType];
-    }
-
-    // Evaluation spans → mathematical (OTL-4)
-    if (spanType === SpanType.EVALUATION) {
-      return 'mathematical';
+      const mapped = PROOF_LEVEL_MAP[stageType];
+      // Enforce ceiling cap — mapped level cannot exceed span type ceiling
+      if (proofRank(mapped) < proofRank(ceiling)) {
+        return mapped;
+      }
+      return ceiling;
     }
 
     return ceiling;

@@ -8,7 +8,7 @@ Per-span-type proof ceilings (OTL-1):
   LLM inference spans    → attestation (gen_ai.request.model is a name string)
   Tool execution INTERNAL → execution (input_commitment computable locally)
   Tool execution CLIENT   → attestation (crosses process boundary)
-  Evaluation result spans → mathematical (deterministic threshold rule)
+  Evaluation result spans → execution (mathematical when ZK proofs are wired)
   Unknown                 → attestation (fallback)
 
 span.kind is the proof-level discriminator (OTL-3):
@@ -66,13 +66,13 @@ PROOF_LEVEL_MAP = {
     "deterministic_rule": "mathematical",
     "policy_engine": "mathematical",
     "hardware_attested": "mathematical",
-    "zkml_model": "execution_zkml",
+    "zkml_model": "verifiable_inference",
     "ml_model": "execution",
     "open_source_ml": "execution",
     "statistical_test": "execution",
     "custom_code": "execution",
-    "human_review": "witnessed",
-    "byollm": "attestation",
+    "witnessed": "witnessed",
+    "llm_api": "attestation",
     "default": "attestation",
 }
 
@@ -85,6 +85,20 @@ SPAN_TYPE_PROOF_CEILING = {
     SpanType.UNKNOWN: "attestation",
 }
 
+_PROOF_RANK = {
+    "mathematical": 0,
+    "verifiable_inference": 1,
+    "execution": 2,
+    "witnessed": 3,
+    "attestation": 4,
+}
+
+
+def _proof_rank(level: str) -> int:
+    """Lower rank = stronger proof. Used for ceiling enforcement."""
+    return _PROOF_RANK.get(level, 4)
+
+
 SURFACE_DECLARATION = {
     "surface_type": "middleware_interceptor",
     "surface_name": "otel_span_processor",
@@ -95,7 +109,8 @@ SURFACE_DECLARATION = {
         "All OTEL-instrumented spans processed via SpanProcessor.on_end(). "
         "Tool execution spans (INTERNAL kind) achieve execution-level proof. "
         "LLM inference spans achieve attestation-level proof. "
-        "gen_ai.evaluation.result events achieve mathematical-level proof. "
+        "gen_ai.evaluation.result events achieve execution-level proof "
+        "(upgradeable to mathematical when ZK proofs are wired). "
         "Covers LangChain, AutoGen, Semantic Kernel, smolagents, Haystack, "
         "Vertex AI, Amazon Bedrock, CrewAI, MCP clients."
     ),
@@ -296,11 +311,11 @@ class PrimustSpanProcessor:
 
         stage_type = str(attrs.get("primust.stage_type", ""))
         if stage_type and stage_type in PROOF_LEVEL_MAP:
-            return PROOF_LEVEL_MAP[stage_type]
-
-        # Evaluation spans → mathematical (OTL-4)
-        if span_type == SpanType.EVALUATION:
-            return "mathematical"
+            mapped = PROOF_LEVEL_MAP[stage_type]
+            # Enforce ceiling cap — mapped level cannot exceed span type ceiling
+            if _proof_rank(mapped) < _proof_rank(ceiling):
+                return mapped
+            return ceiling
 
         return ceiling
 

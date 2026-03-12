@@ -117,6 +117,7 @@ export class ProofLifecycleManager {
           details: { reason: 'proof_storage_failure: R2 write failed' },
           detected_at: new Date().toISOString(),
           resolved_at: null,
+          incident_report_ref: null,
         };
       }
     }
@@ -147,6 +148,7 @@ export class ProofLifecycleManager {
       },
       detected_at: new Date().toISOString(),
       resolved_at: null,
+      incident_report_ref: null,
     };
     status.gap = gap;
 

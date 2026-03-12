@@ -25,7 +25,7 @@ function makeSkipRecord(): CheckExecutionRecord {
     commitment_hash: 'poseidon2:' + 'cc'.repeat(32),
     output_commitment: null,
     commitment_algorithm: 'poseidon2',
-    commitment_type: 'output',
+    commitment_type: 'input_commitment',
     check_result: 'not_applicable',
     proof_level_achieved: 'attestation',
     proof_pending: false,
@@ -36,6 +36,9 @@ function makeSkipRecord(): CheckExecutionRecord {
     reviewer_credential: null,
     unverified_provenance: false,
     freshness_warning: false,
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     chain_hash: 'sha256:' + 'ee'.repeat(32),
     idempotency_key: 'idem_001',
     recorded_at: '2026-03-10T00:00:00Z',
@@ -50,6 +53,9 @@ function makeSnapshot(): PolicySnapshot {
     effective_checks: [],
     snapshotted_at: '2026-03-10T00:00:00Z',
     policy_basis: 'P1_self_declared',
+    retention_policy: null,
+    risk_classification: null,
+    regulatory_context: null,
   };
 }
 

@@ -10,13 +10,13 @@ import java.util.Map;
  *   <li>deterministic_rule → mathematical</li>
  *   <li>policy_engine → mathematical</li>
  *   <li>hardware_attested → mathematical</li>
- *   <li>zkml_model → execution_zkml</li>
+ *   <li>zkml_model → verifiable_inference</li>
  *   <li>ml_model → execution</li>
  *   <li>statistical_test → execution</li>
  *   <li>custom_code → execution</li>
  *   <li>open_source_ml → execution</li>
- *   <li>human_review → witnessed</li>
- *   <li>byollm → attestation</li>
+ *   <li>witnessed → witnessed</li>
+ *   <li>llm_api → attestation</li>
  * </ul>
  */
 public final class ProofLevel {
@@ -27,14 +27,14 @@ public final class ProofLevel {
         "deterministic_rule", "mathematical",
         "policy_engine", "mathematical",
         "hardware_attested", "mathematical",
-        "zkml_model", "execution_zkml",
+        "zkml_model", "verifiable_inference",
         "ml_model", "execution",
         "statistical_test", "execution",
         "custom_code", "execution",
-        "human_review", "witnessed"
+        "witnessed", "witnessed"
     ));
     static {
-        MAPPING.put("byollm", "attestation");
+        MAPPING.put("llm_api", "attestation");
         MAPPING.put("open_source_ml", "execution");
     }
 

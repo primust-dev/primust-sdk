@@ -65,4 +65,56 @@ export interface ConfigEpochInputs {
   transition_gap_commitment: bigint;
 }
 
-export type CircuitInputs = WitnessInput | SkipConditionInputs | ConfigEpochInputs;
+// ── New Circuit Witness Types ──
+
+export interface CoverageCheckInputs {
+  commitment_root: string;
+  total_actions: number;
+  covered_count: number;
+  threshold_pct: number;
+  action_hashes: string[];
+  has_record: number[];
+  record_count: number;
+}
+
+export interface OrderingProofInputs {
+  chain_root: string;
+  sequence_length: number;
+  sequence_values: string[];
+  sequence_count: number;
+}
+
+export interface ThresholdApplicationInputs {
+  decision_hash: string;
+  pass_count: number;
+  scores: string[];
+  thresholds: string[];
+  decisions: number[];
+  blinding: bigint;
+  record_count: number;
+}
+
+export interface PolicyConfigIntegrityInputs {
+  policy_hash: string;
+  trace_count: number;
+  trace_policy_hashes: string[];
+  actual_count: number;
+}
+
+export interface ModelExecutionCoverageInputs {
+  model_hash: string;
+  coverage_pct: number;
+  trace_count: number;
+  trace_model_hashes: string[];
+  actual_count: number;
+}
+
+export type CircuitInputs =
+  | WitnessInput
+  | SkipConditionInputs
+  | ConfigEpochInputs
+  | CoverageCheckInputs
+  | OrderingProofInputs
+  | ThresholdApplicationInputs
+  | PolicyConfigIntegrityInputs
+  | ModelExecutionCoverageInputs;
