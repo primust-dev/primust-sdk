@@ -129,8 +129,8 @@ class TestFitValidation:
         assert FIT_VALIDATION["external_verifier"]
         assert "reinsurer" in FIT_VALIDATION["external_verifier"].lower()
 
-    def test_proof_ceiling_mathematical(self):
-        assert FIT_VALIDATION["proof_ceiling"] == "mathematical"
+    def test_proof_ceiling_attestation(self):
+        assert FIT_VALIDATION["proof_ceiling"] == "attestation"
 
     def test_regulatory_hooks_present(self):
         assert len(FIT_VALIDATION["regulatory_hooks"]) >= 2
@@ -258,13 +258,13 @@ class TestPrivacyInvariant:
             return MagicMock(
                 commitment_hash="sha256:abc",
                 record_id="rec_001",
-                proof_level="mathematical",
+                proof_level="attestation",
                 queued=False,
             )
         mock_run.record = capture_record
         mock_run.close = MagicMock(return_value=MagicMock(
             vpec_id="vpec_001",
-            proof_level="mathematical",
+            proof_level="attestation",
             chain_intact=True,
             governance_gaps=[],
         ))

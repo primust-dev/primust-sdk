@@ -8,11 +8,11 @@ Based on Guidewire InsuranceSuite Cloud API (Swagger 2.0)
 Public spec: https://docs.guidewire.com/cloud/cc/202411/apiref/
 Auth: OAuth2 client credentials (service account)
 
-Proof ceiling: Attestation (REST boundary)
-  - Coverage limit comparison: Mathematical (threshold arithmetic, no PHI)
-  - Deductible calculation: Mathematical (arithmetic, no claim contents)
-  - Payment within limits: Mathematical (bounds check, verifiable in circuit)
-  - Adjudication decision: Attestation (opaque ClaimCenter rules engine)
+Proof ceiling: Attestation (REST boundary — all stages)
+  REST wrapper gives invocation-binding only. The arithmetic stages
+  (coverage limits, deductible, reserve adequacy) are deterministic and
+  COULD reach Mathematical via Java IPlugin (in-process), but from REST
+  we only observe API responses. Mathematical requires Java SDK + Studio.
 
 External verifier: Reinsurers, Lloyd's syndicates, state DOI examiners
 The trust deficit: Cedant proves adjudication ran per policy terms
@@ -56,12 +56,12 @@ FIT_VALIDATION = {
     ),
     "regulated_process": True,
     "data_cannot_be_disclosed": True,
-    "proof_ceiling": "mathematical",  # for arithmetic stages; attestation for rules engine
+    "proof_ceiling": "attestation",
     "proof_ceiling_notes": (
-        "Coverage limit comparisons, deductible arithmetic, and payment "
-        "bounds checks are deterministic — Mathematical ceiling achievable. "
-        "ClaimCenter rules engine adjudication is opaque — Attestation ceiling "
-        "for the decision stage itself."
+        "REST boundary — all stages are attestation. Coverage limit arithmetic "
+        "and reserve checks are deterministic and could reach Mathematical "
+        "via the Java IPlugin (in-process), but from REST we only observe "
+        "API responses. Mathematical requires the Java SDK + Guidewire Studio."
     ),
     "buildable": "now (REST/Attestation); design partner for in-process/Mathematical",
     "regulatory_hooks": [
@@ -346,19 +346,19 @@ class GuidewireClaimCenterConnector:
                 "stage": 1,
                 "name": "deductible_application",
                 "type": "arithmetic",
-                "proof_level": "mathematical",
+                "proof_level": "attestation",
                 "description": "net_amount = requested - deductible",
                 "deterministic": True,
-                "zk_circuit": "threshold_comparison",
+                "mathematical_upgrade_path": "Java IPlugin in-process — threshold_comparison circuit",
             },
             {
                 "stage": 2,
                 "name": "limit_comparison",
                 "type": "arithmetic",
-                "proof_level": "mathematical",
+                "proof_level": "attestation",
                 "description": "net_amount <= policy_limit",
                 "deterministic": True,
-                "zk_circuit": "threshold_comparison",
+                "mathematical_upgrade_path": "Java IPlugin in-process — threshold_comparison circuit",
             },
         ],
     }
@@ -372,10 +372,10 @@ class GuidewireClaimCenterConnector:
                 "stage": 1,
                 "name": "reserve_ratio_check",
                 "type": "arithmetic",
-                "proof_level": "mathematical",
+                "proof_level": "attestation",
                 "description": "reserve >= incurred * threshold_ratio",
                 "deterministic": True,
-                "zk_circuit": "threshold_comparison",
+                "mathematical_upgrade_path": "Java IPlugin in-process — threshold_comparison circuit",
             },
         ],
     }
