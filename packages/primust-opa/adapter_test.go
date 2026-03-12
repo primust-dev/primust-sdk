@@ -3,7 +3,7 @@ package primustopa
 import (
 	"testing"
 
-	rulescore "github.com/primust/rules-core-go"
+	rulescore "github.com/primust-dev/rules-core-go"
 )
 
 func TestSurfaceDeclaration(t *testing.T) {

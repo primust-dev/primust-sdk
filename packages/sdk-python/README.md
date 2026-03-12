@@ -180,4 +180,4 @@ Apache 2.0
 
 ---
 
-[Docs](https://docs.primust.com) · [Verify](https://verify.primust.com) · [Connectors](https://github.com/primust/connectors)
+[Docs](https://docs.primust.com) · [Verify](https://verify.primust.com) · [Connectors](https://github.com/primust-dev/connectors)

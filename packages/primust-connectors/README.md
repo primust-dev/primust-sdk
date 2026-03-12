@@ -322,4 +322,4 @@ Apache 2.0
 
 ---
 
-[Primust SDK](https://github.com/primust/sdk-python) · [Docs](https://docs.primust.com) · [Verify](https://verify.primust.com)
+[Primust SDK](https://github.com/primust-dev/sdk-python) · [Docs](https://docs.primust.com) · [Verify](https://verify.primust.com)

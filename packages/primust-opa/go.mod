@@ -1,10 +1,10 @@
-module github.com/primust/primust-opa
+module github.com/primust-dev/primust-opa
 
 go 1.23.8
 
 require (
 	github.com/open-policy-agent/opa v1.4.2
-	github.com/primust/rules-core-go v0.0.0
+	github.com/primust-dev/rules-core-go v0.0.0
 )
 
 require (
@@ -39,4 +39,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/primust/rules-core-go => ../rules-core-go
+replace github.com/primust-dev/rules-core-go => ../rules-core-go

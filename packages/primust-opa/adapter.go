@@ -18,7 +18,7 @@ import (
 	"net/http"
 	"time"
 
-	rulescore "github.com/primust/rules-core-go"
+	rulescore "github.com/primust-dev/rules-core-go"
 
 	"github.com/open-policy-agent/opa/v1/rego"
 )
