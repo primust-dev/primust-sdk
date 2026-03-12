@@ -168,7 +168,8 @@ type StageType =
   | 'zkml_model'
   | 'statistical_test'
   | 'custom_code'
-  | 'human_review';
+  | 'human_review'
+  | 'policy_engine';
 
 /**
  * Select the proof level for a given stage type.
@@ -198,5 +199,7 @@ export function selectProofLevel(stageType: StageType): ProofLevel {
       return 'execution';
     case 'human_review':
       return 'witnessed';
+    case 'policy_engine':
+      return 'mathematical';
   }
 }

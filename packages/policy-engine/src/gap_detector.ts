@@ -43,16 +43,14 @@ const GAP_SEVERITY: Record<string, GapSeverity> = {
 
 // ── Helpers ──
 
-let gapCounter = 0;
-
 function makeGap(
   runId: string,
   gapType: GapType,
   details: Record<string, unknown> = {},
 ): Gap {
-  gapCounter++;
+  const suffix = crypto.randomUUID().slice(0, 8);
   return {
-    gap_id: `gap_${gapType}_${runId}_${gapCounter}`,
+    gap_id: `gap_${gapType}_${runId}_${suffix}`,
     run_id: runId,
     gap_type: gapType,
     severity: GAP_SEVERITY[gapType] ?? 'Medium',

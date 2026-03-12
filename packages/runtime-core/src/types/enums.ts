@@ -29,6 +29,7 @@ export type ImplementationType =
  *   statistical_test   → mathematical or execution
  *   custom_code        → execution (if code_hash) or attestation
  *   human_review       → witnessed (NEVER attestation — invariant 13)
+ *   policy_engine      → mathematical
  */
 export type StageType =
   | 'deterministic_rule'
@@ -36,7 +37,8 @@ export type StageType =
   | 'zkml_model'
   | 'statistical_test'
   | 'custom_code'
-  | 'human_review';
+  | 'human_review'
+  | 'policy_engine';
 
 export type EvaluationScope =
   | 'per_run'

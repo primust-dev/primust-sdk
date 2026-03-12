@@ -69,21 +69,21 @@ class PrimustOpenAIAgents:
                     agent.tools[i] = self._wrap_fn(name, tool)
         return agent
 
-    def wrap_tool(self, tool_name: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
+    def wrap_tool(self, check_label: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
         """Wrap a single tool function with Primust instrumentation."""
-        return self._wrap_fn(tool_name, tool_fn)
+        return self._wrap_fn(check_label, tool_fn)
 
-    def _wrap_fn(self, tool_name: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
+    def _wrap_fn(self, check_label: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
         adapter = self
 
         @functools.wraps(tool_fn)
         def instrumented(*args: Any, **kwargs: Any) -> Any:
-            manifest_id = adapter.manifest_map.get(tool_name, f"auto:{tool_name}")
+            manifest_id = adapter.manifest_map.get(check_label, f"auto:{check_label}")
             session: CheckSession | None = None
             try:
-                session = adapter.pipeline.open_check(tool_name, manifest_id)
+                session = adapter.pipeline.open_check(check_label, manifest_id)
             except Exception:
-                logger.exception("Failed to open check for %s", tool_name)
+                logger.exception("Failed to open check for %s", check_label)
 
             try:
                 result = tool_fn(*args, **kwargs)
@@ -96,7 +96,7 @@ class PrimustOpenAIAgents:
                             check_result="error",
                         )
                     except Exception:
-                        logger.exception("Failed to record error for %s", tool_name)
+                        logger.exception("Failed to record error for %s", check_label)
                 raise exc
 
             if session:
@@ -108,7 +108,7 @@ class PrimustOpenAIAgents:
                         output=result,
                     )
                 except Exception:
-                    logger.exception("Failed to record result for %s", tool_name)
+                    logger.exception("Failed to record result for %s", check_label)
 
             return result
 

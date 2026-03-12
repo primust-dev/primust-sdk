@@ -11,7 +11,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..auth import AuthContext, require_jwt
 from ..banned import reject_banned_fields
@@ -22,9 +22,10 @@ router = APIRouter(prefix="/api/v1", tags=["gaps"])
 
 
 class WaiveRequest(BaseModel):
-    reason: str
-    compensating_control: str | None = None
-    expires_at: str | None = None
+    reason: str = Field(max_length=2000)
+    approver_user_id: str = Field(max_length=256)
+    compensating_control: str | None = Field(default=None, max_length=2000)
+    expires_at: str | None = Field(default=None, max_length=64)
 
 
 @router.get("/gaps")
@@ -112,6 +113,14 @@ async def waive_gap(
             detail="expires_at cannot be more than 90 days from now",
         )
 
+    # Separation of duties: requestor and approver must be different users
+    requestor_id = auth.user_id or "system"
+    if requestor_id == body.approver_user_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Waiver requestor and approver must be different users",
+        )
+
     waiver_id = f"waiver_{uuid.uuid4().hex[:16]}"
 
     # KMS-sign the waiver
@@ -131,13 +140,13 @@ async def waive_gap(
         waiver_id,
         gap_id,
         auth.org_id,
-        auth.user_id or "system",
-        auth.user_id or "system",
+        requestor_id,
+        body.approver_user_id,
         body.reason,
         body.compensating_control,
         body.expires_at,
         json.dumps(waiver_sig),
-        now.isoformat(),
+        now,
     )
 
     # Update gap state

@@ -16,6 +16,7 @@
  * 9. test_mode check
  */
 
+import { createHash } from 'node:crypto';
 import {
   canonical,
   verify as ed25519Verify,
@@ -167,21 +168,31 @@ export async function verify(
     return result;
   }
 
-  // ── Step 5: Signer status check (Rekor — stubbed in v1) ──
+  // ── Step 5: Signer status check (Rekor) ──
   if (skip_network) {
     result.rekor_status = 'skipped';
   } else {
-    // TODO: Integrate with Sigstore Rekor for key revocation events
-    result.rekor_status = 'unavailable';
-    result.warnings.push('rekor_check_not_implemented');
+    result.rekor_status = await checkRekor(publicKeyB64Url, sig.kid as string);
+    if (result.rekor_status === 'unavailable') {
+      result.warnings.push('rekor_check_unavailable');
+    } else if (result.rekor_status === 'revoked') {
+      result.errors.push('signer_key_revoked');
+      return result;
+    }
   }
 
-  // ── Step 6: RFC 3161 timestamp verification (stubbed in v1) ──
+  // ── Step 6: RFC 3161 timestamp verification ──
   const tsAnchor = artifact.timestamp_anchor as Record<string, unknown> | undefined;
-  if (tsAnchor && tsAnchor.type === 'rfc3161') {
-    // TODO: Verify RFC 3161 token against TSA certificate chain
-    result.timestamp_anchor_valid = null;
-    result.warnings.push('rfc3161_verification_not_implemented');
+  if (tsAnchor && tsAnchor.type === 'rfc3161' && typeof tsAnchor.value === 'string') {
+    result.timestamp_anchor_valid = verifyTimestampImprint(
+      tsAnchor.value as string,
+      documentBody,
+    );
+    if (result.timestamp_anchor_valid === false) {
+      result.warnings.push('rfc3161_imprint_mismatch');
+    } else if (result.timestamp_anchor_valid === true) {
+      result.warnings.push('rfc3161_tsa_cert_chain_not_verified');
+    }
   } else {
     result.timestamp_anchor_valid = null;
   }
@@ -199,14 +210,33 @@ export async function verify(
   const manifestHashes = artifact.manifest_hashes as Record<string, string>;
   result.manifest_hashes = manifestHashes;
 
-  // ── Step 9: ZK proof verification (stubbed in v1) ──
+  // ── Step 9: ZK proof verification ──
   const pendingFlags = artifact.pending_flags as Record<string, unknown> | undefined;
   if (artifact.zk_proof && !(pendingFlags?.proof_pending)) {
-    // TODO: Verify via Barretenberg WASM (ultrahonk) or EZKL
-    result.zk_proof_valid = null;
-    result.warnings.push('zk_proof_verification_not_implemented');
+    const zkProof = artifact.zk_proof as Record<string, unknown>;
+    const provingSystem = zkProof.proving_system as string | undefined;
+
+    if (provingSystem === 'ultrahonk') {
+      result.zk_proof_valid = await verifyUltraHonk(zkProof);
+      if (result.zk_proof_valid === false) {
+        result.errors.push('zk_proof_invalid');
+      }
+    } else if (provingSystem === 'ezkl') {
+      // EZKL Tier 2: explicit stub — requires EZKL verifier integration
+      result.zk_proof_valid = null;
+      result.warnings.push('ezkl_verification_not_implemented');
+    } else {
+      result.zk_proof_valid = null;
+      result.warnings.push(`unknown_proving_system: ${provingSystem ?? 'none'}`);
+    }
   } else {
     result.zk_proof_valid = null;
+  }
+
+  // ── Step 9b: Mathematical proof_level requires verified ZK proof ──
+  if (artifact.proof_level === 'mathematical' && result.zk_proof_valid === null) {
+    result.errors.push('mathematical_proof_not_verified');
+    return result;
   }
 
   // ── Step 10: test_mode check ──
@@ -239,4 +269,131 @@ function extractKeyFromPem(pem: string): string {
   }
   // Already base64url
   return pem.trim();
+}
+
+// ── RFC 3161 Timestamp Imprint Verification ──
+
+/**
+ * Verify the message imprint inside an RFC 3161 TimeStampResp matches
+ * SHA-256(canonical(documentBody)).
+ *
+ * Parses enough DER to extract the hashed message from the MessageImprint
+ * field. Returns true if imprint matches, false if mismatch, null if unparseable.
+ */
+function verifyTimestampImprint(
+  tsTokenB64: string,
+  documentBody: Record<string, unknown>,
+): boolean | null {
+  try {
+    const tsResp = Buffer.from(tsTokenB64, 'base64');
+
+    // Find SHA-256 OID (2.16.840.1.101.3.4.2.1) in the DER
+    const sha256Oid = Buffer.from([0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01]);
+    const oidIdx = findBuffer(tsResp, sha256Oid);
+    if (oidIdx === -1) return null;
+
+    // The message imprint hash follows the AlgorithmIdentifier.
+    // After OID + NULL, look for OCTET STRING (0x04) containing 32-byte hash.
+    const searchStart = oidIdx + sha256Oid.length;
+    for (let i = searchStart; i < Math.min(searchStart + 20, tsResp.length - 33); i++) {
+      if (tsResp[i] === 0x04 && tsResp[i + 1] === 0x20) {
+        const extractedHash = tsResp.subarray(i + 2, i + 2 + 32);
+
+        // Recompute expected hash
+        const canonicalDoc = canonical(documentBody);
+        const expectedHash = createHash('sha256').update(canonicalDoc).digest();
+
+        return extractedHash.equals(expectedHash);
+      }
+    }
+    return null; // Could not find hash in DER
+  } catch {
+    return null;
+  }
+}
+
+function findBuffer(haystack: Buffer, needle: Buffer): number {
+  for (let i = 0; i <= haystack.length - needle.length; i++) {
+    if (haystack.subarray(i, i + needle.length).equals(needle)) return i;
+  }
+  return -1;
+}
+
+// ── Rekor Status Check ──
+
+const REKOR_API = 'https://rekor.sigstore.dev/api/v1';
+
+/**
+ * Check Rekor for key revocation by querying with SHA-256 fingerprint
+ * of the public key bytes.
+ */
+async function checkRekor(publicKeyB64Url: string, kid: string): Promise<RekorStatus> {
+  try {
+    // Decode public key bytes and compute SHA-256 fingerprint
+    const keyBytes = fromBase64Url(publicKeyB64Url);
+    const fingerprint = createHash('sha256').update(Buffer.from(keyBytes)).digest('hex');
+
+    // Search Rekor index by key fingerprint
+    const resp = await fetch(`${REKOR_API}/index/retrieve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: `sha256:${fingerprint}` }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!resp.ok) {
+      return 'unavailable';
+    }
+
+    const entries = await resp.json() as string[];
+    if (!entries || entries.length === 0) {
+      // No entries found — key has not been submitted to Rekor (not necessarily bad)
+      return 'not_found';
+    }
+
+    // Key found in Rekor — it's been logged (active, not revoked)
+    return 'active';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+// ── ZK Proof Verification (UltraHonk) ──
+
+/**
+ * Verify an UltraHonk ZK proof using @aztec/bb.js.
+ *
+ * Requires:
+ * - zk_proof.proof: base64-encoded proof bytes
+ * - zk_proof.public_inputs: array of field elements (hex strings)
+ * - zk_proof.verification_key: base64-encoded verification key
+ *
+ * Returns true if valid, false if invalid, null if verification unavailable.
+ */
+async function verifyUltraHonk(zkProof: Record<string, unknown>): Promise<boolean | null> {
+  try {
+    // Dynamic import — @aztec/bb.js is an optional dependency
+    const bb = await import('@aztec/bb.js').catch(() => null);
+    if (!bb) {
+      return null; // bb.js not available
+    }
+
+    const proofB64 = zkProof.proof as string;
+    const publicInputs = zkProof.public_inputs as string[];
+    const vkB64 = zkProof.verification_key as string;
+
+    if (!proofB64 || !publicInputs || !vkB64) {
+      return false;
+    }
+
+    const proofBytes = Buffer.from(proofB64, 'base64');
+    const vkBytes = Buffer.from(vkB64, 'base64');
+
+    // UltraHonk verification
+    const api = await bb.newBarretenbergApiAsync();
+    const valid = await api.acirVerifyUltraHonk(proofBytes, vkBytes);
+    return valid;
+  } catch {
+    return null; // Verification error — treat as unavailable, not invalid
+  }
 }

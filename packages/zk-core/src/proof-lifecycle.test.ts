@@ -172,8 +172,8 @@ describe('ProofLifecycleManager', () => {
       const routing = routeProver(level);
       if (level === 'mathematical' || level === 'execution_zkml') {
         expect(routing).not.toBeNull();
-        expect(routing!.prover).toBeDefined();
-        expect(routing!.prover_system).toBeDefined();
+        expect(routing!.prover).toBeTypeOf('string');
+        expect(routing!.prover_system).toBeTypeOf('string');
       } else {
         // No ZK proof for execution, witnessed, attestation
         expect(routing).toBeNull();

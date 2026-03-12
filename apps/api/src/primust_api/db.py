@@ -11,10 +11,15 @@ All four resources resolved together per request:
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import os
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
 
 import asyncpg
+
+logger = logging.getLogger("primust.db")
 
 # ── Region config ──
 
@@ -24,6 +29,8 @@ REGION_EU = "eu"
 BANNED_COLUMNS = frozenset(
     ["agent_id", "pipeline_id", "tool_name", "session_id", "trace_id", "reliance_mode"]
 )
+
+_DEV_MODE = os.environ.get("PRIMUST_DEV_MODE", "").lower() == "true"
 
 
 class RegionConfig:
@@ -45,7 +52,13 @@ class RegionConfig:
     @property
     def kms_key(self) -> str:
         key = f"PRIMUST_KMS_KEY_{self.region.upper()}"
-        return os.environ.get(key, f"local-key-{self.region}")
+        val = os.environ.get(key)
+        if val:
+            return val
+        if _DEV_MODE:
+            logger.warning("%s not set — using local-key stub (PRIMUST_DEV_MODE=true)", key)
+            return f"local-key-{self.region}"
+        raise RuntimeError(f"{key} not configured and PRIMUST_DEV_MODE is not enabled")
 
     @property
     def r2_bucket(self) -> str:
@@ -55,7 +68,13 @@ class RegionConfig:
     @property
     def tsa_url(self) -> str:
         key = f"PRIMUST_TSA_URL_{self.region.upper()}"
-        return os.environ.get(key, "none")
+        val = os.environ.get(key)
+        if val:
+            return val
+        if _DEV_MODE:
+            logger.warning("%s not set — TSA disabled (PRIMUST_DEV_MODE=true)", key)
+            return "none"
+        raise RuntimeError(f"{key} not configured and PRIMUST_DEV_MODE is not enabled")
 
 
 def get_region_config(region: str) -> RegionConfig:
@@ -65,16 +84,21 @@ def get_region_config(region: str) -> RegionConfig:
 # ── Connection pool ──
 
 _pools: dict[str, asyncpg.Pool] = {}
+_pool_lock = asyncio.Lock()
 
 
 async def get_pool(region: str) -> asyncpg.Pool:
     """Get or create a connection pool for the given region."""
-    if region not in _pools:
-        config = get_region_config(region)
-        _pools[region] = await asyncpg.create_pool(
-            config.database_url, min_size=2, max_size=10
-        )
-    return _pools[region]
+    if region in _pools:
+        return _pools[region]
+    async with _pool_lock:
+        # Double-check after acquiring lock
+        if region not in _pools:
+            config = get_region_config(region)
+            _pools[region] = await asyncpg.create_pool(
+                config.database_url, min_size=2, max_size=10
+            )
+        return _pools[region]
 
 
 async def close_pools() -> None:
@@ -82,6 +106,15 @@ async def close_pools() -> None:
     for pool in _pools.values():
         await pool.close()
     _pools.clear()
+
+
+@asynccontextmanager
+async def transaction(region: str) -> AsyncGenerator[asyncpg.Connection, None]:
+    """Acquire a connection with an open transaction. Auto-commits on success, rolls back on error."""
+    pool = await get_pool(region)
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            yield conn
 
 
 # ── Query helpers ──

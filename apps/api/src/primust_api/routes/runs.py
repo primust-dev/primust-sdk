@@ -6,20 +6,24 @@ POST /api/v1/runs/{run_id}/close — Issue signed VPEC.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from ..auth import AuthContext, require_api_key
 from ..banned import reject_banned_fields
-from ..db import execute, fetch_all, fetch_one, get_region_config
+from ..db import execute, fetch_all, fetch_one, get_region_config, transaction
 from ..kms import kms_sign
 from ..tsa import get_timestamp_anchor
+
+logger = logging.getLogger("primust.runs")
 
 
 async def _check_raw_body(request: Request) -> dict[str, Any]:
@@ -35,25 +39,27 @@ router = APIRouter(prefix="/api/v1", tags=["runs"])
 
 
 class CreateRunRequest(BaseModel):
-    workflow_id: str
-    surface_id: str
-    policy_pack_id: str
-    process_context_hash: str | None = None
+    workflow_id: str = Field(max_length=256)
+    surface_id: str = Field(max_length=256)
+    policy_pack_id: str = Field(max_length=256)
+    process_context_hash: str | None = Field(default=None, max_length=256)
 
 
 class CreateRecordRequest(BaseModel):
-    manifest_id: str
-    commitment_hash: str
-    commitment_algorithm: str = "poseidon2"
-    commitment_type: str = "input_only"
-    check_result: str
-    proof_level_achieved: str
-    output_commitment: str | None = None
-    check_open_tst: str | None = None
-    check_close_tst: str | None = None
-    skip_rationale_hash: str | None = None
+    manifest_id: str = Field(max_length=256)
+    commitment_hash: str = Field(max_length=256)
+    commitment_algorithm: Literal["poseidon2", "sha256"] = "poseidon2"
+    commitment_type: Literal["input_only", "input_output"] = "input_only"
+    check_result: Literal["pass", "fail", "degraded", "error", "not_applicable"]
+    proof_level_achieved: Literal[
+        "mathematical", "execution_zkml", "execution", "witnessed", "attestation"
+    ]
+    output_commitment: str | None = Field(default=None, max_length=256)
+    check_open_tst: str | None = Field(default=None, max_length=64)
+    check_close_tst: str | None = Field(default=None, max_length=64)
+    skip_rationale_hash: str | None = Field(default=None, max_length=256)
     reviewer_credential: dict[str, Any] | None = None
-    idempotency_key: str
+    idempotency_key: str = Field(max_length=256)
 
 
 class CloseRunRequest(BaseModel):
@@ -73,7 +79,7 @@ async def create_run(
 
     region = auth.org_region
     run_id = f"run_{uuid.uuid4().hex[:16]}"
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
 
     # Snapshot policy pack → policy snapshot
     pack = await fetch_one(
@@ -90,36 +96,35 @@ async def create_run(
         json.dumps(pack["checks"], sort_keys=True).encode()
     ).hexdigest()
 
-    await execute(
-        region,
-        """INSERT INTO policy_snapshots
-           (snapshot_id, policy_pack_id, policy_pack_version, effective_checks,
-            snapshotted_at, policy_basis)
-           VALUES ($1, $2, $3, $4, $5, $6)""",
-        snapshot_id,
-        body.policy_pack_id,
-        pack["version"],
-        json.dumps(pack["checks"]) if isinstance(pack["checks"], list) else pack["checks"],
-        now,
-        "P1_self_declared",
-    )
+    # Atomic: snapshot + run creation
+    async with transaction(region) as conn:
+        await conn.execute(
+            """INSERT INTO policy_snapshots
+               (snapshot_id, policy_pack_id, policy_pack_version, effective_checks,
+                snapshotted_at, policy_basis)
+               VALUES ($1, $2, $3, $4, $5, $6)""",
+            snapshot_id,
+            body.policy_pack_id,
+            pack["version"],
+            json.dumps(pack["checks"]) if isinstance(pack["checks"], list) else pack["checks"],
+            now,
+            "P1_self_declared",
+        )
 
-    # Create process run
-    await execute(
-        region,
-        """INSERT INTO process_runs
-           (run_id, workflow_id, org_id, surface_id, policy_snapshot_hash,
-            process_context_hash, state, started_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
-        run_id,
-        body.workflow_id,
-        auth.org_id,
-        body.surface_id,
-        policy_snapshot_hash,
-        body.process_context_hash,
-        "open",
-        now,
-    )
+        await conn.execute(
+            """INSERT INTO process_runs
+               (run_id, workflow_id, org_id, surface_id, policy_snapshot_hash,
+                process_context_hash, state, started_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
+            run_id,
+            body.workflow_id,
+            auth.org_id,
+            body.surface_id,
+            policy_snapshot_hash,
+            body.process_context_hash,
+            "open",
+            now,
+        )
 
     return {
         "run_id": run_id,
@@ -161,14 +166,23 @@ async def create_record(
         )
 
     # Enforce: reviewer_credential required if proof_level_achieved = witnessed
-    if body.proof_level_achieved == "witnessed" and not body.reviewer_credential:
-        raise HTTPException(
-            status_code=422,
-            detail="reviewer_credential required when proof_level_achieved = witnessed",
-        )
+    if body.proof_level_achieved == "witnessed":
+        if not body.reviewer_credential:
+            raise HTTPException(
+                status_code=422,
+                detail="reviewer_credential required when proof_level_achieved = witnessed",
+            )
+        # Validate internal structure
+        _REQUIRED_CRED_FIELDS = ["reviewer_key_id", "reviewer_signature", "display_hash", "rationale_hash"]
+        missing = [f for f in _REQUIRED_CRED_FIELDS if not body.reviewer_credential.get(f)]
+        if missing:
+            raise HTTPException(
+                status_code=422,
+                detail=f"reviewer_credential missing required fields: {', '.join(missing)}",
+            )
 
     record_id = f"rec_{uuid.uuid4().hex[:16]}"
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
 
     # Compute chain_hash from previous record
     prev = await fetch_one(
@@ -255,6 +269,35 @@ async def close_run(
         run_id,
     )
 
+    # H6-1: Zero records guard — cannot close a run with no check records
+    if not records and not body.partial:
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot close run with zero check execution records",
+        )
+
+    # H6-2: Null policySnapshot guard
+    snapshot = await fetch_one(
+        region,
+        "SELECT snapshot_id FROM policy_snapshots WHERE snapshot_id = $1",
+        run.get("policy_snapshot_hash", ""),
+    )
+    if not snapshot:
+        # Policy snapshot is missing — emit gap but continue (don't block close)
+        gap_id = f"gap_policy_snapshot_missing_{run_id}_{uuid.uuid4().hex[:8]}"
+        await execute(
+            region,
+            """INSERT INTO gaps (gap_id, run_id, gap_type, severity, state, details, detected_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+            gap_id,
+            run_id,
+            "policy_config_drift",
+            "Critical",
+            "open",
+            json.dumps({"reason": "policy_snapshot_hash resolves to no snapshot record"}),
+            datetime.now(timezone.utc),
+        )
+
     # Load gaps
     gaps = await fetch_all(
         region,
@@ -262,7 +305,7 @@ async def close_run(
         run_id,
     )
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
 
     # Build proof distribution
     proof_dist = {
@@ -352,7 +395,7 @@ async def close_run(
             "rekor_entry_url": None,
             "published_at": None,
         },
-        "issued_at": now,
+        "issued_at": now.isoformat(),
         "pending_flags": {
             "signature_pending": False,
             "proof_pending": body.request_zk,
@@ -366,41 +409,111 @@ async def close_run(
     # GCP KMS signing
     region_config = get_region_config(region)
     vpec_json = json.dumps(vpec, sort_keys=True, separators=(",", ":"))
-    vpec["signature"] = await kms_sign(vpec_json, region_config.kms_key)
+    sig_envelope = await kms_sign(vpec_json, region_config.kms_key)
+    vpec["signature"] = sig_envelope
+
+    # Detect provisional (KMS failure) — set state and pending flags
+    is_provisional = sig_envelope.get("algorithm") == "UNSIGNED_PENDING"
+    if is_provisional:
+        vpec["state"] = "provisional"
+        vpec["pending_flags"]["signature_pending"] = True
 
     # DigiCert RFC 3161 timestamping
     vpec["timestamp_anchor"] = await get_timestamp_anchor(
         vpec_json, tsa_url=region_config.tsa_url
     )
 
-    # Close the run
-    await execute(
-        region,
-        "UPDATE process_runs SET state = 'closed', closed_at = $1 WHERE run_id = $2",
-        now,
-        run_id,
-    )
+    vpec_state = "provisional" if is_provisional else "signed"
 
-    # Store VPEC
-    await execute(
-        region,
-        """INSERT INTO vpecs
-           (vpec_id, org_id, run_id, workflow_id, schema_version,
-            process_context_hash, partial, proof_level, state, test_mode,
-            issued_at, payload)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)""",
-        vpec_id,
-        auth.org_id,
-        run_id,
-        run["workflow_id"],
-        "3.0.0",
-        run["process_context_hash"],
-        body.partial,
-        weakest_link,
-        "signed",
-        auth.test_mode,
-        now,
-        json.dumps(vpec),
-    )
+    # Atomic: close run + store VPEC
+    async with transaction(region) as conn:
+        await conn.execute(
+            "UPDATE process_runs SET state = 'closed', closed_at = $1 WHERE run_id = $2",
+            now,
+            run_id,
+        )
+
+        await conn.execute(
+            """INSERT INTO vpecs
+               (vpec_id, org_id, run_id, workflow_id, schema_version,
+                process_context_hash, partial, proof_level, state, test_mode,
+                issued_at, payload)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)""",
+            vpec_id,
+            auth.org_id,
+            run_id,
+            run["workflow_id"],
+            "3.0.0",
+            run["process_context_hash"],
+            body.partial,
+            weakest_link,
+            vpec_state,
+            auth.test_mode,
+            now,
+            json.dumps(vpec),
+        )
+
+    # Background retry: attempt to sign provisional VPECs
+    if is_provisional:
+        asyncio.create_task(
+            _retry_kms_sign(vpec_id, vpec_json, region_config.kms_key, region)
+        )
 
     return vpec
+
+
+async def _retry_kms_sign(
+    vpec_id: str,
+    vpec_json: str,
+    kms_key: str,
+    region: str,
+    max_retries: int = 10,
+) -> None:
+    """Background task: retry KMS signing with exponential backoff (up to ~1h)."""
+    delay = 1.0
+    for attempt in range(max_retries):
+        await asyncio.sleep(delay)
+        try:
+            sig = await kms_sign(vpec_json, kms_key)
+            if sig.get("algorithm") != "UNSIGNED_PENDING":
+                # KMS succeeded — update VPEC in DB
+                import json as _json
+                row = await fetch_one(region, "SELECT payload FROM vpecs WHERE vpec_id = $1", vpec_id)
+                if row:
+                    payload = _json.loads(row["payload"]) if isinstance(row["payload"], str) else row["payload"]
+                    payload["signature"] = sig
+                    payload["state"] = "signed"
+                    payload["pending_flags"]["signature_pending"] = False
+                    await execute(
+                        region,
+                        "UPDATE vpecs SET state = 'signed', payload = $1 WHERE vpec_id = $2",
+                        _json.dumps(payload),
+                        vpec_id,
+                    )
+                logger.info("Provisional VPEC %s signed successfully on retry %d", vpec_id, attempt + 1)
+                return
+        except Exception:
+            logger.warning(
+                "KMS retry %d/%d failed for VPEC %s",
+                attempt + 1, max_retries, vpec_id,
+                exc_info=True,
+            )
+        delay = min(delay * 2, 600)  # cap at 10 minutes per retry
+
+    # All retries exhausted — insert gap
+    logger.error("KMS signing failed after %d retries for VPEC %s", max_retries, vpec_id)
+    row = await fetch_one(region, "SELECT run_id FROM vpecs WHERE vpec_id = $1", vpec_id)
+    if row:
+        gap_id = f"gap_kms_unavailable_{row['run_id']}_{uuid.uuid4().hex[:8]}"
+        await execute(
+            region,
+            """INSERT INTO gaps (gap_id, run_id, gap_type, severity, state, details, detected_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+            gap_id,
+            row["run_id"],
+            "kms_unavailable",
+            "High",
+            "open",
+            json.dumps({"vpec_id": vpec_id, "retries_exhausted": max_retries}),
+            datetime.now(timezone.utc),
+        )

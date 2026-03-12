@@ -226,7 +226,7 @@ describe('Evidence Pack assembly (P8-A)', () => {
     );
 
     for (const entry of pack.observation_summary) {
-      expect(entry.surface_coverage_statement).toBeDefined();
+      expect(entry.surface_coverage_statement).toBeTypeOf('string');
       expect(entry.surface_coverage_statement.length).toBeGreaterThan(0);
     }
   });
@@ -283,8 +283,8 @@ describe('Evidence Pack assembly (P8-A)', () => {
 
     expect(pack.manifest_hashes).toBeTypeOf('object');
     expect(Array.isArray(pack.manifest_hashes)).toBe(false);
-    expect(pack.manifest_hashes!['manifest_001']).toBeDefined();
-    expect(pack.manifest_hashes!['manifest_002']).toBeDefined();
+    expect(pack.manifest_hashes!['manifest_001']).toBeTypeOf('string');
+    expect(pack.manifest_hashes!['manifest_002']).toBeTypeOf('string');
   });
 });
 
@@ -339,12 +339,12 @@ describe('Evidence Pack CLI and verification instructions (P8-B)', () => {
       { coverage_verified_pct: 100, coverage_pending_pct: 0, coverage_ungoverned_pct: 0 },
     );
 
-    expect(pack.verification_instructions).toBeDefined();
+    expect(pack.verification_instructions).toBeTypeOf('object');
     expect(pack.verification_instructions.cli_command).toContain('primust pack verify');
     expect(pack.verification_instructions.offline_command).toContain('--trust-root');
     expect(pack.verification_instructions.trust_root_url).toBe('https://keys.primust.com/jwks');
-    expect(pack.verification_instructions.what_this_proves).toBeTruthy();
-    expect(pack.verification_instructions.what_this_does_not_prove).toBeTruthy();
-    expect(pack.verification_instructions.coverage_basis_explanation).toBeTruthy();
+    expect(pack.verification_instructions.what_this_proves).toBeTypeOf('string');
+    expect(pack.verification_instructions.what_this_does_not_prove).toBeTypeOf('string');
+    expect(pack.verification_instructions.coverage_basis_explanation).toBeTypeOf('string');
   });
 });

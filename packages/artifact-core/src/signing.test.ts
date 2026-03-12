@@ -19,7 +19,8 @@ describe('signing', () => {
       expect(signerRecord.superseded_by_kid).toBeNull();
       expect(signerRecord.org_id).toBe(ORG_ID);
       expect(signerRecord.signer_type).toBe(SIGNER_TYPE);
-      expect(signerRecord.public_key_b64url).toBeTruthy();
+      expect(signerRecord.public_key_b64url).toBeTypeOf('string');
+      expect(signerRecord.public_key_b64url.length).toBeGreaterThan(0);
       expect(privateKey).toBeInstanceOf(Uint8Array);
       expect(privateKey.length).toBe(32);
     });
@@ -47,8 +48,8 @@ describe('signing', () => {
       expect(signatureEnvelope.signer_id).toBe(SIGNER_ID);
       expect(signatureEnvelope.kid).toBe(signerRecord.kid);
       expect(signatureEnvelope.algorithm).toBe('Ed25519');
-      expect(signatureEnvelope.signature).toBeTruthy();
-      expect(signatureEnvelope.signed_at).toBeTruthy();
+      expect(signatureEnvelope.signature).toBeTypeOf('string');
+      expect(signatureEnvelope.signed_at).toMatch(/^\d{4}-/);
 
       const valid = verify(document, signatureEnvelope, signerRecord.public_key_b64url);
       expect(valid).toBe(true);
@@ -141,7 +142,7 @@ describe('signing', () => {
       const { updatedRecord, newRecord } = rotateKey(signerRecord);
 
       expect(updatedRecord.superseded_by_kid).toBe(newRecord.kid);
-      expect(updatedRecord.deactivated_at).toBeTruthy();
+      expect(updatedRecord.deactivated_at).toMatch(/^\d{4}-/);
     });
 
     it('rotateKey preserves signer_id across rotation', () => {

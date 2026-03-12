@@ -78,7 +78,7 @@ describe('ManifestRegistry', () => {
     const result = registry.registerManifest(manifest);
 
     const retrieved = registry.getManifest(result.manifest_id);
-    expect(retrieved).toBeDefined();
+    expect(retrieved).not.toBeNull();
     expect(retrieved!.name).toBe('test_check');
   });
 

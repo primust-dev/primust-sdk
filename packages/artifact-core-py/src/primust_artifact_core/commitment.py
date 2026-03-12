@@ -398,6 +398,7 @@ def select_proof_level(stage_type: str) -> str:
         "statistical_test": "execution",
         "custom_code": "execution",
         "human_review": "witnessed",
+        "policy_engine": "mathematical",
     }
     result = mapping.get(stage_type)
     if result is None:

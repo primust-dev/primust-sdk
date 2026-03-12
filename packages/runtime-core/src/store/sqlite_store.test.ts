@@ -228,7 +228,7 @@ describe('SqliteStore', () => {
     });
 
     const run = store.getProcessRun('run_001');
-    expect(run).toBeDefined();
+    expect(run).not.toBeNull();
     expect(run!.process_context_hash).toBe(contextHash);
   });
 
@@ -245,7 +245,7 @@ describe('SqliteStore', () => {
     });
 
     const run = store.getProcessRun('run_002');
-    expect(run).toBeDefined();
+    expect(run).not.toBeNull();
     expect(run!.process_context_hash).toBeNull();
   });
 

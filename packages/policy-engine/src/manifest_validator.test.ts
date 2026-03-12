@@ -111,7 +111,8 @@ describe('Manifest Validator', () => {
 
     const errors = validateManifest(manifest);
     const stageError = errors.find((e) => e.code === 'human_review_attestation_forbidden');
-    expect(stageError).toBeDefined();
+    expect(stageError).not.toBeUndefined();
+    expect(stageError!.code).toBe('human_review_attestation_forbidden');
   });
 
   // ── MUST PASS: manual proof level above ceiling → error ──
@@ -126,7 +127,8 @@ describe('Manifest Validator', () => {
 
     const errors = validateManifest(manifest);
     const aboveError = errors.find((e) => e.code === 'proof_level_above_ceiling');
-    expect(aboveError).toBeDefined();
+    expect(aboveError).not.toBeUndefined();
+    expect(aboveError!.code).toBe('proof_level_above_ceiling');
   });
 
   // ── MUST PASS: deterministic hash ──
@@ -239,7 +241,8 @@ describe('Manifest Validator', () => {
 
     const errors = validateRecordFields(record);
     const skipError = errors.find((e) => e.code === 'skip_rationale_hash_missing');
-    expect(skipError).toBeDefined();
+    expect(skipError).not.toBeUndefined();
+    expect(skipError!.code).toBe('skip_rationale_hash_missing');
   });
 
   // ── Additional: proof ceiling with mixed stages ──

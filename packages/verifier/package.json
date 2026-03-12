@@ -15,6 +15,14 @@
   "dependencies": {
     "@primust/artifact-core": "workspace:*"
   },
-  "files": ["dist"],
-  "license": "UNLICENSED"
+  "files": [
+    "dist"
+  ],
+  "license": "UNLICENSED",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
 }

@@ -59,7 +59,7 @@
           "name": { "type": "string" },
           "type": {
             "type": "string",
-            "enum": ["deterministic_rule", "ml_model", "zkml_model", "statistical_test", "custom_code", "human_review"]
+            "enum": ["deterministic_rule", "ml_model", "zkml_model", "statistical_test", "custom_code", "human_review", "policy_engine"]
           },
           "proof_level": {
             "type": "string",

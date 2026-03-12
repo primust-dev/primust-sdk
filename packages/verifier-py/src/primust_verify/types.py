@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 
-RekorStatus = Literal["clean", "revoked", "unavailable", "skipped"]
+RekorStatus = Literal["active", "not_found", "revoked", "unavailable", "skipped"]
 
 
 @dataclass

@@ -24,6 +24,7 @@ StageType = Literal[
     "statistical_test",
     "custom_code",
     "human_review",
+    "policy_engine",
 ]
 
 EvaluationScope = Literal[

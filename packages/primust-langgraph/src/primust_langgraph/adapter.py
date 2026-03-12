@@ -65,9 +65,9 @@ class PrimustLangGraph:
                     graph.nodes[node_name] = self._wrap_node(node_name, node_fn)
         return graph
 
-    def wrap_tool(self, tool_name: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
+    def wrap_tool(self, check_label: str, tool_fn: Callable[..., Any]) -> Callable[..., Any]:
         """Wrap a single tool function with Primust instrumentation."""
-        return self._wrap_node(tool_name, tool_fn)
+        return self._wrap_node(check_label, tool_fn)
 
     def _wrap_node(self, node_name: str, node_fn: Callable[..., Any]) -> Callable[..., Any]:
         adapter = self

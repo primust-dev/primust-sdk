@@ -105,7 +105,7 @@ describe('VPEC issuance (P7-A)', () => {
     expect(vpec.vpec_id).toMatch(/^vpec_/);
     expect(vpec.state).toBe('signed');
     expect(vpec.run_id).toBe('run_001');
-    expect(vpec.signature.signature).toBeTruthy();
+    expect(vpec.signature.signature).toBeTypeOf('string');
   });
 
   it('MUST PASS: reliance_mode not present in issued artifact', () => {
@@ -146,7 +146,7 @@ describe('VPEC issuance (P7-A)', () => {
     const vpec = closeRun('run_001', store, signerRecord, privateKey);
     expect(vpec.manifest_hashes).toBeTypeOf('object');
     expect(Array.isArray(vpec.manifest_hashes)).toBe(false);
-    expect(vpec.manifest_hashes['manifest_001']).toBeDefined();
+    expect(vpec.manifest_hashes['manifest_001']).toBeTypeOf('string');
   });
 
   it('MUST PASS: gaps[] entries include gap_type and severity (not bare strings)', () => {
@@ -157,8 +157,8 @@ describe('VPEC issuance (P7-A)', () => {
     const vpec = closeRun('run_001', store, signerRecord, privateKey);
     expect(vpec.gaps.length).toBeGreaterThan(0);
     for (const gap of vpec.gaps) {
-      expect(gap.gap_type).toBeDefined();
-      expect(gap.severity).toBeDefined();
+      expect(gap.gap_type).toBeTypeOf('string');
+      expect(gap.severity).toBeTypeOf('string');
       expect(typeof gap).toBe('object');
     }
   });
@@ -253,7 +253,7 @@ describe('VPEC issuance (P7-A)', () => {
 
     const vpec = closeRun('run_001', store, signerRecord, privateKey);
     for (const entry of vpec.surface_summary) {
-      expect(entry.observation_mode).toBeDefined();
+      expect(entry.observation_mode).toBeTypeOf('string');
     }
     // Verify at least one entry exists since we registered a surface
     expect(vpec.surface_summary.length).toBeGreaterThan(0);

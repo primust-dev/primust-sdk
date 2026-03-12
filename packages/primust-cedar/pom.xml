@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.primust</groupId>
+    <artifactId>primust-cedar</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>Primust Cedar Adapter</name>
+    <description>
+        Primust governance adapter for AWS Cedar authorization engine.
+        Wraps Cedar policy evaluation with Poseidon2 commitments and VPEC recording.
+    </description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.primust</groupId>
+            <artifactId>primust-rules-core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <!--
+            Cedar Java SDK (com.cedarpolicy:cedar-java) — provided by customer's environment.
+            Not declared here because Maven cannot resolve it (not on Maven Central).
+            Customer adds it to their own classpath. Adapter accepts raw data, not Cedar types.
+        -->
+<dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

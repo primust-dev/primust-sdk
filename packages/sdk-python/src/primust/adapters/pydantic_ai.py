@@ -63,7 +63,7 @@ class RecordContext:
 
     session: CheckSession
     pipeline: Pipeline
-    tool_name: str
+    check_label: str
     input_data: Any
     _output: Any = None
     _has_output: bool = False
@@ -91,7 +91,7 @@ class PrimustPydanticAIDep:
 
     @contextmanager
     def record_tool(
-        self, tool_name: str, input: Any = None  # noqa: A002
+        self, check_label: str, input: Any = None  # noqa: A002
     ) -> Generator[RecordContext, None, None]:
         """
         Context manager for explicit tool instrumentation (Option B).
@@ -101,13 +101,13 @@ class PrimustPydanticAIDep:
                 result = await actual_search(query)
                 record.set_output(result)
         """
-        manifest_id = self.manifest_map.get(tool_name, f"auto:{tool_name}")
-        session = self.pipeline.open_check(tool_name, manifest_id)
+        manifest_id = self.manifest_map.get(check_label, f"auto:{check_label}")
+        session = self.pipeline.open_check(check_label, manifest_id)
 
         ctx = RecordContext(
             session=session,
             pipeline=self.pipeline,
-            tool_name=tool_name,
+            check_label=check_label,
             input_data=input,
         )
 
@@ -121,7 +121,7 @@ class PrimustPydanticAIDep:
                     check_result="error",
                 )
             except Exception:
-                logger.exception("Failed to record error for %s", tool_name)
+                logger.exception("Failed to record error for %s", check_label)
             raise exc
         else:
             record_kwargs: dict[str, Any] = {}
@@ -135,7 +135,7 @@ class PrimustPydanticAIDep:
                     **record_kwargs,
                 )
             except Exception:
-                logger.exception("Failed to record result for %s", tool_name)
+                logger.exception("Failed to record result for %s", check_label)
 
     def get_surface_declaration(self) -> dict[str, str]:
         return dict(SURFACE_DECLARATION)
@@ -167,11 +167,11 @@ def instrument_agent(
     tools = getattr(agent, tools_attr)
 
     if isinstance(tools, dict):
-        for tool_name, tool_obj in tools.items():
+        for check_label, tool_obj in tools.items():
             if hasattr(tool_obj, "function") and callable(tool_obj.function):
                 original_fn = tool_obj.function
                 tool_obj.function = _wrap_tool_fn(
-                    tool_name, original_fn, primust_dep
+                    check_label, original_fn, primust_dep
                 )
     elif isinstance(tools, (list, tuple)):
         for i, tool_obj in enumerate(tools):
@@ -183,7 +183,7 @@ def instrument_agent(
 
 
 def _wrap_tool_fn(
-    tool_name: str,
+    check_label: str,
     tool_fn: Callable[..., Any],
     dep: PrimustPydanticAIDep,
 ) -> Callable[..., Any]:
@@ -191,12 +191,12 @@ def _wrap_tool_fn(
 
     @functools.wraps(tool_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        manifest_id = dep.manifest_map.get(tool_name, f"auto:{tool_name}")
+        manifest_id = dep.manifest_map.get(check_label, f"auto:{check_label}")
         session: CheckSession | None = None
         try:
-            session = dep.pipeline.open_check(tool_name, manifest_id)
+            session = dep.pipeline.open_check(check_label, manifest_id)
         except Exception:
-            logger.exception("Failed to open check for %s", tool_name)
+            logger.exception("Failed to open check for %s", check_label)
 
         try:
             result = tool_fn(*args, **kwargs)
@@ -209,7 +209,7 @@ def _wrap_tool_fn(
                         check_result="error",
                     )
                 except Exception:
-                    logger.exception("Failed to record error for %s", tool_name)
+                    logger.exception("Failed to record error for %s", check_label)
             raise exc
 
         if session:
@@ -221,7 +221,7 @@ def _wrap_tool_fn(
                     output=result,
                 )
             except Exception:
-                logger.exception("Failed to record result for %s", tool_name)
+                logger.exception("Failed to record result for %s", check_label)
 
         return result
 

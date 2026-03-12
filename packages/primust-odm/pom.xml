@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.primust</groupId>
+    <artifactId>primust-odm</artifactId>
+    <version>0.1.0</version>
+    <packaging>jar</packaging>
+
+    <name>Primust IBM ODM Adapter</name>
+    <description>
+        Primust governance adapter for IBM Operational Decision Manager.
+        Wraps ODM rule execution with Poseidon2 commitments.
+        Unique capability: getRulesFired() enables automatic per-rule stage recording.
+        Note: jrules-engine JAR is distributed via IBM Passport Advantage, not Maven Central.
+    </description>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.primust</groupId>
+            <artifactId>primust-rules-core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <!--
+            IBM ODM jrules-engine — NOT on Maven Central.
+            Distributed via IBM Passport Advantage.
+            Not declared here because Maven cannot resolve it.
+            Customer adds it to their own classpath. Adapter accepts raw data, not ODM types.
+        -->
+<dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

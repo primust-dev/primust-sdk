@@ -153,7 +153,10 @@ export async function assemblePack(
   const commitmentRoots = artifacts
     .map((a) => a.commitment_root)
     .filter((r): r is string => r !== null);
-  const merkleRoot = buildCommitmentRoot(commitmentRoots) ?? 'poseidon2:' + '0'.repeat(64);
+  if (commitmentRoots.length === 0) {
+    throw new Error('Evidence Pack requires at least one artifact with a non-null commitment_root');
+  }
+  const merkleRoot = buildCommitmentRoot(commitmentRoots)!;
 
   // Step 3: Validate coverage buckets
   const { coverage_verified_pct, coverage_pending_pct, coverage_ungoverned_pct } = coverageOptions;

@@ -4,7 +4,7 @@
 
 import type { ProofLevel, ProofDistribution, Coverage, GapEntry } from '@primust/artifact-core';
 
-export type RekorStatus = 'clean' | 'revoked' | 'unavailable' | 'skipped';
+export type RekorStatus = 'active' | 'not_found' | 'revoked' | 'unavailable' | 'skipped';
 
 export interface VerifyOptions {
   /** Reject test_mode: true artifacts. */

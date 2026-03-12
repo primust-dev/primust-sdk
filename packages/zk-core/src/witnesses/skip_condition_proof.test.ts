@@ -71,7 +71,7 @@ describe('skip_condition_proof witness builder', () => {
     expect(witness.merkle_path).toHaveLength(20);
     expect(witness.run_id).toBe('run_001');
     expect(witness.manifest_id).toBe('manifest_001');
-    expect(witness.policy_snapshot_hash).toBeDefined();
+    expect(witness.policy_snapshot_hash).toBeTypeOf('string');
   });
 
   it('MUST PASS: throws if condition_values are all zero', () => {

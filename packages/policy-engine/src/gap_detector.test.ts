@@ -105,6 +105,7 @@ describe('gap_detector', () => {
     const gaps = detectGaps('run_001', store);
     const overrideGap = gaps.find((g) => g.gap_type === 'enforcement_override');
     expect(overrideGap).toBeDefined();
+    expect(overrideGap!.gap_id).toMatch(/^gap_/);
     expect(overrideGap!.severity).toBe('Critical');
   });
 
@@ -123,6 +124,7 @@ describe('gap_detector', () => {
       (g) => g.gap_type === 'check_not_executed' && (g.details as Record<string, unknown>).manifest_id === 'manifest_002',
     );
     expect(notExecuted).toBeDefined();
+    expect(notExecuted!.gap_id).toMatch(/^gap_/);
     expect(notExecuted!.severity).toBe('High');
   });
 
@@ -143,6 +145,7 @@ describe('gap_detector', () => {
     const gaps = detectGaps('run_001', store);
     const ebt = gaps.find((g) => g.gap_type === 'external_boundary_traversal');
     expect(ebt).toBeDefined();
+    expect(ebt!.gap_id).toMatch(/^gap_/);
     expect(ebt!.severity).toBe('Informational');
   });
 
@@ -172,7 +175,9 @@ describe('gap_detector', () => {
     );
 
     gaps = detectGaps('run_001', store, null, manifests);
-    expect(gaps.find((g) => g.gap_type === 'check_timing_suspect')).toBeDefined();
+    const timingGap = gaps.find((g) => g.gap_type === 'check_timing_suspect');
+    expect(timingGap).toBeDefined();
+    expect(timingGap!.gap_id).toMatch(/^gap_/);
   });
 
   it('MUST PASS: skip_rationale_missing fires when check_result=not_applicable and hash absent', () => {
@@ -188,6 +193,7 @@ describe('gap_detector', () => {
     const gaps = detectGaps('run_001', store);
     const skipGap = gaps.find((g) => g.gap_type === 'skip_rationale_missing');
     expect(skipGap).toBeDefined();
+    expect(skipGap!.gap_id).toMatch(/^gap_/);
     expect(skipGap!.severity).toBe('High');
   });
 
@@ -212,9 +218,10 @@ describe('gap_detector', () => {
     const gaps = detectGaps('run_001', store);
     const drift = gaps.find((g) => g.gap_type === 'policy_config_drift');
     expect(drift).toBeDefined();
+    expect(drift!.gap_id).toMatch(/^gap_/);
     const details = drift!.details as Record<string, unknown>;
-    expect(details.prior_hash).toBeDefined();
-    expect(details.current_hash).toBeDefined();
+    expect(details.prior_hash).toBeTypeOf('string');
+    expect(details.current_hash).toBeTypeOf('string');
   });
 
   it('MUST PASS: deterministic_consistency_violation fires on same input + different results', () => {
@@ -241,6 +248,7 @@ describe('gap_detector', () => {
     const gaps = detectGaps('run_001', store);
     const dcv = gaps.find((g) => g.gap_type === 'deterministic_consistency_violation');
     expect(dcv).toBeDefined();
+    expect(dcv!.gap_id).toMatch(/^gap_/);
     expect(dcv!.severity).toBe('Critical');
   });
 

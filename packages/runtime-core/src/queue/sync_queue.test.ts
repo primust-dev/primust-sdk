@@ -140,7 +140,8 @@ describe('SyncQueue', () => {
     // api_unavailable gap should exist
     const gaps = store.getGaps('run_001');
     const apiGap = gaps.find((g) => g.gap_type === 'api_unavailable');
-    expect(apiGap).toBeDefined();
+    expect(apiGap).not.toBeNull();
+    expect(apiGap!.gap_type).toBe('api_unavailable');
     expect(apiGap!.severity).toBe('High');
   });
 

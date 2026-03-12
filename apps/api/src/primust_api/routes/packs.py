@@ -18,6 +18,32 @@ from ..banned import reject_banned_fields
 from ..db import execute, fetch_all, fetch_one, get_region_config
 from ..kms import kms_sign
 
+
+def _merkle_root(leaves: list[str]) -> str:
+    """Compute SHA-256 Merkle root over sorted commitment hashes.
+
+    - Empty tree: SHA-256("PRIMUST_EMPTY_EVIDENCE_PACK")
+    - Sorted leaf order (by value)
+    - SHA-256(left || right) for pairs, odd leaf duplicated
+    """
+    if not leaves:
+        h = hashlib.sha256(b"PRIMUST_EMPTY_EVIDENCE_PACK").hexdigest()
+        return f"sha256:{h}"
+
+    # Sort leaves and hash each to get uniform 32-byte nodes
+    nodes = sorted(leaves)
+    hashed = [hashlib.sha256(n.encode()).digest() for n in nodes]
+
+    while len(hashed) > 1:
+        next_level = []
+        for i in range(0, len(hashed), 2):
+            left = hashed[i]
+            right = hashed[i + 1] if i + 1 < len(hashed) else left  # odd leaf duplicated
+            next_level.append(hashlib.sha256(left + right).digest())
+        hashed = next_level
+
+    return "sha256:" + hashed[0].hex()
+
 router = APIRouter(prefix="/api/v1", tags=["packs"])
 
 
@@ -89,7 +115,7 @@ async def create_pack(
 
     # Build pack
     pack_id = f"pack_{uuid.uuid4().hex[:16]}"
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
 
     # Report hash
     report_content = json.dumps(
@@ -98,13 +124,24 @@ async def create_pack(
     )
     report_hash = "sha256:" + hashlib.sha256(report_content.encode()).hexdigest()
 
+    # Collect commitment hashes from all artifacts for Merkle tree
+    commitment_hashes = []
+    for a in artifacts:
+        for gap_or_hash in [a.get("commitment_root")] if a.get("commitment_root") else []:
+            commitment_hashes.append(gap_or_hash)
+        # Also include per-record commitment hashes if available via manifest_hashes
+        mh = a.get("manifest_hashes", {})
+        for mh_val in mh.values():
+            commitment_hashes.append(mh_val)
+    merkle = _merkle_root(commitment_hashes)
+
     pack = {
         "pack_id": pack_id,
         "org_id": auth.org_id,
         "period_start": body.period_start,
         "period_end": body.period_end,
         "artifact_ids": body.artifact_ids,
-        "merkle_root": "poseidon2:" + "0" * 64,  # stub — production uses buildCommitmentRoot
+        "merkle_root": merkle,
         "proof_distribution": proof_dist,
         "coverage_verified_pct": 100,
         "coverage_pending_pct": 0,

@@ -113,7 +113,7 @@ describe('PolicySnapshotService', () => {
 
     // Read the snapshot from the store
     const snapshot = store.getPolicySnapshot(policy_snapshot_hash);
-    expect(snapshot).toBeDefined();
+    expect(snapshot).not.toBeNull();
     const originalChecks = snapshot!.effective_checks;
 
     // Mutate the policy pack (add a new check)
@@ -226,7 +226,7 @@ describe('PolicySnapshotService', () => {
     // Drift gap should be emitted
     const gaps = store.getGaps(result2.run_id);
     const driftGap = gaps.find((g) => g.gap_type === 'policy_config_drift');
-    expect(driftGap).toBeDefined();
+    expect(driftGap).not.toBeNull();
     expect(driftGap!.severity).toBe('Medium');
   });
 
@@ -260,7 +260,7 @@ describe('PolicySnapshotService', () => {
     });
 
     const snapshot = store.getPolicySnapshot(policy_snapshot_hash);
-    expect(snapshot).toBeDefined();
+    expect(snapshot).not.toBeNull();
     const checks = snapshot!.effective_checks as Array<{ action_unit_count: number }>;
     expect(checks[0].action_unit_count).toBe(10);
   });
@@ -285,7 +285,7 @@ describe('PolicySnapshotService', () => {
     });
 
     const run = store.getProcessRun(run_id);
-    expect(run).toBeDefined();
+    expect(run).not.toBeNull();
     expect(run!.process_context_hash).toBe(contextHash);
   });
 });

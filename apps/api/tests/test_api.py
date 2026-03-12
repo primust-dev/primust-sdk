@@ -172,6 +172,22 @@ class TestAPI:
         surface_id = seed_surface(mock_db)
         run_id = seed_run(mock_db, surface_id=surface_id)
 
+        # Add a record (required — zero-record close is now rejected)
+        mock_db.tables["check_execution_records"].append({
+            "record_id": "rec_test_mode",
+            "run_id": run_id,
+            "action_unit_id": "au_001",
+            "manifest_id": "manifest_001",
+            "manifest_hash": "sha256:" + "dd" * 32,
+            "surface_id": surface_id,
+            "commitment_hash": "poseidon2:" + "cc" * 32,
+            "check_result": "pass",
+            "proof_level_achieved": "execution",
+            "chain_hash": "sha256:" + "ee" * 32,
+            "idempotency_key": "idem_test_mode",
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        })
+
         resp = client.post(
             f"/api/v1/runs/{run_id}/close",
             json={},
@@ -204,7 +220,10 @@ class TestAPI:
 
         resp = client.post(
             f"/api/v1/gaps/{gap_id}/waive",
-            json={"reason": "Accepted risk" * 10},  # > 50 chars
+            json={
+                "reason": "Accepted risk" * 10,
+                "approver_user_id": "user_002",
+            },
             headers={"Authorization": f"Bearer {jwt_token}"},
         )
 
@@ -235,6 +254,7 @@ class TestAPI:
             f"/api/v1/gaps/{gap_id}/waive",
             json={
                 "reason": "Accepted risk" * 10,
+                "approver_user_id": "user_002",
                 "expires_at": far_future,
             },
             headers={"Authorization": f"Bearer {jwt_token}"},
@@ -248,13 +268,13 @@ class TestAPI:
         from primust_api.db import RegionConfig
 
         us = RegionConfig("us")
-        assert "US" in us.database_url.upper() or us.database_url  # env var set
+        assert "US" in us.database_url.upper()
 
         eu = RegionConfig("eu")
-        assert "EU" in eu.database_url.upper() or eu.database_url
+        assert "EU" in eu.database_url.upper()
 
         # Verify they resolve to different env vars
-        assert us.database_url != eu.database_url or True  # both set to localhost in tests
+        assert us.database_url != eu.database_url
 
     def test_reliance_mode_in_body_rejected(
         self, client: TestClient, mock_db: InMemoryDB, api_key_us: str
@@ -278,6 +298,143 @@ class TestAPI:
         assert "reliance_mode" in resp.json()["detail"].lower() or "Banned" in resp.json()["detail"]
 
 
+class TestErrorPaths:
+    """H12-5: Error-path tests for edge cases."""
+
+    def test_double_close_returns_409(
+        self, client: TestClient, mock_db: InMemoryDB, api_key_us: str
+    ) -> None:
+        """Double-close of an already-closed run → 409."""
+        surface_id = seed_surface(mock_db)
+        run_id = seed_run(mock_db, surface_id=surface_id)
+
+        # Add a record
+        mock_db.tables["check_execution_records"].append({
+            "record_id": "rec_double",
+            "run_id": run_id,
+            "action_unit_id": "au_001",
+            "manifest_id": "manifest_001",
+            "manifest_hash": "sha256:" + "dd" * 32,
+            "surface_id": surface_id,
+            "commitment_hash": "poseidon2:" + "cc" * 32,
+            "check_result": "pass",
+            "proof_level_achieved": "execution",
+            "chain_hash": "sha256:" + "ee" * 32,
+            "idempotency_key": "idem_double",
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+        # First close — succeeds
+        resp1 = client.post(
+            f"/api/v1/runs/{run_id}/close",
+            json={},
+            headers={"X-API-Key": api_key_us},
+        )
+        assert resp1.status_code == 200
+
+        # Second close — 409 (run is not open)
+        resp2 = client.post(
+            f"/api/v1/runs/{run_id}/close",
+            json={},
+            headers={"X-API-Key": api_key_us},
+        )
+        assert resp2.status_code == 409
+        assert "not open" in resp2.json()["detail"].lower()
+
+    def test_close_nonexistent_run_returns_404(
+        self, client: TestClient, mock_db: InMemoryDB, api_key_us: str
+    ) -> None:
+        """Close a run_id that doesn't exist → 404."""
+        resp = client.post(
+            "/api/v1/runs/run_nonexistent/close",
+            json={},
+            headers={"X-API-Key": api_key_us},
+        )
+        assert resp.status_code == 404
+        assert "not found" in resp.json()["detail"].lower()
+
+    def test_close_zero_records_returns_422(
+        self, client: TestClient, mock_db: InMemoryDB, api_key_us: str
+    ) -> None:
+        """Close a run with zero check execution records → 422."""
+        surface_id = seed_surface(mock_db)
+        run_id = seed_run(mock_db, surface_id=surface_id)
+
+        resp = client.post(
+            f"/api/v1/runs/{run_id}/close",
+            json={},
+            headers={"X-API-Key": api_key_us},
+        )
+        assert resp.status_code == 422
+        assert "zero" in resp.json()["detail"].lower()
+
+    def test_kms_unavailable_returns_provisional(
+        self, client: TestClient, mock_db: InMemoryDB, api_key_us: str
+    ) -> None:
+        """KMS failure during close → provisional VPEC with signature_pending."""
+        from unittest.mock import patch
+
+        surface_id = seed_surface(mock_db)
+        run_id = seed_run(mock_db, surface_id=surface_id)
+
+        mock_db.tables["check_execution_records"].append({
+            "record_id": "rec_prov",
+            "run_id": run_id,
+            "action_unit_id": "au_001",
+            "manifest_id": "manifest_001",
+            "manifest_hash": "sha256:" + "dd" * 32,
+            "surface_id": surface_id,
+            "commitment_hash": "poseidon2:" + "cc" * 32,
+            "check_result": "pass",
+            "proof_level_achieved": "execution",
+            "chain_hash": "sha256:" + "ee" * 32,
+            "idempotency_key": "idem_prov",
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+        # Mock KMS to return provisional envelope
+        async def _failing_kms(doc_json, kms_key, **kw):
+            return {"algorithm": "UNSIGNED_PENDING", "signature": None}
+
+        with patch("primust_api.routes.runs.kms_sign", side_effect=_failing_kms):
+            resp = client.post(
+                f"/api/v1/runs/{run_id}/close",
+                json={},
+                headers={"X-API-Key": api_key_us},
+            )
+
+        assert resp.status_code == 200
+        vpec = resp.json()
+        assert vpec["state"] == "provisional"
+        assert vpec["pending_flags"]["signature_pending"] is True
+
+
+class TestCrossOrgIsolation:
+    """H0: Cross-org API key enforcement."""
+
+    def test_cross_org_key_cannot_access_other_org_data(
+        self, client: TestClient, mock_db: InMemoryDB
+    ) -> None:
+        """Key for org002 cannot read org001 resources (SQL WHERE filters by auth.org_id)."""
+        from .conftest import _make_api_key
+
+        # Seed data under org001
+        surface_id = seed_surface(mock_db, org_id="org001")
+        run_id = seed_run(mock_db, org_id="org001", surface_id=surface_id)
+
+        # Key for org002
+        org002_key = _make_api_key("live", "org002", "us")
+
+        # Attempt to close org001's run with org002's key → 404 (not found for org002)
+        resp = client.post(
+            f"/api/v1/runs/{run_id}/close",
+            json={},
+            headers={"X-API-Key": org002_key},
+        )
+        assert resp.status_code == 404
+        assert "not found" in resp.json()["detail"].lower()
+
+
 class TestHealth:
     """Health endpoint."""
 
@@ -287,3 +444,5 @@ class TestHealth:
         data = resp.json()
         assert data["status"] == "ok"
         assert "region" in data
+        assert "db" in data
+        assert "kms" in data

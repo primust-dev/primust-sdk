@@ -9,10 +9,18 @@
     "build": "tsc",
     "test": "vitest run"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "UNLICENSED",
   "dependencies": {
     "@primust/artifact-core": "workspace:*",
     "@primust/runtime-core": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   }
 }

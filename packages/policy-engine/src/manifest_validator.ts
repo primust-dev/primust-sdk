@@ -79,7 +79,9 @@ export function computeProofCeiling(manifest: CheckManifest): ProofLevel {
  * Returns `sha256:` prefixed hex string.
  */
 export function computeManifestHash(manifest: CheckManifest): string {
-  const { manifest_id, manifest_hash, signature, ...content } = manifest as Record<string, unknown>;
+  const content = Object.fromEntries(
+    Object.entries(manifest).filter(([k]) => k !== 'manifest_id' && k !== 'manifest_hash' && k !== 'signature'),
+  );
   const canonicalStr = canonical(content);
   const hashBytes = sha256(new TextEncoder().encode(canonicalStr));
   return 'sha256:' + hexEncode(hashBytes);

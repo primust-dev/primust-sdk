@@ -306,6 +306,33 @@ describe('verify()', () => {
     expect(result.errors).toContain('manifest_hashes_not_object');
   });
 
+  it('MUST PASS: mathematical proof_level + missing ZK verifier → error', async () => {
+    const { artifact, publicKeyB64Url } = createSignedArtifact({
+      proof_level: 'mathematical',
+      proof_distribution: {
+        mathematical: 5,
+        execution_zkml: 0,
+        execution: 0,
+        witnessed: 0,
+        attestation: 0,
+        weakest_link: 'mathematical',
+        weakest_link_explanation: 'All at mathematical',
+      },
+      zk_proof: {
+        proving_system: 'ultrahonk',
+        proof: 'dGVzdA==',
+        public_inputs: ['0x01'],
+        verification_key: 'dGVzdA==',
+      },
+    });
+    const trustRoot = writeTrustRoot(publicKeyB64Url);
+
+    // bb.js is not installed — verifyUltraHonk returns null
+    const result = await verify(artifact, { skip_network: true, trust_root: trustRoot });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('mathematical_proof_not_verified');
+  });
+
   it('test_mode: true + non-production → valid with warning', async () => {
     const { artifact, publicKeyB64Url } = createSignedArtifact({ test_mode: true });
     const trustRoot = writeTrustRoot(publicKeyB64Url);

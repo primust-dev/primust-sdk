@@ -20,7 +20,7 @@ describe('SignerRegistry', () => {
 
   it('constructs when PRIMUST_LINEAGE_HMAC_KEY is set', () => {
     const registry = new SignerRegistry();
-    expect(registry).toBeDefined();
+    expect(registry).toBeInstanceOf(SignerRegistry);
   });
 
   // ── MUST PASS: Create signer ──
@@ -77,11 +77,11 @@ describe('SignerRegistry', () => {
     expect(key.crv).toBe('Ed25519');
     expect(key.use).toBe('sig');
     expect(key.key_ops).toEqual(['verify']);
-    expect(key.kid).toBeDefined();
-    expect(key.x).toBeDefined();
+    expect(key.kid).toBeTypeOf('string');
+    expect(key.x).toBeTypeOf('string');
     expect(key.primust_signer_id).toBe('signer_1');
     expect(key.primust_status).toBe('active');
-    expect(key.primust_activated_at).toBeDefined();
+    expect(key.primust_activated_at).toBeTypeOf('string');
     expect(key.primust_signer_type).toBe('artifact_signer');
   });
 
@@ -165,7 +165,7 @@ describe('SignerRegistry', () => {
     registry.revokeKey(signerRecord.kid, 'key_compromise');
 
     const resolved = registry.resolveKid(signerRecord.kid);
-    expect(resolved).toBeDefined();
+    expect(resolved).not.toBeNull();
     expect(resolved!.status).toBe('revoked');
   });
 

@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-typescript:
+    name: TypeScript tests + lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+  test-python:
+    name: Python tests (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - packages/sdk-python
+          - packages/verifier-py
+          - packages/artifact-core-py
+          - packages/runtime-core-py
+          - packages/policy-engine-py
+          - apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.package }}
+          pip install -e ".[dev]" 2>/dev/null || pip install -e ".[test]" 2>/dev/null || pip install -e .
+      - name: Run tests
+        run: |
+          cd ${{ matrix.package }}
+          python -m pytest tests/ -v
+
+  lint-python:
+    name: Python lint (ruff + mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: pip install ruff mypy
+      - name: Ruff check
+        run: ruff check packages/ apps/ --exclude node_modules --exclude __pycache__
+      - name: Ruff format check
+        run: ruff format --check packages/ apps/ --exclude node_modules --exclude __pycache__
+      - name: MyPy (API)
+        run: |
+          cd apps/api
+          pip install -e ".[dev]" 2>/dev/null || pip install -e .
+          pip install mypy
+          mypy src/primust_api/ --ignore-missing-imports --no-error-summary || true
+
+  schema-validate:
+    name: Schema validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate SQL migrations
+        run: |
+          for f in packages/db/migrations/*.sql; do
+            echo "Checking $f..."
+            python -c "
+          with open('$f') as fh:
+              content = fh.read()
+          assert len(content) > 0, 'Empty migration file'
+          assert 'CREATE' in content.upper() or 'ALTER' in content.upper(), 'No DDL statements found'
+          print(f'  OK: {len(content)} bytes')
+          "
+          done
+      - name: Check no banned columns in schema
+        run: |
+          BANNED="agent_id|pipeline_id|tool_name|session_id|trace_id|reliance_mode"
+          FOUND=$(grep -E "($BANNED)" packages/db/migrations/*.sql || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Banned columns found in schema:"
+            echo "$FOUND"
+            exit 1
+          fi
+
+  banned-fields:
+    name: Banned field scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for banned field names
+        run: |
+          BANNED="agent_id|pipeline_id|tool_name|session_id|trace_id|reliance_mode"
+          FOUND=$(grep -rn --include='*.py' --include='*.ts' --include='*.nr' \
+            -E "\b($BANNED)\b" \
+            packages/ apps/ \
+            --exclude-dir=node_modules \
+            --exclude-dir=__pycache__ \
+            --exclude='*.test.*' \
+            --exclude='QUARANTINE.md' \
+            || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Banned field names found in source:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "No banned fields found."
+
+  deploy:
+    name: Deploy (manual)
+    if: github.event_name == 'workflow_dispatch'
+    needs: [test-typescript, test-python, lint-python, schema-validate, banned-fields]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy stub
+        run: echo "Deploy step — configure Fly.io deployment here"

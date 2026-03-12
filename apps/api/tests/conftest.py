@@ -6,10 +6,13 @@ Uses FastAPI TestClient with mocked database layer.
 
 from __future__ import annotations
 
+import hashlib
+import hmac as _hmac_mod
 import json
 import os
 import uuid
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -18,12 +21,29 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-# Set env vars before importing app
+# Set env vars BEFORE importing app — order matters
 os.environ.setdefault("DATABASE_URL_US", "postgresql://test:test@localhost:5432/primust_us")
 os.environ.setdefault("DATABASE_URL_EU", "postgresql://test:test@localhost:5432/primust_eu")
+os.environ.setdefault("PRIMUST_DEV_MODE", "true")
+os.environ.setdefault("PRIMUST_API_KEY_SECRET", "test_api_key_secret")
+os.environ.setdefault("CLERK_SECRET_KEY", "test_clerk_secret")
 
 
 from primust_api.main import app  # noqa: E402
+
+
+# ── HMAC-valid API key generation ──
+
+_API_KEY_SECRET = os.environ["PRIMUST_API_KEY_SECRET"]
+
+
+def _make_api_key(mode: str, org_id: str, region: str) -> str:
+    """Generate a valid HMAC-signed API key."""
+    prefix = f"pk_{mode}_{org_id}_{region}"
+    secret = _hmac_mod.new(
+        _API_KEY_SECRET.encode(), prefix.encode(), hashlib.sha256
+    ).hexdigest()[:32]
+    return f"{prefix}_{secret}"
 
 
 # ── In-memory database mock ──
@@ -222,30 +242,85 @@ async def _mock_get_timestamp_anchor(document_json: str, **kwargs: Any) -> dict[
     }
 
 
+class _MockConn:
+    """Mock DB connection for transaction context manager."""
+    async def execute(self, query: str, *args: Any) -> str:
+        return await _db.execute("us", query, *args)
+
+    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
+        return await _db.fetch_all("us", query, *args)
+
+    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
+        return await _db.fetch_one("us", query, *args)
+
+    @asynccontextmanager
+    async def transaction(self):
+        yield
+
+
+@asynccontextmanager
+async def _mock_transaction(region: str):
+    """Mock transaction that delegates to in-memory DB."""
+    yield _MockConn()
+
+
+class _MockPool:
+    """Mock asyncpg pool for lifespan/health checks."""
+    @asynccontextmanager
+    async def acquire(self):
+        yield _MockConn()
+
+    async def close(self):
+        pass
+
+
+async def _mock_get_pool(region: str):
+    return _MockPool()
+
+
+_PATCHES = [
+    # DB-level patches (for auth, health, lifespan)
+    ("primust_api.db.get_pool", dict(side_effect=_mock_get_pool)),
+    ("primust_api.db.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.db.fetch_all", dict(side_effect=_db.fetch_all)),
+    ("primust_api.db.execute", dict(side_effect=_db.execute)),
+    ("primust_api.main.get_pool", dict(side_effect=_mock_get_pool)),
+    ("primust_api.main.close_pools", dict(new=AsyncMock())),
+    # Route-level patches (runs)
+    ("primust_api.routes.runs.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.routes.runs.fetch_all", dict(side_effect=_db.fetch_all)),
+    ("primust_api.routes.runs.execute", dict(side_effect=_db.execute)),
+    ("primust_api.routes.runs.transaction", dict(new=_mock_transaction)),
+    ("primust_api.routes.runs.kms_sign", dict(side_effect=_mock_kms_sign)),
+    ("primust_api.routes.runs.get_timestamp_anchor", dict(side_effect=_mock_get_timestamp_anchor)),
+    ("primust_api.routes.runs.get_region_config", dict(side_effect=_mock_get_region_config)),
+    # Route-level patches (vpecs)
+    ("primust_api.routes.vpecs.fetch_one", dict(side_effect=_db.fetch_one)),
+    # Route-level patches (packs)
+    ("primust_api.routes.packs.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.routes.packs.fetch_all", dict(side_effect=_db.fetch_all)),
+    ("primust_api.routes.packs.execute", dict(side_effect=_db.execute)),
+    ("primust_api.routes.packs.kms_sign", dict(side_effect=_mock_kms_sign)),
+    ("primust_api.routes.packs.get_region_config", dict(side_effect=_mock_get_region_config)),
+    # Route-level patches (gaps)
+    ("primust_api.routes.gaps.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.routes.gaps.fetch_all", dict(side_effect=_db.fetch_all)),
+    ("primust_api.routes.gaps.execute", dict(side_effect=_db.execute)),
+    ("primust_api.routes.gaps.kms_sign", dict(side_effect=_mock_kms_sign)),
+    ("primust_api.routes.gaps.get_region_config", dict(side_effect=_mock_get_region_config)),
+]
+
+
 @pytest.fixture(autouse=True)
 def mock_db():
     """Mock all database calls, KMS signing, and TSA timestamping."""
     _db.reset()
-    with (
-        patch("primust_api.routes.runs.fetch_one", side_effect=_db.fetch_one),
-        patch("primust_api.routes.runs.fetch_all", side_effect=_db.fetch_all),
-        patch("primust_api.routes.runs.execute", side_effect=_db.execute),
-        patch("primust_api.routes.runs.kms_sign", side_effect=_mock_kms_sign),
-        patch("primust_api.routes.runs.get_timestamp_anchor", side_effect=_mock_get_timestamp_anchor),
-        patch("primust_api.routes.runs.get_region_config", side_effect=_mock_get_region_config),
-        patch("primust_api.routes.vpecs.fetch_one", side_effect=_db.fetch_one),
-        patch("primust_api.routes.packs.fetch_one", side_effect=_db.fetch_one),
-        patch("primust_api.routes.packs.fetch_all", side_effect=_db.fetch_all),
-        patch("primust_api.routes.packs.execute", side_effect=_db.execute),
-        patch("primust_api.routes.packs.kms_sign", side_effect=_mock_kms_sign),
-        patch("primust_api.routes.packs.get_region_config", side_effect=_mock_get_region_config),
-        patch("primust_api.routes.gaps.fetch_one", side_effect=_db.fetch_one),
-        patch("primust_api.routes.gaps.fetch_all", side_effect=_db.fetch_all),
-        patch("primust_api.routes.gaps.execute", side_effect=_db.execute),
-        patch("primust_api.routes.gaps.kms_sign", side_effect=_mock_kms_sign),
-        patch("primust_api.routes.gaps.get_region_config", side_effect=_mock_get_region_config),
-    ):
-        yield _db
+    patchers = [patch(target, **kwargs) for target, kwargs in _PATCHES]
+    for p in patchers:
+        p.start()
+    yield _db
+    for p in reversed(patchers):
+        p.stop()
 
 
 @pytest.fixture
@@ -255,17 +330,17 @@ def client():
 
 @pytest.fixture
 def api_key_us():
-    return "pk_live_org001_us_secret123"
+    return _make_api_key("live", "org001", "us")
 
 
 @pytest.fixture
 def api_key_test():
-    return "pk_test_org001_us_secret123"
+    return _make_api_key("test", "org001", "us")
 
 
 @pytest.fixture
 def jwt_token():
-    """Create a simple JWT for testing (no verification in dev mode)."""
+    """Create a simple JWT for testing (verified against CLERK_SECRET_KEY)."""
     import jwt as pyjwt
 
     payload = {
@@ -274,7 +349,7 @@ def jwt_token():
         "org_region": "us",
         "exp": int(datetime.now(timezone.utc).timestamp()) + 3600,
     }
-    return pyjwt.encode(payload, "test_secret", algorithm="HS256")
+    return pyjwt.encode(payload, os.environ["CLERK_SECRET_KEY"], algorithm="HS256")
 
 
 def seed_policy_pack(db: InMemoryDB, org_id: str = "org001") -> str:

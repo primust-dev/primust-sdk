@@ -112,7 +112,7 @@ describe('witness builder + prover', () => {
 
     expect(handle).not.toBeNull();
     expect(handle!.status).toBe('pending');
-    expect(handle!.job_id).toBeTruthy();
+    expect(handle!.job_id).toBeTypeOf('string');
     store.close();
   });
 

@@ -170,7 +170,7 @@ describe('config_epoch_continuity witness builder', () => {
 
     // transition_commitment_hash must be non-zero when epoch transition exists
     expect(witness.epoch_transition_exists).toBe(true);
-    expect(witness.transition_commitment_hash).toBeDefined();
+    expect(witness.transition_commitment_hash).toBeTypeOf('string');
     expect(witness.transition_commitment_hash).not.toBe('0');
     expect(witness.transition_commitment_hash).toMatch(/^poseidon2:/);
 

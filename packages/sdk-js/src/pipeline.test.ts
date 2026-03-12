@@ -147,15 +147,15 @@ describe('TypeScript SDK (P10-B)', () => {
     const recordReq = requests.filter((r) => r.url.includes('/records'));
     const body = recordReq[0].body;
 
-    expect(body.commitment_hash).toBeDefined();
-    expect(body.output_commitment).toBeDefined();
+    expect(body.commitment_hash).toMatch(/^poseidon2:|^sha256:/);
+    expect(body.output_commitment).toBeTypeOf('string');
     expect(body.commitment_algorithm).toBe('poseidon2');
     expect(body.commitment_type).toBe('input_output');
     expect(body.check_result).toBe('pass');
-    expect(body.proof_level_achieved).toBeDefined();
-    expect(body.check_open_tst).toBeDefined();
-    expect(body.check_close_tst).toBeDefined();
-    expect(body.idempotency_key).toBeDefined();
+    expect(body.proof_level_achieved).toBeTypeOf('string');
+    expect(body.check_open_tst).toBeTypeOf('string');
+    expect(body.check_close_tst).toBeTypeOf('string');
+    expect(body.idempotency_key).toBeTypeOf('string');
     expect(body.manifest_id).toBe('manifest_003');
   });
 
@@ -168,7 +168,7 @@ describe('TypeScript SDK (P10-B)', () => {
     const p = createPipeline(fetch);
 
     const session = await p.openCheck('timing_check', 'manifest_004');
-    expect(session.checkOpenTst).toBeTruthy();
+    expect(session.checkOpenTst).toBeTypeOf('string');
 
     // Small delay to ensure different timestamps
     await new Promise((r) => setTimeout(r, 5));
@@ -179,7 +179,7 @@ describe('TypeScript SDK (P10-B)', () => {
     const body = recordReq[0].body;
 
     expect(body.check_open_tst).toBe(session.checkOpenTst);
-    expect(body.check_close_tst).toBeTruthy();
+    expect(body.check_close_tst).toBeTypeOf('string');
     // Both timestamps must be valid ISO strings (close is generated at record time)
     expect(new Date(body.check_open_tst as string).getTime()).not.toBeNaN();
     expect(new Date(body.check_close_tst as string).getTime()).not.toBeNaN();

@@ -19,7 +19,7 @@ import httpx
 
 logger = logging.getLogger("primust.tsa")
 
-DIGICERT_TSA_URL = "http://timestamp.digicert.com"
+DIGICERT_TSA_URL = "https://timestamp.digicert.com"
 
 
 # ── DER encoding helpers ──
@@ -95,8 +95,7 @@ async def get_rfc3161_timestamp(
         )
 
     if resp.status_code != 200:
-        logger.error("TSA request failed: %d %s", resp.status_code, resp.text[:200])
-        return {"type": "none", "tsa": "none", "value": None}
+        raise RuntimeError(f"TSA request failed: {resp.status_code} {resp.text[:200]}")
 
     # Determine TSA provider from URL
     tsa_provider = "digicert_us"
@@ -125,11 +124,7 @@ async def get_timestamp_anchor(
     if not tsa_url or tsa_url == "none":
         return {"type": "none", "tsa": "none", "value": None}
 
-    try:
-        return await get_rfc3161_timestamp(
-            document_json.encode("utf-8"),
-            tsa_url=tsa_url,
-        )
-    except Exception:
-        logger.exception("TSA timestamping failed — falling back to stub")
-        return {"type": "none", "tsa": "none", "value": None}
+    return await get_rfc3161_timestamp(
+        document_json.encode("utf-8"),
+        tsa_url=tsa_url,
+    )

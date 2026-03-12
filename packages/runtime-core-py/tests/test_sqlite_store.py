@@ -317,6 +317,48 @@ class TestSqliteStore:
         assert len(drift_gaps) == 0
         store.close()
 
+    # ── MUST PASS: corrupted DB → fail-open (no crash) ──
+
+    def test_corrupted_db_fails_open(self, tmp_path):
+        """Write to a store, corrupt the file, write operations fail-open (no throw)."""
+        db_file = str(tmp_path / "test.db")
+        store = SqliteStore(db_file)
+        _open_default_run(store)
+        store.append_check_record(_make_record(0))
+        store.close()
+
+        # Corrupt the file
+        with open(db_file, "wb") as f:
+            f.write(b"CORRUPTED DATA " * 100)
+
+        # Re-open with corrupted file — write operations should not throw
+        store2 = SqliteStore.__new__(SqliteStore)
+        import sqlite3
+        store2._conn = sqlite3.connect(db_file, check_same_thread=False)
+        store2._conn.row_factory = sqlite3.Row
+
+        # append_check_record: fail-open → returns None
+        result = store2.append_check_record(_make_record(1, run_id="run_002"))
+        assert result is None
+
+        # open_run: fail-open → returns empty list (no crash)
+        drift = store2.open_run(
+            run_id="run_003", workflow_id="wf_001", org_id="org_test",
+            surface_id="surf_001", policy_snapshot_hash="sha256:" + "x" * 64,
+            process_context_hash=None, action_unit_count=1, ttl_seconds=3600,
+        )
+        assert drift == []
+
+        # insert_gap: fail-open → no throw
+        store2.insert_gap({
+            "gap_id": "gap_corrupt", "run_id": "run_003",
+            "gap_type": "test", "severity": "Low", "state": "open",
+            "details": {}, "detected_at": "2026-03-10T00:00:00Z",
+        })
+        # If we reach here, fail-open worked (no exception propagated)
+
+        store2.close()
+
     # ── Chain hashes are unique ──
 
     def test_chain_hashes_unique(self):

@@ -61,7 +61,9 @@ export class ManifestRegistry {
    */
   private computeContentHash(manifest: CheckManifest): string {
     // Build content object without manifest_id and signature
-    const { manifest_id, signature, ...content } = manifest as Record<string, unknown>;
+    const content = Object.fromEntries(
+      Object.entries(manifest).filter(([k]) => k !== 'manifest_id' && k !== 'signature'),
+    );
     const canonicalStr = canonical(content);
     const hashBytes = sha256(new TextEncoder().encode(canonicalStr));
     return Array.from(hashBytes)

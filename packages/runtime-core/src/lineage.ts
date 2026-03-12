@@ -15,7 +15,7 @@
  *     → if invalid: lineage_token_missing gap (High)
  */
 
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { canonical } from '@primust/artifact-core';
 
 // ── Types ──
@@ -117,8 +117,10 @@ export function validateLineageToken(
   const canonicalPayload = canonical(payload);
   const expectedToken = computeHmac(canonicalPayload, hmacKey);
 
-  // Verify HMAC
-  if (token !== expectedToken) {
+  // Verify HMAC (timing-safe comparison to prevent timing attacks)
+  const tokenBuf = Buffer.from(token);
+  const expectedBuf = Buffer.from(expectedToken);
+  if (tokenBuf.length !== expectedBuf.length || !timingSafeEqual(tokenBuf, expectedBuf)) {
     errors.push('hmac_invalid');
   }
 
