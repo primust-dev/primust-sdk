@@ -27,7 +27,7 @@ function makeArtifact(overrides: Partial<VPECArtifact> = {}): VPECArtifact {
 
   const doc: Record<string, unknown> = {
     vpec_id: `vpec_${crypto.randomUUID()}`,
-    schema_version: '3.0.0',
+    schema_version: '4.0.0',
     org_id: 'org_001',
     run_id: 'run_001',
     workflow_id: 'wf_001',
@@ -49,7 +49,7 @@ function makeArtifact(overrides: Partial<VPECArtifact> = {}): VPECArtifact {
     proof_level: 'execution',
     proof_distribution: {
       mathematical: 0,
-      execution_zkml: 0,
+      verifiable_inference: 0,
       execution: 5,
       witnessed: 0,
       attestation: 0,
@@ -235,7 +235,7 @@ describe('Evidence Pack assembly (P8-A)', () => {
     const artifact = makeArtifact({
       proof_distribution: {
         mathematical: 2,
-        execution_zkml: 1,
+        verifiable_inference: 1,
         execution: 3,
         witnessed: 1,
         attestation: 1,
@@ -257,7 +257,7 @@ describe('Evidence Pack assembly (P8-A)', () => {
 
     const dist = pack.proof_distribution;
     expect(dist.mathematical).toBe(2);
-    expect(dist.execution_zkml).toBe(1);
+    expect(dist.verifiable_inference).toBe(1);
     expect(dist.execution).toBe(3);
     expect(dist.witnessed).toBe(1);
     expect(dist.attestation).toBe(1);

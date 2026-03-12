@@ -128,8 +128,8 @@ describe('ProofLifecycleManager', () => {
     expect(routing!.prover).toBe('modal_cpu');
     expect(routing!.prover_system).toBe('ultrahonk');
 
-    // GPU is for execution_zkml (EZKL)
-    const zkmlRouting = routeProver('execution_zkml');
+    // GPU is for verifiable_inference (EZKL)
+    const zkmlRouting = routeProver('verifiable_inference');
     expect(zkmlRouting).not.toBeNull();
     expect(zkmlRouting!.prover).toBe('modal_gpu');
   });
@@ -162,7 +162,7 @@ describe('ProofLifecycleManager', () => {
   it('MUST PASS: all 5 proof levels handled in prover routing', () => {
     const levels = [
       'mathematical',
-      'execution_zkml',
+      'verifiable_inference',
       'execution',
       'witnessed',
       'attestation',
@@ -170,7 +170,7 @@ describe('ProofLifecycleManager', () => {
 
     for (const level of levels) {
       const routing = routeProver(level);
-      if (level === 'mathematical' || level === 'execution_zkml') {
+      if (level === 'mathematical' || level === 'verifiable_inference') {
         expect(routing).not.toBeNull();
         expect(routing!.prover).toBeTypeOf('string');
         expect(routing!.prover_system).toBeTypeOf('string');

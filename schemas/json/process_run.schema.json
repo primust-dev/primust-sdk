@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/process_run/v3.0.0",
+  "$id": "https://primust.com/schemas/process_run/v4.0.0",
   "title": "Primust ProcessRun",
   "description": "Process run record — provisional-frozen at schema_version 3.0.0",
   "type": "object",

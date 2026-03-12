@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/check_execution_record/v3.0.0",
+  "$id": "https://primust.com/schemas/check_execution_record/v4.0.0",
   "title": "Primust CheckExecutionRecord",
   "description": "Check execution record — provisional-frozen at schema_version 3.0.0. Append-only after commit.",
   "type": "object",
@@ -52,7 +52,7 @@
     },
     "proof_level_achieved": {
       "type": "string",
-      "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+      "enum": ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"]
     },
     "proof_pending": { "type": "boolean" },
     "zkml_proof_pending": { "type": "boolean" },
@@ -96,7 +96,26 @@
     "freshness_warning": { "type": "boolean" },
     "chain_hash": { "type": "string" },
     "idempotency_key": { "type": "string" },
-    "recorded_at": { "type": "string", "format": "date-time" }
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "actor_id": { "type": ["string", "null"], "pattern": "^user_[0-9a-f\\-]{36}$" },
+    "explanation_commitment": { "type": ["string", "null"], "pattern": "^poseidon2:[0-9a-f]+$" },
+    "bias_audit": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["protected_categories", "disparity_metric", "disparity_threshold", "disparity_result_commitment", "result"],
+          "properties": {
+            "protected_categories": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "disparity_metric": { "type": "string", "enum": ["demographic_parity", "equalized_odds"] },
+            "disparity_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+            "disparity_result_commitment": { "type": "string", "pattern": "^poseidon2:[0-9a-f]+$" },
+            "result": { "type": "string", "enum": ["pass", "fail", "not_applicable"] }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
   },
   "not": { "required": ["reliance_mode"] },
   "additionalProperties": false

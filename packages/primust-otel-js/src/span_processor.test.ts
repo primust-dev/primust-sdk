@@ -99,8 +99,8 @@ describe('OTEL Span Processor — Original MUST PASS', () => {
     expect(typeof inputStr).toBe('string');
   });
 
-  it('MUST PASS: human_review span → proof_level = witnessed in map', () => {
-    expect(PROOF_LEVEL_MAP['human_review']).toBe('witnessed');
+  it('MUST PASS: witnessed span → proof_level = witnessed in map', () => {
+    expect(PROOF_LEVEL_MAP['witnessed']).toBe('witnessed');
   });
 
   it('MUST PASS: process_context_hash propagated from span attribute', () => {
@@ -137,10 +137,9 @@ describe('OTEL Span Processor — Original MUST PASS', () => {
     );
   });
 
-  it('MUST PASS: all proof levels reachable', () => {
+  it('proof levels reachable (mathematical excluded until ZK wired)', () => {
     const expected = new Set([
-      'mathematical',
-      'execution_zkml',
+      'verifiable_inference',
       'execution',
       'witnessed',
       'attestation',
@@ -261,7 +260,8 @@ describe('OTL-1: Span Type Classification', () => {
     expect(SPAN_TYPE_PROOF_CEILING[SpanType.TOOL_EXECUTION_INTERNAL]).toBe(
       'execution',
     );
-    expect(SPAN_TYPE_PROOF_CEILING[SpanType.EVALUATION]).toBe('mathematical');
+    // TODO(zk-integration): Restore to 'mathematical' when ZK proofs are wired
+    expect(SPAN_TYPE_PROOF_CEILING[SpanType.EVALUATION]).toBe('execution');
   });
 });
 
@@ -473,7 +473,8 @@ describe('OTL-4: Evaluation Mathematical Proof', () => {
 
     const spanType = processor.classifySpan(span);
     expect(spanType).toBe(SpanType.EVALUATION);
-    expect(processor.resolveProofLevel(span, spanType)).toBe('mathematical');
+    // TODO(zk-integration): Restore to 'mathematical' when ZK proofs are wired
+    expect(processor.resolveProofLevel(span, spanType)).toBe('execution');
   });
 });
 
@@ -571,20 +572,21 @@ describe('OTL-8: Per-Tool Manifest', () => {
 // ── New Stage Types (PCG-1, PCG-6) ──
 
 describe('New Stage Types in PROOF_LEVEL_MAP', () => {
-  it('byollm → attestation', () => {
-    expect(PROOF_LEVEL_MAP['byollm']).toBe('attestation');
+  it('llm_api → attestation', () => {
+    expect(PROOF_LEVEL_MAP['llm_api']).toBe('attestation');
   });
 
   it('open_source_ml → execution', () => {
     expect(PROOF_LEVEL_MAP['open_source_ml']).toBe('execution');
   });
 
-  it('hardware_attested → mathematical', () => {
-    expect(PROOF_LEVEL_MAP['hardware_attested']).toBe('mathematical');
+  // TODO(zk-integration): Restore to 'mathematical' when ZK proofs are wired
+  it('hardware_attested → execution (mathematical when ZK wired)', () => {
+    expect(PROOF_LEVEL_MAP['hardware_attested']).toBe('execution');
   });
 
-  it('policy_engine → mathematical', () => {
-    expect(PROOF_LEVEL_MAP['policy_engine']).toBe('mathematical');
+  it('policy_engine → execution (mathematical when ZK wired)', () => {
+    expect(PROOF_LEVEL_MAP['policy_engine']).toBe('execution');
   });
 });
 

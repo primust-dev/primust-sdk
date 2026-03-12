@@ -23,7 +23,7 @@ import type { VerificationResult } from './types.js';
 
 const PROOF_LEVEL_DISPLAY: Record<string, string> = {
   mathematical: 'mathematical',
-  execution_zkml: 'execution+zkml',
+  verifiable_inference: 'verifiable_inference',
   execution: 'execution',
   witnessed: 'witnessed',
   attestation: 'attestation',
@@ -34,7 +34,7 @@ function formatProofLevel(level: string): string {
 }
 
 function formatDistribution(dist: Record<string, unknown>): string {
-  const levels = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'];
+  const levels = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
   return levels
     .filter((l) => typeof dist[l] === 'number' && (dist[l] as number) > 0)
     .map((l) => `${formatProofLevel(l)}: ${dist[l]}`)

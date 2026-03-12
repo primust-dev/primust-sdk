@@ -1,7 +1,7 @@
 /**
- * Primust Runtime Core — Domain-neutral object schemas v3.
+ * Primust Runtime Core — Domain-neutral object schemas v4.
  *
- * Provisional-frozen at schema_version 3.0.0.
+ * Provisional-frozen at schema_version 4.0.0.
  *
  * BANNED FIELD NAMES (enforced in validate-schemas.ts):
  *   agent_id, pipeline_id, tool_name, session_id, trace_id,
@@ -9,7 +9,7 @@
  *
  * INVARIANTS:
  *   1. No banned field names anywhere
- *   2. human_review stage type → witnessed proof level (NEVER attestation)
+ *   2. witnessed stage type → witnessed proof level (NEVER attestation)
  *   3. manifest_hash captured per CheckExecutionRecord at record time
  *   4. reviewer_credential required when proof_level_achieved = witnessed
  *   5. skip_rationale_hash required when check_result = not_applicable
@@ -118,6 +118,9 @@ export interface CheckManifest {
   freshness_threshold_hours: number | null;
   benchmark: ManifestBenchmark | null;
   model_or_tool_hash: string | null;
+  prompt_version_id: string | null;
+  prompt_approved_by: string | null; // user_{uuid}
+  prompt_approved_at: string | null; // ISO 8601
   publisher: string;
   signer_id: string;
   kid: string;
@@ -126,6 +129,32 @@ export interface CheckManifest {
 }
 
 // ── Object 3: PolicyPack ──
+
+export interface ExplanationCommitmentRequirement {
+  on_check_result: Array<'fail' | 'override'>;
+  on_check_types: string[];
+}
+
+export interface BiasAuditRequirement {
+  on_check_types: string[];
+  protected_categories: string[];
+}
+
+export interface ComplianceRequirements {
+  require_actor_id: boolean;
+  require_explanation_commitment: ExplanationCommitmentRequirement | null;
+  require_bias_audit: BiasAuditRequirement | null;
+  require_retention_policy: boolean;
+  require_risk_classification: boolean;
+}
+
+export interface SlaPolicyConfig {
+  proof_level_floor_minimum: ProofLevel;
+  provable_surface_minimum: number; // 0.0–1.0
+  max_open_critical_gaps: number;
+  max_open_high_gaps: number | null;
+  retention_policy_required: string | null;
+}
 
 export interface PolicyPackCheck {
   check_id: string;
@@ -141,6 +170,8 @@ export interface PolicyPack {
   name: string;
   version: string;
   checks: PolicyPackCheck[];
+  compliance_requirements: ComplianceRequirements | null;
+  sla_policy: SlaPolicyConfig | null;
   created_at: string; // ISO 8601
   signer_id: string;
   kid: string;
@@ -165,6 +196,9 @@ export interface PolicySnapshot {
   effective_checks: EffectiveCheck[];
   snapshotted_at: string; // ISO 8601
   policy_basis: PolicyBasis;
+  retention_policy: string | null; // FDA_PART11_7Y | EU_AI_ACT_10Y | HIPAA_6Y | SOC2_1Y | GDPR_3Y | null
+  risk_classification: string | null; // EU_HIGH_RISK | EU_LIMITED_RISK | EU_MINIMAL_RISK | US_FEDERAL | null
+  regulatory_context: string[] | null; // e.g. ["EU_AI_ACT_ART13", "AIUC1_E015"]
 }
 
 // ── Object 5: ProcessRun ──
@@ -194,6 +228,14 @@ export interface ActionUnit {
 }
 
 // ── Object 7: CheckExecutionRecord ──
+
+export interface BiasAudit {
+  protected_categories: string[];
+  disparity_metric: 'demographic_parity' | 'equalized_odds';
+  disparity_threshold: number;
+  disparity_result_commitment: string; // poseidon2:hex
+  result: 'pass' | 'fail' | 'not_applicable';
+}
 
 export interface ReviewerCredential {
   reviewer_key_id: string;
@@ -232,6 +274,10 @@ export interface CheckExecutionRecord {
   chain_hash: string;
   idempotency_key: string;
   recorded_at: string; // ISO 8601
+  // ── P4-D compliance fields ──
+  actor_id: string | null; // user_{uuid} — identity of triggering user/service account
+  explanation_commitment: string | null; // poseidon2:hex — computed locally, plaintext NEVER sent
+  bias_audit: BiasAudit | null;
 }
 
 // ── Object 8: Gap ──
@@ -245,6 +291,7 @@ export interface Gap {
   details: Record<string, unknown>;
   detected_at: string; // ISO 8601
   resolved_at: string | null;
+  incident_report_ref: string | null; // e.g. FDA_MDR_2026_00123
 }
 
 // ── Object 9: Waiver ──
@@ -257,6 +304,7 @@ export interface Waiver {
   approver_user_id: string;
   reason: string; // min 50 chars enforced client and server
   compensating_control: string | null;
+  risk_treatment: 'accept' | 'mitigate' | 'transfer' | 'avoid';
   expires_at: string; // REQUIRED. Max 90 days from approval. No permanent waivers.
   signature: SignatureEnvelopeRef;
   approved_at: string; // ISO 8601
@@ -292,7 +340,7 @@ export interface EvidencePack {
   merkle_root: string;
   proof_distribution: {
     mathematical: number;
-    execution_zkml: number;
+    verifiable_inference: number;
     execution: number;
     witnessed: number;
     attestation: number;

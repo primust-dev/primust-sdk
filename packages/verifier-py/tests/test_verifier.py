@@ -39,7 +39,7 @@ def _build_artifact_body(
     """Build a valid artifact body (without signature)."""
     base: dict[str, Any] = {
         "vpec_id": "vpec_00000000-0000-0000-0000-000000000001",
-        "schema_version": "3.0.0",
+        "schema_version": "4.0.0",
         "org_id": "org_test",
         "run_id": "run_00000000-0000-0000-0000-000000000001",
         "workflow_id": "wf_test",
@@ -61,7 +61,7 @@ def _build_artifact_body(
         "proof_level": "execution",
         "proof_distribution": {
             "mathematical": 0,
-            "execution_zkml": 0,
+            "verifiable_inference": 0,
             "execution": 5,
             "witnessed": 0,
             "attestation": 0,
@@ -229,7 +229,7 @@ class TestVerify:
     def test_all_5_proof_levels(self, tmp_path: Path):
         levels = [
             "mathematical",
-            "execution_zkml",
+            "verifiable_inference",
             "execution",
             "witnessed",
             "attestation",
@@ -239,7 +239,7 @@ class TestVerify:
                 proof_level=level,
                 proof_distribution={
                     "mathematical": 0,
-                    "execution_zkml": 0,
+                    "verifiable_inference": 0,
                     "execution": 0,
                     "witnessed": 0,
                     "attestation": 0,
@@ -304,7 +304,7 @@ class TestVerify:
             proof_level="mathematical",
             proof_distribution={
                 "mathematical": 5,
-                "execution_zkml": 0,
+                "verifiable_inference": 0,
                 "execution": 0,
                 "witnessed": 0,
                 "attestation": 0,
@@ -396,7 +396,7 @@ class TestCLI:
     def test_all_5_proof_levels_display(self, tmp_path: Path, capsys):
         levels = [
             "mathematical",
-            "execution_zkml",
+            "verifiable_inference",
             "execution",
             "witnessed",
             "attestation",
@@ -414,7 +414,7 @@ class TestCLI:
                 proof_level=level,
                 proof_distribution={
                     "mathematical": 0,
-                    "execution_zkml": 0,
+                    "verifiable_inference": 0,
                     "execution": 0,
                     "witnessed": 0,
                     "attestation": 0,
@@ -445,19 +445,19 @@ class TestCLI:
             assert code == 0
             mock_urlopen.assert_not_called()
 
-    def test_execution_zkml_renders_as_execution_plus_zkml(
+    def test_verifiable_inference_renders_as_execution_plus_zkml(
         self, tmp_path: Path, capsys
     ):
         artifact, pub_key = _create_signed_artifact(
-            proof_level="execution_zkml",
+            proof_level="verifiable_inference",
             proof_distribution={
                 "mathematical": 0,
-                "execution_zkml": 5,
+                "verifiable_inference": 5,
                 "execution": 0,
                 "witnessed": 0,
                 "attestation": 0,
-                "weakest_link": "execution_zkml",
-                "weakest_link_explanation": "All at execution_zkml",
+                "weakest_link": "verifiable_inference",
+                "weakest_link_explanation": "All at verifiable_inference",
             },
         )
         trust_root = _write_trust_root(tmp_path, pub_key)
@@ -467,4 +467,4 @@ class TestCLI:
 
         captured = capsys.readouterr()
         assert "execution+zkml" in captured.out
-        assert "execution_zkml" not in captured.out
+        assert "verifiable_inference" not in captured.out

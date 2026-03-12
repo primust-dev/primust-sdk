@@ -129,7 +129,7 @@ class TestAPI:
         assert resp.status_code == 200
         vpec = resp.json()
         assert vpec["vpec_id"].startswith("vpec_")
-        assert vpec["schema_version"] == "3.0.0"
+        assert vpec["schema_version"] == "4.0.0"
         assert vpec["state"] == "signed"
         assert "reliance_mode" not in json.dumps(vpec)
 

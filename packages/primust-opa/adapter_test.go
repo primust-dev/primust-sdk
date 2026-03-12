@@ -60,9 +60,9 @@ func TestInputCommitment(t *testing.T) {
 		t.Errorf("Canonical = %s, want %s", jsonStr, expected)
 	}
 
-	commitment := rulescore.Commit([]byte(jsonStr), "poseidon2")
-	if commitment.Algorithm != "poseidon2" {
-		t.Error("Expected poseidon2 algorithm")
+	commitment := rulescore.CommitDefault([]byte(jsonStr))
+	if commitment.Algorithm != "sha256" {
+		t.Error("Expected sha256 algorithm (default)")
 	}
 	if len(commitment.Hash) < 10 {
 		t.Error("Commitment hash too short")

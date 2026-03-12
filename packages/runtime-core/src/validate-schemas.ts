@@ -3,13 +3,14 @@
  *
  * Enforces all invariants from the schema spec:
  *   1. No banned field names anywhere
- *   2. human_review stage type → witnessed proof level (NEVER attestation)
+ *   2. witnessed stage type → witnessed proof level (NEVER attestation)
  *   3. manifest_hash captured per CheckExecutionRecord at record time
  *   4. reviewer_credential required when proof_level_achieved = witnessed
  *   5. skip_rationale_hash required when check_result = not_applicable
  *   6. CheckExecutionRecord is append-only (no UPDATE after commit)
  *   7. Waiver expires_at REQUIRED — no permanent waivers (max 90 days)
  *   8. EvidencePack: coverage_verified + coverage_pending + coverage_ungoverned = 100
+ *   9. Waiver risk_treatment REQUIRED — must be: accept, mitigate, transfer, or avoid
  */
 
 import type { CheckExecutionRecord, ManifestStage, Waiver, EvidencePack } from './types/index.js';
@@ -63,22 +64,22 @@ export function scanBannedFields(
 
 /**
  * Validate a ManifestStage — invariant 2:
- * human_review type → witnessed proof_level (NEVER attestation).
+ * witnessed type → witnessed proof_level (NEVER attestation).
  */
 export function validateManifestStage(stage: ManifestStage): ValidationError[] {
   const errors: ValidationError[] = [];
-  if (stage.type === 'human_review' && stage.proof_level === 'attestation') {
+  if (stage.type === 'witnessed' && stage.proof_level === 'attestation') {
     errors.push({
-      code: 'human_review_attestation_forbidden',
+      code: 'witnessed_attestation_forbidden',
       message:
-        'human_review stage type must use witnessed proof level, NEVER attestation (invariant 2)',
+        'witnessed stage type must use witnessed proof level, NEVER attestation (invariant 2)',
     });
   }
-  if (stage.type === 'human_review' && stage.proof_level !== 'witnessed') {
+  if (stage.type === 'witnessed' && stage.proof_level !== 'witnessed') {
     errors.push({
-      code: 'human_review_must_be_witnessed',
+      code: 'witnessed_must_be_witnessed',
       message:
-        'human_review stage type must use witnessed proof level',
+        'witnessed stage type must use witnessed proof level',
     });
   }
   return errors;
@@ -185,6 +186,20 @@ export function validateWaiver(waiver: Waiver): ValidationError[] {
         message: 'Waiver expires_at must be after approved_at',
       });
     }
+  }
+
+  // Invariant 9: risk_treatment required and must be valid
+  const VALID_RISK_TREATMENTS = ['accept', 'mitigate', 'transfer', 'avoid'];
+  if (!waiver.risk_treatment) {
+    errors.push({
+      code: 'waiver_risk_treatment_missing',
+      message: 'Waiver risk_treatment is required (invariant 9)',
+    });
+  } else if (!VALID_RISK_TREATMENTS.includes(waiver.risk_treatment)) {
+    errors.push({
+      code: 'waiver_risk_treatment_invalid',
+      message: `Waiver risk_treatment must be one of: ${VALID_RISK_TREATMENTS.join(', ')} (got "${waiver.risk_treatment}")`,
+    });
   }
 
   return errors;

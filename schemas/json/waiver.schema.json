@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/waiver/v3.0.0",
+  "$id": "https://primust.com/schemas/waiver/v4.0.0",
   "title": "Primust Waiver",
   "description": "Waiver record — provisional-frozen at schema_version 3.0.0. expires_at REQUIRED, max 90 days.",
   "type": "object",
@@ -12,6 +12,7 @@
     "approver_user_id",
     "reason",
     "compensating_control",
+    "risk_treatment",
     "expires_at",
     "signature",
     "approved_at"
@@ -24,6 +25,7 @@
     "approver_user_id": { "type": "string" },
     "reason": { "type": "string", "minLength": 50 },
     "compensating_control": { "type": ["string", "null"] },
+    "risk_treatment": { "type": "string", "enum": ["accept", "mitigate", "transfer", "avoid"] },
     "expires_at": { "type": "string", "format": "date-time" },
     "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" },
     "approved_at": { "type": "string", "format": "date-time" }

@@ -133,6 +133,9 @@ importers:
       '@primust/runtime-core':
         specifier: workspace:*
         version: link:../runtime-core
+      '@primust/zk-core':
+        specifier: workspace:*
+        version: link:../zk-core
 
   packages/primust-otel-js:
     dependencies:

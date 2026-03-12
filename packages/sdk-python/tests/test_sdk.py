@@ -68,7 +68,7 @@ class MockTransport(httpx.BaseTransport):
                 200,
                 json={
                     "vpec_id": "vpec_test001",
-                    "schema_version": "3.0.0",
+                    "schema_version": "4.0.0",
                     "state": "signed",
                     "partial": parsed.get("partial", False),
                     "test_mode": False,

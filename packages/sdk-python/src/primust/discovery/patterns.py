@@ -17,7 +17,7 @@ class Pattern:
     modules: list[str]
     call_patterns: list[str]
     # Classification
-    proof_level: str  # mathematical | execution_zkml | execution | witnessed | attestation
+    proof_level: str  # mathematical | verifiable_inference | execution | witnessed | attestation
     category: str  # deterministic | ml_model | llm_call | human_review | external_api
     suggested_manifest_prefix: str
 

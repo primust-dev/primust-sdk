@@ -26,12 +26,13 @@ Regulatory hooks:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
 import httpx
+
+from primust_artifact_core.commitment import commit as _artifact_commit
 
 try:
     import primust
@@ -190,9 +191,10 @@ class GuidewireClient:
 # ---------------------------------------------------------------------------
 
 def _commit(data: Any) -> str:
-    """Poseidon2 if native extension available, SHA-256 fallback."""
+    """Commit via artifact-core commitment path (SHA-256 default, poseidon2 opt-in)."""
     canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
-    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
+    hash_str, _ = _artifact_commit(canonical.encode())
+    return hash_str
 
 
 def _bounded_claim_metadata(claim: dict) -> dict:

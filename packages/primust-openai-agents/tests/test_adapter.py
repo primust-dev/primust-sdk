@@ -138,7 +138,7 @@ class TestOpenAIAgentsAdapter:
 
     def test_all_five_proof_levels_reachable(self) -> None:
         """MUST PASS: all 5 proof levels reachable."""
-        expected = {"mathematical", "execution_zkml", "execution", "witnessed", "attestation"}
+        expected = {"mathematical", "verifiable_inference", "execution", "witnessed", "attestation"}
         assert set(PROOF_LEVEL_MAP.values()) == expected
 
     def test_adapter_failure_does_not_block_tool(

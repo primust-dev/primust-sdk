@@ -1,7 +1,7 @@
 /**
  * Primust VPEC Artifact Schema — TypeScript types
  *
- * Provisional-frozen at schema_version 3.0.0
+ * Provisional-frozen at schema_version 4.0.0
  * Canonical source: schemas/json/artifact.schema.json
  *
  * INVARIANTS (enforced in validateArtifact):
@@ -19,7 +19,7 @@
 
 export type ProofLevel =
   | 'mathematical'
-  | 'execution_zkml'
+  | 'verifiable_inference'
   | 'execution'
   | 'witnessed'
   | 'attestation';
@@ -80,7 +80,8 @@ export type GapType =
   | 'policy_config_drift'
   | 'zkml_proof_pending_timeout'
   | 'zkml_proof_failed'
-  | 'api_unavailable';
+  | 'explanation_missing'
+  | 'bias_audit_missing';
 
 // ---------- Sub-structures ----------
 
@@ -96,7 +97,7 @@ export interface SurfaceEntry {
 
 export interface ProofDistribution {
   mathematical: number;
-  execution_zkml: number;
+  verifiable_inference: number;
   execution: number;
   witnessed: number;
   attestation: number;
@@ -177,7 +178,7 @@ export interface PendingFlags {
 
 export interface VPECArtifact {
   vpec_id: string;
-  schema_version: '3.0.0';
+  schema_version: '4.0.0';
 
   org_id: string;
   run_id: string;

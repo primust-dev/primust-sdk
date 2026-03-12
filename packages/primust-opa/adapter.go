@@ -93,16 +93,17 @@ func New(config Config) *PrimustOPA {
 
 // Eval evaluates a prepared OPA query with Primust instrumentation.
 //
-// The input is committed locally via Poseidon2 before any network call.
+// The input is committed locally (SHA-256 default, Poseidon2 opt-in via
+// PRIMUST_COMMITMENT_ALGORITHM env var) before any network call.
 // Only the commitment hash transits to the Primust API — the raw input
 // never leaves the customer environment.
 func (p *PrimustOPA) Eval(ctx context.Context, query rego.PreparedEvalQuery, input interface{}) (*EvalResult, error) {
-	// 1. Canonical JSON of input → Poseidon2 commitment
+	// 1. Canonical JSON of input → commitment (SHA-256 default)
 	inputJSON, err := rulescore.Canonical(input)
 	if err != nil {
 		return nil, fmt.Errorf("primust-opa: canonical JSON failed: %w", err)
 	}
-	commitment := rulescore.Commit([]byte(inputJSON), "poseidon2")
+	commitment := rulescore.CommitDefault([]byte(inputJSON))
 
 	// 2. Evaluate OPA policy
 	rs, err := query.Eval(ctx, rego.EvalInput(input))

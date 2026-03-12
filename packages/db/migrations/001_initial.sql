@@ -5,7 +5,7 @@
 -- Proof level enum (all 5 — used across multiple tables)
 CREATE TYPE proof_level AS ENUM (
   'mathematical',
-  'execution_zkml',
+  'verifiable_inference',
   'execution',
   'witnessed',
   'attestation'
@@ -229,7 +229,7 @@ CREATE TABLE vpecs (
   org_id                 TEXT NOT NULL,
   run_id                 TEXT NOT NULL REFERENCES process_runs(run_id),
   workflow_id            TEXT NOT NULL,
-  schema_version         TEXT NOT NULL DEFAULT '3.0.0',
+  schema_version         TEXT NOT NULL DEFAULT '4.0.0',
   process_context_hash   TEXT,
   partial                BOOLEAN NOT NULL DEFAULT FALSE,
   proof_level            proof_level NOT NULL,

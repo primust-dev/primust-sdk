@@ -7,7 +7,7 @@ interface ProofDistributionBarProps {
 
 const BAR_COLORS: Record<string, string> = {
   mathematical: "bg-green-700",
-  execution_zkml: "bg-blue-600",
+  verifiable_inference: "bg-blue-600",
   execution: "bg-yellow-500",
   witnessed: "bg-orange-500",
   attestation: "bg-gray-500",

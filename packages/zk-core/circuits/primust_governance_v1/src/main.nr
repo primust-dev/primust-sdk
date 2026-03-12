@@ -18,7 +18,7 @@
 //   2. All pass/not_applicable records counted for governance completeness
 //   3. No override records present (enforcement integrity)
 
-use std::hash::poseidon2;
+use dep::poseidon::poseidon2;
 
 global MAX_RECORDS: u32 = 64;
 
@@ -73,16 +73,6 @@ fn main(
 /// Compute binary Merkle root using Poseidon2 for internal nodes.
 /// Handles arbitrary record counts by duplicating the last leaf for odd counts.
 fn compute_merkle_root(leaves: [Field; 64], count: u32) -> Field {
-    // For zero records, return zero (should not happen in practice)
-    if count == 0 {
-        return 0;
-    }
-
-    // If single record, return its hash directly
-    if count == 1 {
-        return leaves[0];
-    }
-
     // Build Merkle tree bottom-up
     // Layer 0: leaves (up to count, rest padded with zeros)
     let mut current_layer: [Field; 64] = [0; 64];
@@ -92,6 +82,9 @@ fn compute_merkle_root(leaves: [Field; 64], count: u32) -> Field {
         }
     }
 
+    // For zero records, result is 0; for single record, result is leaves[0].
+    // Both cases are handled correctly by the loop below (which won't execute
+    // when layer_size <= 1), leaving current_layer[0] as the root.
     let mut layer_size: u32 = count;
 
     // Process layers until we have a single root

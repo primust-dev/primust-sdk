@@ -23,9 +23,9 @@ logger = logging.getLogger("primust.openai_agents")
 
 PROOF_LEVEL_MAP = {
     "deterministic_rule": "mathematical",
-    "zkml_model": "execution_zkml",
+    "zkml_model": "verifiable_inference",
     "ml_model": "execution",
-    "human_review": "witnessed",
+    "witnessed": "witnessed",
     "default": "attestation",
 }
 

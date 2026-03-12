@@ -70,9 +70,9 @@ public class PrimustODM {
                                   List<String> rulesFired,
                                   Map<String, Object> decisionOutput,
                                   String checkResult) {
-        // Canonical JSON of ruleset params → Poseidon2 commitment
+        // Canonical JSON of ruleset params → commitment (SHA-256 default)
         String inputJson = CanonicalJson.canonical(rulesetParams);
-        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8), "poseidon2");
+        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8));
 
         // Commit decision output
         String outputJson = CanonicalJson.canonical(decisionOutput);

@@ -1,8 +1,9 @@
 /**
  * Primust Artifact Core — Commitment Layer (P6-A)
  *
- * Poseidon2 (default, ZK-friendly) and SHA-256 (legacy fallback) commitments.
- * Pure implementation, no native bindings, WASM-compatible.
+ * SHA-256 (default) and Poseidon2 (opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2) commitments.
+ * Poseidon2 uses a pure implementation — opt-in only until an audited reference
+ * (e.g. Barretenberg) is validated.
  *
  * PRIVACY INVARIANT: Raw content NEVER leaves the customer environment.
  * Only the commitment hash transits to Primust API.
@@ -110,46 +111,82 @@ function parseHashToField(hash: string): bigint {
  * Compute a commitment hash over input bytes.
  *
  * @param input - Raw content bytes (NEVER transmitted — only the hash leaves the environment)
- * @param algorithm - 'poseidon2' (default, ZK-friendly) or 'sha256' (legacy fallback)
+ * @param algorithm - 'sha256' (default) or 'poseidon2' (opt-in). If not specified, uses
+ *                    PRIMUST_COMMITMENT_ALGORITHM env var or defaults to 'sha256'.
  */
 export function commit(
   input: Uint8Array,
-  algorithm: CommitmentAlgorithm = 'poseidon2',
+  algorithm?: CommitmentAlgorithm,
 ): CommitmentResult {
-  if (algorithm === 'sha256') {
-    return { hash: sha256Commit(input), algorithm: 'sha256' };
+  const alg = algorithm ?? resolveAlgorithm();
+  if (alg === 'poseidon2') {
+    return { hash: poseidon2(input), algorithm: 'poseidon2' };
   }
-  return { hash: poseidon2(input), algorithm: 'poseidon2' };
+  return { hash: sha256Commit(input), algorithm: 'sha256' };
 }
 
 /**
- * Compute a commitment hash for check output.
- * Always uses poseidon2 — output_commitment is poseidon2-only invariant.
+ * Compute a commitment hash for check output. Uses resolved algorithm.
  */
 export function commitOutput(output: Uint8Array): CommitmentResult {
-  return { hash: poseidon2(output), algorithm: 'poseidon2' };
+  const alg = resolveAlgorithm();
+  if (alg === 'poseidon2') {
+    return { hash: poseidon2(output), algorithm: 'poseidon2' };
+  }
+  return { hash: sha256Commit(output), algorithm: 'sha256' };
+}
+
+/**
+ * Resolve the commitment algorithm.
+ * Default is "sha256". Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2
+ * until an audited implementation (e.g. Barretenberg) is validated.
+ */
+function resolveAlgorithm(): CommitmentAlgorithm {
+  if (typeof process !== 'undefined' && process.env?.PRIMUST_COMMITMENT_ALGORITHM === 'poseidon2') {
+    return 'poseidon2';
+  }
+  return 'sha256';
+}
+
+/**
+ * Parse a commitment hash string to raw bytes.
+ */
+function parseHashToRawBytes(hash: string): Uint8Array {
+  const colonIdx = hash.indexOf(':');
+  if (colonIdx === -1) throw new Error(`Invalid hash format: ${hash}`);
+  const hex = hash.slice(colonIdx + 1);
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
 }
 
 /**
  * Build a Merkle root over an array of commitment hashes.
+ * Uses the resolved algorithm (SHA-256 default, Poseidon2 opt-in) for intermediate nodes.
  *
- * @returns poseidon2 Merkle root, or null for empty array.
+ * @returns Merkle root, or null for empty array.
  *          Single hash → returns that hash unchanged.
- *          Uses poseidon2 for all intermediate nodes.
  */
-export function buildCommitmentRoot(hashes: string[]): string | null {
+export function buildCommitmentRoot(hashes: string[], algorithm?: CommitmentAlgorithm): string | null {
+  const alg = algorithm ?? resolveAlgorithm();
   if (hashes.length === 0) return null;
   if (hashes.length === 1) return hashes[0];
 
-  // Convert to field elements
+  if (alg === 'poseidon2') {
+    return buildPoseidon2MerkleRoot(hashes);
+  }
+  return buildSha256MerkleRoot(hashes);
+}
+
+function buildPoseidon2MerkleRoot(hashes: string[]): string {
   let layer = hashes.map(parseHashToField);
 
-  // Build binary Merkle tree bottom-up
   while (layer.length > 1) {
     const next: bigint[] = [];
     for (let i = 0; i < layer.length; i += 2) {
       const left = layer[i];
-      // Odd leaf: duplicate last
       const right = i + 1 < layer.length ? layer[i + 1] : layer[i];
       next.push(poseidon2Pair(left, right));
     }
@@ -157,6 +194,25 @@ export function buildCommitmentRoot(hashes: string[]): string | null {
   }
 
   return 'poseidon2:' + layer[0].toString(16).padStart(64, '0');
+}
+
+function buildSha256MerkleRoot(hashes: string[]): string {
+  let layer = hashes.map(parseHashToRawBytes);
+
+  while (layer.length > 1) {
+    const next: Uint8Array[] = [];
+    for (let i = 0; i < layer.length; i += 2) {
+      const left = layer[i];
+      const right = i + 1 < layer.length ? layer[i + 1] : layer[i];
+      const combined = new Uint8Array(left.length + right.length);
+      combined.set(left);
+      combined.set(right, left.length);
+      next.push(sha256(combined));
+    }
+    layer = next;
+  }
+
+  return 'sha256:' + Array.from(layer[0]).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ── Proof Level Selection ──
@@ -168,7 +224,7 @@ type StageType =
   | 'zkml_model'
   | 'statistical_test'
   | 'custom_code'
-  | 'human_review'
+  | 'witnessed'
   | 'policy_engine';
 
 /**
@@ -176,30 +232,32 @@ type StageType =
  *
  * Mapping:
  *   deterministic_rule → mathematical
- *   zkml_model         → execution_zkml
+ *   zkml_model         → verifiable_inference
  *   ml_model           → execution
  *   statistical_test   → execution (default; non-deterministic sampling/bootstrapping)
  *   custom_code        → execution
- *   human_review       → witnessed
+ *   witnessed          → witnessed
  *
  * Note: attestation is the weakest level and only applies from explicit manifest
  * declaration, not from stage type mapping.
  */
+// TODO(zk-integration): Restore deterministic_rule/policy_engine to 'mathematical'
+// when ZK proof integration is live (closeRun → proveAsync wired).
 export function selectProofLevel(stageType: StageType): ProofLevel {
   switch (stageType) {
     case 'deterministic_rule':
-      return 'mathematical';
+      return 'execution';
     case 'zkml_model':
-      return 'execution_zkml';
+      return 'verifiable_inference';
     case 'ml_model':
       return 'execution';
     case 'statistical_test':
       return 'execution';
     case 'custom_code':
       return 'execution';
-    case 'human_review':
+    case 'witnessed':
       return 'witnessed';
     case 'policy_engine':
-      return 'mathematical';
+      return 'execution';
   }
 }

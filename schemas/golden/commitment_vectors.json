@@ -1,61 +1,135 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Golden test vectors for Primust commitment layer. TypeScript and Python implementations MUST produce identical output for all vectors.",
-  "version": "1.0.0",
-  "vectors": [
+  "description": "Golden test vectors for Primust commitment layer. All implementations MUST produce identical output for all vectors. SHA-256 is the default algorithm. Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2 and requires an audited implementation (e.g. Barretenberg) before production use.",
+  "version": "2.0.0",
+  "default_algorithm": "sha256",
+  "sha256_vectors": [
+    {
+      "id": "sha256-empty",
+      "description": "Default-path: empty input",
+      "input_hex": "",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "sha256-1byte",
+      "description": "Default-path: single byte 0x42",
+      "input_hex": "42",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c"
+    },
+    {
+      "id": "sha256-hello",
+      "description": "Default-path: ASCII 'hello'",
+      "input_hex": "68656c6c6f",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    },
+    {
+      "id": "sha256-32bytes",
+      "description": "Default-path: 32 bytes of 0xCD",
+      "input_hex": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:7969ec0fcb8b648dfde24b1d0ae24568d398dcc3a83b80a850f973238cdfd3d9"
+    },
+    {
+      "id": "sha256-canonical-json",
+      "description": "Default-path: canonical JSON of {entity: 'Acme Corp', type: 'company'}",
+      "input_utf8": "{\"entity\":\"Acme Corp\",\"type\":\"company\"}",
+      "algorithm": "sha256",
+      "expected_hash": "sha256:d2335958c50a31363816f5720e7b24d0e986856754a87ee94857c3489f8b190a"
+    }
+  ],
+  "poseidon2_vectors": [
     {
       "id": "poseidon2-empty",
+      "description": "Opt-in (PRIMUST_COMMITMENT_ALGORITHM=poseidon2): empty input. WARNING: These vectors are self-consistent across Python/Java/Go pure math/big implementations but have NOT been validated against Barretenberg or another audited Poseidon2 reference.",
       "input_hex": "",
       "algorithm": "poseidon2",
       "expected_hash": "poseidon2:0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1"
     },
     {
       "id": "poseidon2-1byte",
+      "description": "Opt-in: single byte 0x42",
       "input_hex": "42",
       "algorithm": "poseidon2",
       "expected_hash": "poseidon2:172be1e9aba0b04df642f6208d5426ab2d3d4e0581d3ead025612b549a49a092"
     },
     {
+      "id": "poseidon2-hello",
+      "description": "Opt-in: ASCII 'hello'",
+      "input_hex": "68656c6c6f",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:2c9c245e34a2bbbdc320d92f1df0e5e435de6a991a80bf9b90d908bc8b8a1960"
+    },
+    {
       "id": "poseidon2-31bytes",
+      "description": "Opt-in: 31 bytes of 0xAB",
       "input_hex": "ababababababababababababababababababababababababababababababab",
       "algorithm": "poseidon2",
       "expected_hash": "poseidon2:22378e78d14813dac1a10e003ea826ccb6432a28c02d45e62e82dde92a3f1555"
     },
     {
       "id": "poseidon2-32bytes",
+      "description": "Opt-in: 32 bytes of 0xCD",
       "input_hex": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
       "algorithm": "poseidon2",
       "expected_hash": "poseidon2:0d39d19348fe292db1b7959c9b9cafcc1ab96fa0affae86c3218c4309e825879"
     },
     {
       "id": "poseidon2-64bytes",
+      "description": "Opt-in: 64 bytes of 0xEF",
       "input_hex": "efefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef",
       "algorithm": "poseidon2",
       "expected_hash": "poseidon2:10f2adcc5a497a4760a6633c07238dfaafcdb66c45cb2a2ab0f1c774a8fd85e2"
     },
     {
-      "id": "sha256-1byte",
-      "input_hex": "42",
-      "algorithm": "sha256",
-      "expected_hash": "sha256:df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c"
-    },
+      "id": "poseidon2-canonical-json",
+      "description": "Opt-in: canonical JSON of {entity: 'Acme Corp', type: 'company'}",
+      "input_utf8": "{\"entity\":\"Acme Corp\",\"type\":\"company\"}",
+      "algorithm": "poseidon2",
+      "expected_hash": "poseidon2:2b685b61654c85ab77d25d28d64bf007777cc0c8a15cdcc06ea1d16f362d8d87"
+    }
+  ],
+  "merkle_sha256_vectors": [
     {
-      "id": "sha256-32bytes",
-      "input_hex": "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
-      "algorithm": "sha256",
-      "expected_hash": "sha256:7969ec0fcb8b648dfde24b1d0ae24568d398dcc3a83b80a850f973238cdfd3d9"
-    },
-    {
-      "id": "merkle-1leaf",
+      "id": "merkle-sha256-1leaf",
+      "description": "Default-path: single leaf returns unchanged.",
       "type": "merkle_root",
+      "algorithm": "sha256",
+      "input_hashes": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      ],
+      "expected_root": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "id": "merkle-sha256-2leaves",
+      "description": "Default-path: SHA-256 intermediate nodes, SHA-256(left_bytes || right_bytes).",
+      "type": "merkle_root",
+      "algorithm": "sha256",
+      "input_hashes": [
+        "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sha256:2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+      ],
+      "expected_root": "sha256:2cdc406caa00167e2d87877d4db045b28b543bd869cbb69c17764e1f64196560"
+    }
+  ],
+  "merkle_poseidon2_vectors": [
+    {
+      "id": "merkle-poseidon2-1leaf",
+      "description": "Opt-in (PRIMUST_COMMITMENT_ALGORITHM=poseidon2): single leaf returns unchanged.",
+      "type": "merkle_root",
+      "algorithm": "poseidon2",
       "input_hashes": [
         "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103"
       ],
       "expected_root": "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103"
     },
     {
-      "id": "merkle-2leaves",
+      "id": "merkle-poseidon2-2leaves",
+      "description": "Opt-in: Poseidon2 intermediate nodes. WARNING: not validated against audited reference.",
       "type": "merkle_root",
+      "algorithm": "poseidon2",
       "input_hashes": [
         "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103",
         "poseidon2:24f8c162c4a75a200f3d486f5910b1ab8fe297ce1cce94e55e2af0da0a421507"
@@ -63,8 +137,10 @@
       "expected_root": "poseidon2:28bf4c4329281a7861385ebece50b70b3e0701805320cf106375ba3d8d05fa94"
     },
     {
-      "id": "merkle-3leaves",
+      "id": "merkle-poseidon2-3leaves",
+      "description": "Opt-in: Poseidon2 intermediate nodes. WARNING: not validated against audited reference.",
       "type": "merkle_root",
+      "algorithm": "poseidon2",
       "input_hashes": [
         "poseidon2:1e05013a2f40c60dc58cfe36bfa4d7e94676c43436922368628342bc5144d103",
         "poseidon2:24f8c162c4a75a200f3d486f5910b1ab8fe297ce1cce94e55e2af0da0a421507",
@@ -72,5 +148,9 @@
       ],
       "expected_root": "poseidon2:00b35086fabadadca9fadc9e67abc0749beaf57d0191caef4f368bc149a82eaf"
     }
-  ]
+  ],
+  "validation_status": {
+    "sha256": "VALIDATED — uses standard library SHA-256, output matches RFC 6234 / NIST FIPS 180-4",
+    "poseidon2": "SELF-CONSISTENT ONLY — Python, Java, and Go pure math/big implementations produce matching output but have NOT been validated against Barretenberg, Iden3, or any audited reference. Do not use in production without external validation."
+  }
 }

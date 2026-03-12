@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/action_unit/v3.0.0",
+  "$id": "https://primust.com/schemas/action_unit/v4.0.0",
   "title": "Primust ActionUnit",
   "description": "Action unit record — provisional-frozen at schema_version 3.0.0",
   "type": "object",

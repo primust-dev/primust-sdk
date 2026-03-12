@@ -12,7 +12,7 @@ describe("P13-B: Reviewer Guide", () => {
 
     const levels = [
       "mathematical",
-      "execution_zkml",
+      "verifiable_inference",
       "execution",
       "witnessed",
       "attestation",

@@ -92,7 +92,7 @@ describe('Manifest Validator', () => {
     const manifest = makeManifest({
       supported_proof_level: 'witnessed',
       stages: [
-        { stage: 1, name: 'Human Review', type: 'human_review', proof_level: 'witnessed', redacted: false },
+        { stage: 1, name: 'Human Review', type: 'witnessed', proof_level: 'witnessed', redacted: false },
       ],
     });
 
@@ -105,14 +105,14 @@ describe('Manifest Validator', () => {
     const manifest = makeManifest({
       supported_proof_level: 'attestation',
       stages: [
-        { stage: 1, name: 'Human Review', type: 'human_review', proof_level: 'attestation', redacted: false },
+        { stage: 1, name: 'Human Review', type: 'witnessed', proof_level: 'attestation', redacted: false },
       ],
     });
 
     const errors = validateManifest(manifest);
-    const stageError = errors.find((e) => e.code === 'human_review_attestation_forbidden');
+    const stageError = errors.find((e) => e.code === 'witnessed_attestation_forbidden');
     expect(stageError).not.toBeUndefined();
-    expect(stageError!.code).toBe('human_review_attestation_forbidden');
+    expect(stageError!.code).toBe('witnessed_attestation_forbidden');
   });
 
   // ── MUST PASS: manual proof level above ceiling → error ──
@@ -210,7 +210,7 @@ describe('Manifest Validator', () => {
   it('all 5 proof levels valid in PROOF_LEVEL_HIERARCHY', () => {
     expect(PROOF_LEVEL_HIERARCHY).toEqual([
       'mathematical',
-      'execution_zkml',
+      'verifiable_inference',
       'execution',
       'witnessed',
       'attestation',
@@ -218,17 +218,17 @@ describe('Manifest Validator', () => {
     expect(PROOF_LEVEL_HIERARCHY.length).toBe(5);
   });
 
-  // ── MUST PASS: zkml_model → execution_zkml ──
+  // ── MUST PASS: zkml_model → verifiable_inference ──
 
-  it('zkml_model stage → proof ceiling = execution_zkml', () => {
+  it('zkml_model stage → proof ceiling = verifiable_inference', () => {
     const manifest = makeManifest({
-      supported_proof_level: 'execution_zkml',
+      supported_proof_level: 'verifiable_inference',
       stages: [
-        { stage: 1, name: 'ZKML Eval', type: 'zkml_model', proof_level: 'execution_zkml', redacted: false },
+        { stage: 1, name: 'ZKML Eval', type: 'zkml_model', proof_level: 'verifiable_inference', redacted: false },
       ],
     });
 
-    expect(computeProofCeiling(manifest)).toBe('execution_zkml');
+    expect(computeProofCeiling(manifest)).toBe('verifiable_inference');
   });
 
   // ── MUST PASS: skip_rationale_hash required when not_applicable ──
@@ -252,7 +252,7 @@ describe('Manifest Validator', () => {
       supported_proof_level: 'witnessed',
       stages: [
         { stage: 1, name: 'Rule', type: 'deterministic_rule', proof_level: 'mathematical', redacted: false },
-        { stage: 2, name: 'Review', type: 'human_review', proof_level: 'witnessed', redacted: false },
+        { stage: 2, name: 'Review', type: 'witnessed', proof_level: 'witnessed', redacted: false },
       ],
     });
 

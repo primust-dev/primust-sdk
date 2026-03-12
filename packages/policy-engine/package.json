@@ -16,6 +16,7 @@
     "@primust/artifact-core": "workspace:*",
     "@primust/runtime-core": "workspace:*",
     "@primust/registry": "workspace:*",
+    "@primust/zk-core": "workspace:*",
     "@noble/hashes": "^1.7.1"
   },
   "license": "UNLICENSED",

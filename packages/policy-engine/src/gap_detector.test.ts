@@ -87,10 +87,10 @@ beforeEach(() => {
 // ── Tests ──
 
 describe('gap_detector', () => {
-  it('MUST PASS: all 15 gap types detectable', () => {
-    // Verify all 15 canonical gap types are in the exported list
-    expect(CANONICAL_GAP_TYPES).toHaveLength(16); // 16 in our detector (15 from spec + policy_config_drift is one of the 15)
-    // The spec says 15 canonical types. We track 16 gap types total (including all from the spec).
+  it('MUST PASS: all 18 gap types detectable', () => {
+    // Verify all 18 canonical gap types are in the exported list
+    expect(CANONICAL_GAP_TYPES).toHaveLength(18); // 18 in our detector (16 from spec + explanation_missing + bias_audit_missing)
+    // The spec says 18 canonical types. We track 18 gap types total.
     // Verify each has a severity
     for (const gapType of CANONICAL_GAP_TYPES) {
       const severity = getGapSeverity(gapType);
@@ -254,7 +254,7 @@ describe('gap_detector', () => {
 
   it('MUST PASS: all 5 proof levels referenced correctly in proof_level_achieved checks', () => {
     openTestRun();
-    const proofLevels = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'] as const;
+    const proofLevels = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'] as const;
 
     for (const level of proofLevels) {
       store.appendCheckRecord(

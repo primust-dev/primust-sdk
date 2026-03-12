@@ -1,4 +1,4 @@
-"""Primust Runtime Core — Frozen dataclasses for all 10 canonical objects v3."""
+"""Primust Runtime Core — Frozen dataclasses for all 10 canonical objects v4."""
 
 from __future__ import annotations
 
@@ -115,6 +115,42 @@ class CheckManifest:
     kid: str
     signed_at: str  # ISO 8601
     signature: SignatureEnvelopeRef
+    prompt_version_id: str | None = None
+    prompt_approved_by: str | None = None  # user_{uuid}
+    prompt_approved_at: str | None = None  # ISO 8601
+
+
+# ── P4-D: Compliance & SLA config ──
+
+
+@dataclass(frozen=True)
+class ExplanationCommitmentRequirement:
+    on_check_result: list[str]  # ["fail", "override"]
+    on_check_types: list[str]
+
+
+@dataclass(frozen=True)
+class BiasAuditRequirement:
+    on_check_types: list[str]
+    protected_categories: list[str]
+
+
+@dataclass(frozen=True)
+class ComplianceRequirements:
+    require_actor_id: bool
+    require_explanation_commitment: ExplanationCommitmentRequirement | None
+    require_bias_audit: BiasAuditRequirement | None
+    require_retention_policy: bool
+    require_risk_classification: bool
+
+
+@dataclass(frozen=True)
+class SlaPolicyConfig:
+    proof_level_floor_minimum: ProofLevel
+    provable_surface_minimum: float  # 0.0-1.0
+    max_open_critical_gaps: int
+    max_open_high_gaps: int | None
+    retention_policy_required: str | None
 
 
 # ── Object 3: PolicyPack ──
@@ -140,6 +176,8 @@ class PolicyPack:
     signer_id: str
     kid: str
     signature: SignatureEnvelopeRef
+    compliance_requirements: ComplianceRequirements | None = None
+    sla_policy: SlaPolicyConfig | None = None
 
 
 # ── Object 4: PolicySnapshot ──
@@ -163,6 +201,9 @@ class PolicySnapshot:
     effective_checks: list[EffectiveCheck]
     snapshotted_at: str  # ISO 8601
     policy_basis: PolicyBasis
+    retention_policy: str | None = None
+    risk_classification: str | None = None
+    regulatory_context: list[str] | None = None
 
 
 # ── Object 5: ProcessRun ──
@@ -193,6 +234,18 @@ class ActionUnit:
     surface_id: str
     action_type: str
     recorded_at: str  # ISO 8601
+
+
+# ── P4-D: BiasAudit ──
+
+
+@dataclass(frozen=True)
+class BiasAudit:
+    protected_categories: list[str]
+    disparity_metric: str  # "demographic_parity" | "equalized_odds"
+    disparity_threshold: float
+    disparity_result_commitment: str  # poseidon2:hex
+    result: str  # "pass" | "fail" | "not_applicable"
 
 
 # ── Object 7: CheckExecutionRecord ──
@@ -237,6 +290,10 @@ class CheckExecutionRecord:
     chain_hash: str
     idempotency_key: str
     recorded_at: str  # ISO 8601
+    # P4-D compliance fields
+    actor_id: str | None = None  # user_{uuid}
+    explanation_commitment: str | None = None  # poseidon2:hex
+    bias_audit: BiasAudit | None = None
 
 
 # ── Object 8: Gap ──
@@ -252,6 +309,7 @@ class Gap:
     details: dict[str, Any]
     detected_at: str  # ISO 8601
     resolved_at: str | None
+    incident_report_ref: str | None = None
 
 
 # ── Object 9: Waiver ──
@@ -266,6 +324,7 @@ class Waiver:
     approver_user_id: str
     reason: str  # min 50 chars
     compensating_control: str | None
+    risk_treatment: str  # "accept" | "mitigate" | "transfer" | "avoid"
     expires_at: str  # REQUIRED, max 90 days
     signature: SignatureEnvelopeRef
     approved_at: str  # ISO 8601
@@ -299,7 +358,7 @@ class TimestampAnchorRef:
 @dataclass(frozen=True)
 class ProofDistribution:
     mathematical: int
-    execution_zkml: int
+    verifiable_inference: int
     execution: int
     witnessed: int
     attestation: int

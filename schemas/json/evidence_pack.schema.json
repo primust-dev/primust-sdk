@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/evidence_pack/v3.0.0",
+  "$id": "https://primust.com/schemas/evidence_pack/v4.0.0",
   "title": "Primust EvidencePack",
   "description": "Evidence pack — provisional-frozen at schema_version 3.0.0. coverage_verified + coverage_pending + coverage_ungoverned = 100.",
   "type": "object",
@@ -34,10 +34,10 @@
     "merkle_root": { "type": "string" },
     "proof_distribution": {
       "type": "object",
-      "required": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"],
+      "required": ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"],
       "properties": {
         "mathematical": { "type": "number" },
-        "execution_zkml": { "type": "number" },
+        "verifiable_inference": { "type": "number" },
         "execution": { "type": "number" },
         "witnessed": { "type": "number" },
         "attestation": { "type": "number" }

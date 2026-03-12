@@ -4,7 +4,7 @@
  * Pure functions, no database dependency.
  *
  * PROOF CEILING: weakest stage.proof_level across all stages.
- * Hierarchy: mathematical > execution_zkml > execution > witnessed > attestation
+ * Hierarchy: mathematical > verifiable_inference > execution > witnessed > attestation
  *
  * MANIFEST HASH: SHA256(canonical(manifest_without_manifest_id_and_signature))
  * manifest_id = manifest_hash (content-addressed identity)
@@ -28,11 +28,11 @@ import type { ValidationError } from '@primust/runtime-core';
 
 /**
  * Proof level hierarchy: lower index = stronger.
- * mathematical (0) > execution_zkml (1) > execution (2) > witnessed (3) > attestation (4)
+ * mathematical (0) > verifiable_inference (1) > execution (2) > witnessed (3) > attestation (4)
  */
 export const PROOF_LEVEL_HIERARCHY: readonly ProofLevel[] = [
   'mathematical',
-  'execution_zkml',
+  'verifiable_inference',
   'execution',
   'witnessed',
   'attestation',

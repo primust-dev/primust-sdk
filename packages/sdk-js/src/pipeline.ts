@@ -66,6 +66,21 @@ export interface ResumedContext {
   delegationContext: Record<string, unknown>;
 }
 
+export interface PrimustLogEvent {
+  primust_record_id: string;
+  primust_commitment_hash: string;   // poseidon2:hex — linkage anchor
+  primust_check_result: string;
+  primust_proof_level: string;
+  primust_workflow_id: string;
+  primust_run_id: string;
+  primust_recorded_at: string;       // ISO 8601
+  gap_types_emitted?: string[];      // only if options.includeGapTypes
+}
+
+export interface LoggerOptions {
+  includeGapTypes?: boolean;         // default false
+}
+
 // ── Helpers ──
 
 function toBytes(value: unknown): Uint8Array {
@@ -93,6 +108,9 @@ export class Pipeline {
   /** @internal Current manifest hashes */
   _manifestHashes: Record<string, string> = {};
 
+  private _loggerCallback: ((event: PrimustLogEvent) => void) | null = null;
+  private _loggerOptions: LoggerOptions = {};
+
   constructor(config: PipelineConfig) {
     this.apiKey = config.apiKey;
     this.workflowId = config.workflowId;
@@ -100,6 +118,38 @@ export class Pipeline {
     this.processContextHash = config.processContextHash;
     this.baseUrl = (config.baseUrl ?? 'https://api.primust.com').replace(/\/+$/, '');
     this._fetch = config.fetch ?? globalThis.fetch.bind(globalThis);
+  }
+
+  /**
+   * Register a log callback for SIEM linkage.
+   *
+   * The callback receives a PrimustLogEvent on every p.record() call.
+   * Write primust_commitment_hash to your existing logging infrastructure
+   * (Splunk, Datadog, CloudWatch, etc.) to create an auditable linkage
+   * between your application logs and the Primust VPEC.
+   *
+   * Auditor verification:
+   *   1. Search SIEM: WHERE primust_commitment_hash = <value>
+   *   2. primust-verify hash <plaintext_input> → confirms hash matches
+   *   3. Primust VPEC proves chain integrity and timestamp independence
+   *
+   * Raw content is never passed to this callback.
+   */
+  setLogger(
+    callback: (event: PrimustLogEvent) => void,
+    options?: LoggerOptions,
+  ): void {
+    this._loggerCallback = callback;
+    if (options) this._loggerOptions = options;
+  }
+
+  private _invokeLogger(event: PrimustLogEvent): void {
+    if (!this._loggerCallback) return;
+    try {
+      this._loggerCallback(event);
+    } catch {
+      // Exceptions in callback are caught — never propagate.
+    }
   }
 
   private async api(
@@ -186,7 +236,7 @@ export class Pipeline {
 
     // Compute commitment hashes locally — raw content NEVER sent
     const inputBytes = toBytes(input);
-    const { hash: commitmentHash } = commit(inputBytes);
+    const { hash: commitmentHash, algorithm: commitmentAlgorithm } = commit(inputBytes);
 
     let outputCommitment: string | null = null;
     if (options.output !== undefined) {
@@ -249,7 +299,7 @@ export class Pipeline {
     const body: Record<string, unknown> = {
       manifest_id: checkSession.manifestId,
       commitment_hash: commitmentHash,
-      commitment_algorithm: 'poseidon2',
+      commitment_algorithm: commitmentAlgorithm,
       commitment_type: options.output === undefined ? 'input_only' : 'input_output',
       check_result: checkResult,
       proof_level_achieved: proofLevel,
@@ -261,6 +311,17 @@ export class Pipeline {
     if (outputCommitment) body.output_commitment = outputCommitment;
     if (skipRationaleHash) body.skip_rationale_hash = skipRationaleHash;
     if (reviewerCredential) body.reviewer_credential = reviewerCredential;
+
+    // Logger callback — called after commitment_hash computed, before API call.
+    this._invokeLogger({
+      primust_record_id: body.idempotency_key as string,
+      primust_commitment_hash: commitmentHash,
+      primust_check_result: checkResult,
+      primust_proof_level: proofLevel,
+      primust_workflow_id: this.workflowId,
+      primust_run_id: this.runId!,
+      primust_recorded_at: now,
+    });
 
     const data = await this.api('POST', `/api/v1/runs/${this.runId}/records`, body);
 

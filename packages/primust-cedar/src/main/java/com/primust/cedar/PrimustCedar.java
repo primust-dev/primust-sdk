@@ -69,7 +69,7 @@ public class PrimustCedar {
         input.put("resource", resource);
 
         String inputJson = CanonicalJson.canonical(input);
-        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8), "poseidon2");
+        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8));
 
         // Determine check result
         String checkResult = "allow".equals(decision) ? "pass" : "fail";

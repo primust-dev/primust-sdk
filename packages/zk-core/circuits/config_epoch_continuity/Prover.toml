@@ -1,0 +1,7 @@
+blinding_factor = ""
+config_params = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+current_config_hash = ""
+epoch_transition_exists = ""
+prior_config_hash = ""
+transition_commitment_hash = ""
+transition_gap_commitment = ""

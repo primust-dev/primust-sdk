@@ -114,7 +114,7 @@ def _make_evidence_pack(**overrides) -> EvidencePack:
         merkle_root="sha256:" + "d" * 64,
         proof_distribution=ProofDistribution(
             mathematical=0,
-            execution_zkml=0,
+            verifiable_inference=0,
             execution=5,
             witnessed=0,
             attestation=0,
@@ -191,7 +191,7 @@ class TestValidateManifestStage:
         stage = ManifestStage(
             stage=1,
             name="Human Review",
-            type="human_review",
+            type="witnessed",
             proof_level="witnessed",
             redacted=False,
         )
@@ -201,25 +201,25 @@ class TestValidateManifestStage:
         stage = ManifestStage(
             stage=1,
             name="Human Review",
-            type="human_review",
+            type="witnessed",
             proof_level="attestation",
             redacted=False,
         )
         errors = validate_manifest_stage(stage)
         codes = [e.code for e in errors]
-        assert "human_review_attestation_forbidden" in codes
+        assert "witnessed_attestation_forbidden" in codes
 
     def test_human_review_execution_rejected(self):
         stage = ManifestStage(
             stage=1,
             name="Human Review",
-            type="human_review",
+            type="witnessed",
             proof_level="execution",
             redacted=False,
         )
         errors = validate_manifest_stage(stage)
         codes = [e.code for e in errors]
-        assert "human_review_must_be_witnessed" in codes
+        assert "witnessed_must_be_witnessed" in codes
 
     def test_deterministic_rule_mathematical_passes(self):
         stage = ManifestStage(

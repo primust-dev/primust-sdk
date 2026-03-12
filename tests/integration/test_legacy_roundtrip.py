@@ -121,11 +121,11 @@ class TestLegacyRoundTrip:
 
         assert "vpec_id" in vpec
         assert vpec["vpec_id"].startswith("vpec_")
-        assert vpec["schema_version"] == "3.0.0"
+        assert vpec["schema_version"] == "4.0.0"
         assert vpec["org_id"] == "testorg"
         assert vpec["test_mode"] is True
         assert vpec["proof_level"] in (
-            "mathematical", "execution_zkml", "execution", "witnessed", "attestation"
+            "mathematical", "verifiable_inference", "execution", "witnessed", "attestation"
         )
 
     def test_vpec_has_dev_signature(self, legacy_pipeline):
@@ -174,7 +174,7 @@ class TestLegacyRoundTrip:
         assert "weakest_link" in dist
         total = sum(
             dist.get(level, 0)
-            for level in ("mathematical", "execution_zkml", "execution", "witnessed", "attestation")
+            for level in ("mathematical", "verifiable_inference", "execution", "witnessed", "attestation")
         )
         assert total == 1
 

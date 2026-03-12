@@ -85,7 +85,7 @@ function ensureKeyCache(kid: string, publicKeyB64Url: string): void {
 
 const PROOF_LEVELS: ProofLevel[] = [
   'mathematical',
-  'execution_zkml',
+  'verifiable_inference',
   'execution',
   'witnessed',
   'attestation',
@@ -171,7 +171,7 @@ export async function assemblePack(
   // Step 4: Aggregate proof_distribution across all 5 levels
   const proofDist: Record<string, number> = {
     mathematical: 0,
-    execution_zkml: 0,
+    verifiable_inference: 0,
     execution: 0,
     witnessed: 0,
     attestation: 0,

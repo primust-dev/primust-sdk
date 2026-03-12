@@ -58,9 +58,12 @@ export function buildWitness(
     manifestHashValues.push(record.manifest_hash as string);
   }
 
-  // Compute commitment root from actual record hashes
+  // Compute commitment root using Poseidon2 — Noir circuits use Poseidon2
+  // natively for in-circuit Merkle tree verification. This root is for ZK
+  // proof public inputs, separate from the VPEC commitment_root (which uses SHA-256).
   const root = buildCommitmentRoot(
     records.map((r) => r.commitment_hash as string),
+    'poseidon2',
   );
 
   // Pad to MAX_RECORDS for fixed-size circuit input

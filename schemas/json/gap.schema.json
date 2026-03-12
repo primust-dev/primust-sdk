@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/gap/v3.0.0",
+  "$id": "https://primust.com/schemas/gap/v4.0.0",
   "title": "Primust Gap",
   "description": "Gap record — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -36,7 +36,8 @@
         "policy_config_drift",
         "zkml_proof_pending_timeout",
         "zkml_proof_failed",
-        "api_unavailable"
+        "explanation_missing",
+        "bias_audit_missing"
       ]
     },
     "severity": {
@@ -49,7 +50,8 @@
     },
     "details": { "type": "object" },
     "detected_at": { "type": "string", "format": "date-time" },
-    "resolved_at": { "type": ["string", "null"], "format": "date-time" }
+    "resolved_at": { "type": ["string", "null"], "format": "date-time" },
+    "incident_report_ref": { "type": ["string", "null"] }
   },
   "not": { "required": ["reliance_mode"] },
   "additionalProperties": false

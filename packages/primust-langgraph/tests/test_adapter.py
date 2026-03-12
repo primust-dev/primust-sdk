@@ -52,7 +52,7 @@ class MockTransport(httpx.BaseTransport):
         if "/close" in path and request.method == "POST":
             return httpx.Response(200, json={
                 "vpec_id": "vpec_test001",
-                "schema_version": "3.0.0",
+                "schema_version": "4.0.0",
                 "state": "signed",
             })
         return httpx.Response(404, json={"detail": "not found"})
@@ -231,7 +231,7 @@ class TestLangGraphAdapter:
     def test_all_five_proof_levels_reachable(self) -> None:
         """MUST PASS: all 5 proof levels reachable depending on manifest stage type."""
         from primust_langgraph.adapter import PROOF_LEVEL_MAP
-        expected = {"mathematical", "execution_zkml", "execution", "witnessed", "attestation"}
+        expected = {"mathematical", "verifiable_inference", "execution", "witnessed", "attestation"}
         assert set(PROOF_LEVEL_MAP.values()) == expected
 
     def test_wrap_graph_instruments_nodes(

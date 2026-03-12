@@ -5,7 +5,7 @@
 
 export type ProofLevel =
   | "mathematical"
-  | "execution_zkml"
+  | "verifiable_inference"
   | "execution"
   | "witnessed"
   | "attestation";
@@ -45,7 +45,7 @@ export type GapSeverity =
 
 export interface ProofDistribution {
   mathematical: number;
-  execution_zkml: number;
+  verifiable_inference: number;
   execution: number;
   witnessed: number;
   attestation: number;

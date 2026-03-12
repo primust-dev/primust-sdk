@@ -1,5 +1,5 @@
 /**
- * Primust Runtime Core — Enum types for domain-neutral object schemas v3.
+ * Primust Runtime Core — Enum types for domain-neutral object schemas v4.
  *
  * Enums already defined in @primust/artifact-core (reuse, do not redefine):
  *   ProofLevel, GapType, GapSeverity, SurfaceType, ObservationMode,
@@ -23,16 +23,19 @@ export type ImplementationType =
   | 'custom';
 
 /** Stage type → default proof_level mapping:
- *   deterministic_rule → mathematical
- *   zkml_model         → execution_zkml
+ *   TODO(zk-integration): Restore deterministic_rule/policy_engine/hardware_attested
+ *   to mathematical when ZK proof integration is live.
+ *
+ *   deterministic_rule → execution (mathematical when ZK wired)
+ *   zkml_model         → verifiable_inference
  *   ml_model           → execution
- *   statistical_test   → mathematical (if deterministic given inputs+seed) or execution
+ *   statistical_test   → execution
  *   custom_code        → execution (if code_hash) or attestation
- *   human_review       → witnessed (NEVER attestation — invariant 13)
- *   policy_engine      → mathematical
- *   byollm             → attestation (opaque hosted API — hard ceiling, no upgrade path)
+ *   witnessed          → witnessed (NEVER attestation — invariant 13)
+ *   policy_engine      → execution (mathematical when ZK wired)
+ *   llm_api            → attestation (opaque hosted API — hard ceiling, no upgrade path)
  *   open_source_ml     → execution (self-hosted, weights hashable, model_version_hash required)
- *   hardware_attested  → mathematical (TEE attestation quote verifiable against HW root of trust)
+ *   hardware_attested  → execution (mathematical when ZK wired)
  */
 export type StageType =
   | 'deterministic_rule'
@@ -40,9 +43,9 @@ export type StageType =
   | 'zkml_model'
   | 'statistical_test'
   | 'custom_code'
-  | 'human_review'
+  | 'witnessed'
   | 'policy_engine'
-  | 'byollm'
+  | 'llm_api'
   | 'open_source_ml'
   | 'hardware_attested';
 

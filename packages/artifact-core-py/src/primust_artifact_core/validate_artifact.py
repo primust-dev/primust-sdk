@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 PROOF_LEVELS = frozenset(
-    ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"]
 )
 
 GAP_TYPES = frozenset(
@@ -95,12 +95,12 @@ def validate_artifact(artifact: dict[str, Any]) -> ValidationResult:
         )
     _check_nested_reliance_mode(artifact, "", errors)
 
-    # schema_version must be 3.0.0
-    if artifact.get("schema_version") != "3.0.0":
+    # schema_version must be 4.0.0
+    if artifact.get("schema_version") != "4.0.0":
         errors.append(
             ValidationError(
                 code="INVALID_SCHEMA_VERSION",
-                message=f'schema_version must be "3.0.0", got "{artifact.get("schema_version")}"',
+                message=f'schema_version must be "4.0.0", got "{artifact.get("schema_version")}"',
                 path="schema_version",
             )
         )

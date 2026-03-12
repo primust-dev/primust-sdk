@@ -5,7 +5,7 @@ import { VerificationPanel } from "./VerificationPanel";
 
 const PROOF_LEVEL_COLORS: Record<string, string> = {
   mathematical: "text-green-600",
-  execution_zkml: "text-blue-600",
+  verifiable_inference: "text-blue-600",
   execution: "text-yellow-600",
   witnessed: "text-orange-600",
   attestation: "text-gray-600",
@@ -13,7 +13,7 @@ const PROOF_LEVEL_COLORS: Record<string, string> = {
 
 const PROOF_LEVEL_LABELS: Record<string, string> = {
   mathematical: "mathematical",
-  execution_zkml: "execution+zkml",
+  verifiable_inference: "verifiable_inference",
   execution: "execution",
   witnessed: "witnessed",
   attestation: "attestation",

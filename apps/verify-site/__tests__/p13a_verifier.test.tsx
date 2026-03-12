@@ -10,7 +10,7 @@ import { verifyArtifact } from "../src/lib/verify";
 function makeValidArtifact(): Record<string, unknown> {
   return {
     vpec_id: "vpec_abc123",
-    schema_version: "3.0.0",
+    schema_version: "4.0.0",
     run_id: "run_001",
     workflow_id: "wf_001",
     org_id: "org_acme",
@@ -20,7 +20,7 @@ function makeValidArtifact(): Record<string, unknown> {
     proof_level: "attestation",
     proof_distribution: {
       mathematical: 0,
-      execution_zkml: 0,
+      verifiable_inference: 0,
       execution: 124,
       witnessed: 0,
       attestation: 3,

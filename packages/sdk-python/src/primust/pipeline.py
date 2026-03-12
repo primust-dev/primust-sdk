@@ -23,12 +23,14 @@ Usage (legacy session-based API):
 from __future__ import annotations
 
 import datetime
+import logging
 import os
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import httpx
 
@@ -41,7 +43,9 @@ from primust_artifact_core import (
 from .models import (
     CheckResult,
     GovernanceGap,
+    LoggerOptions,
     ManifestRegistration,
+    PrimustLogEvent,
     ProofLevel,
     ProofLevelBreakdown,
     RecordResult,
@@ -160,6 +164,74 @@ class Pipeline:
         self._closed = False
         self._org_id: Optional[str] = None
         self._policy_snapshot_hash: Optional[str] = None
+        self._logger_callback: Callable[[PrimustLogEvent], None] | None = None
+        self._logger_options: LoggerOptions = LoggerOptions()
+
+    def set_logger(
+        self,
+        callback: Callable[[PrimustLogEvent], None],
+        options: LoggerOptions | None = None,
+    ) -> None:
+        """
+        Register a log callback for SIEM linkage.
+
+        The callback receives a PrimustLogEvent on every p.record() call.
+        Write primust_commitment_hash to your existing logging infrastructure
+        (Splunk, Datadog, CloudWatch, etc.) to create an auditable linkage
+        between your application logs and the Primust VPEC.
+
+        Auditor verification:
+          1. Search SIEM: WHERE primust_commitment_hash = <value>
+          2. primust-verify hash <plaintext_input> → confirms hash matches
+          3. Primust VPEC proves chain integrity and timestamp independence
+
+        Raw content is never passed to this callback.
+        """
+        self._logger_callback = callback
+        if options is not None:
+            self._logger_options = options
+
+    def _invoke_logger(
+        self,
+        *,
+        record_id: str,
+        commitment_hash: str,
+        check_result: str,
+        proof_level: str,
+        workflow_id: str,
+        run_id: str,
+        recorded_at: str,
+        gap_types: list[str] | None = None,
+    ) -> None:
+        """Call the logger callback if registered. Never raises."""
+        if self._logger_callback is None:
+            return
+
+        event = PrimustLogEvent(
+            primust_record_id=record_id,
+            primust_commitment_hash=commitment_hash,
+            primust_check_result=check_result,
+            primust_proof_level=proof_level,
+            primust_workflow_id=workflow_id,
+            primust_run_id=run_id,
+            primust_recorded_at=recorded_at,
+        )
+        if self._logger_options.include_gap_types and gap_types:
+            event.gap_types_emitted = gap_types
+
+        start = time.monotonic()
+        try:
+            self._logger_callback(event)
+        except Exception:
+            logging.getLogger("primust.logger").warning(
+                "Logger callback raised an exception — suppressed",
+                exc_info=True,
+            )
+        elapsed_ms = (time.monotonic() - start) * 1000
+        if elapsed_ms > 100:
+            logging.getLogger("primust.logger").warning(
+                "Logger callback took %.1fms (>100ms threshold)", elapsed_ms,
+            )
 
     # ══════════════════════════════════════════════════════════════════
     # Run-based API (recommended)
@@ -199,6 +271,8 @@ class Pipeline:
             policy_snapshot_hash=self._policy_snapshot_hash or "",
             transport=self._transport,
             test_mode=self.test_mode,
+            logger_callback=self._logger_callback,
+            logger_options=self._logger_options,
         )
 
     def register_check(self, manifest: dict) -> ManifestRegistration:
@@ -377,6 +451,18 @@ class Pipeline:
             body["skip_rationale_hash"] = skip_rationale_hash
         if reviewer_credential:
             body["reviewer_credential"] = reviewer_credential
+
+        # Logger callback — called synchronously after commitment_hash computed,
+        # before ObservationEnvelope sent to API.
+        self._invoke_logger(
+            record_id=body["idempotency_key"],
+            commitment_hash=commitment_hash,
+            check_result=check_result,
+            proof_level=proof_level,
+            workflow_id=self.workflow_id,
+            run_id=self._run_id,
+            recorded_at=now,
+        )
 
         resp = self._client.post(
             f"/api/v1/runs/{self._run_id}/records",

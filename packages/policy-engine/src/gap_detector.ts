@@ -2,7 +2,7 @@
  * Primust Policy Engine — Gap Detection at Run Close (P7-B)
  *
  * detectGaps() scans all CheckExecutionRecords for a run and detects
- * all 15 canonical gap types. Pass-through gaps (already stored) are
+ * all 18 canonical gap types. Pass-through gaps (already stored) are
  * loaded from the store; per-record gaps are detected inline.
  *
  * GAP SEVERITY RULES:
@@ -15,8 +15,10 @@ import type {
   CheckExecutionRecord,
   Gap,
   PolicySnapshot,
+  PolicyPack,
   EffectiveCheck,
   ReviewerCredential,
+  ComplianceRequirements,
 } from '@primust/runtime-core';
 import type { GapType, GapSeverity } from '@primust/artifact-core';
 
@@ -39,6 +41,8 @@ const GAP_SEVERITY: Record<string, GapSeverity> = {
   policy_config_drift: 'Medium',
   zkml_proof_pending_timeout: 'High',
   zkml_proof_failed: 'Critical',
+  explanation_missing: 'Medium',
+  bias_audit_missing: 'High',
 };
 
 // ── Helpers ──
@@ -58,6 +62,7 @@ function makeGap(
     details,
     detected_at: new Date().toISOString(),
     resolved_at: null,
+    incident_report_ref: null,
   };
 }
 
@@ -77,6 +82,7 @@ export function detectGaps(
   store: SqliteStore,
   policySnapshot?: PolicySnapshot | null,
   manifests?: Map<string, { implementation_type: string }>,
+  complianceRequirements?: ComplianceRequirements | null,
 ): Gap[] {
   const gaps: Gap[] = [];
 
@@ -216,6 +222,55 @@ export function detectGaps(
     }
   }
 
+  // P4-D compliance gap detection — only fires when complianceRequirements is set
+  if (complianceRequirements) {
+    for (const record of records) {
+      // explanation_missing — fires when require_explanation_commitment is set
+      // and explanation_commitment is null on a matching record
+      if (complianceRequirements.require_explanation_commitment) {
+        const req = complianceRequirements.require_explanation_commitment;
+        const resultMatches = req.on_check_result.includes(
+          record.check_result as 'fail' | 'override',
+        );
+        const typeMatches =
+          req.on_check_types.length === 0 ||
+          req.on_check_types.includes(
+            manifests?.get(record.manifest_id)?.implementation_type ?? '',
+          );
+        if (
+          resultMatches &&
+          typeMatches &&
+          !record.explanation_commitment
+        ) {
+          gaps.push(
+            makeGap(runId, 'explanation_missing', {
+              record_id: record.record_id,
+              manifest_id: record.manifest_id,
+              check_result: record.check_result,
+            }),
+          );
+        }
+      }
+
+      // bias_audit_missing — fires when require_bias_audit is set
+      // and bias_audit is null on a matching record
+      if (complianceRequirements.require_bias_audit) {
+        const req = complianceRequirements.require_bias_audit;
+        const implType =
+          manifests?.get(record.manifest_id)?.implementation_type ?? '';
+        if (req.on_check_types.includes(implType) && !record.bias_audit) {
+          gaps.push(
+            makeGap(runId, 'bias_audit_missing', {
+              record_id: record.record_id,
+              manifest_id: record.manifest_id,
+              check_type: implType,
+            }),
+          );
+        }
+      }
+    }
+  }
+
   // Pass-through gaps — load existing gaps from store
   // These were already detected and stored by other components:
   // external_boundary_traversal, lineage_token_missing, admission_gate_override,
@@ -251,7 +306,7 @@ export function getGapSeverity(gapType: string): GapSeverity {
   return GAP_SEVERITY[gapType] ?? 'Medium';
 }
 
-/** All 15 canonical gap types (excluding api_unavailable which is API-layer only). */
+/** All 18 canonical gap types. */
 export const CANONICAL_GAP_TYPES: GapType[] = [
   'check_not_executed',
   'enforcement_override',
@@ -269,4 +324,6 @@ export const CANONICAL_GAP_TYPES: GapType[] = [
   'policy_config_drift',
   'zkml_proof_pending_timeout',
   'zkml_proof_failed',
+  'explanation_missing',
+  'bias_audit_missing',
 ];

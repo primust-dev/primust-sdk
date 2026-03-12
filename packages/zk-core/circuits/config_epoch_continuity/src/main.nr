@@ -20,7 +20,7 @@
 //   2. If epoch_transition_exists: transition_gap_commitment != 0 and closes correctly
 //   3. Poseidon2(config_params, blinding_factor) == current_config_hash
 
-use std::hash::poseidon2;
+use dep::poseidon::poseidon2;
 
 fn main(
     // Public inputs

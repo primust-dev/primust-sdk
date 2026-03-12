@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/policy_pack/v3.0.0",
+  "$id": "https://primust.com/schemas/policy_pack/v4.0.0",
   "title": "Primust PolicyPack",
   "description": "Policy pack definition — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -41,7 +41,67 @@
     "created_at": { "type": "string", "format": "date-time" },
     "signer_id": { "type": "string" },
     "kid": { "type": "string" },
-    "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" }
+    "signature": { "$ref": "#/$defs/SignatureEnvelopeRef" },
+    "compliance_requirements": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["require_actor_id", "require_explanation_commitment", "require_bias_audit", "require_retention_policy", "require_risk_classification"],
+          "properties": {
+            "require_actor_id": { "type": "boolean" },
+            "require_explanation_commitment": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["on_check_result", "on_check_types"],
+                  "properties": {
+                    "on_check_result": { "type": "array", "items": { "type": "string", "enum": ["fail", "override"] } },
+                    "on_check_types": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "require_bias_audit": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["on_check_types", "protected_categories"],
+                  "properties": {
+                    "on_check_types": { "type": "array", "items": { "type": "string" } },
+                    "protected_categories": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "require_retention_policy": { "type": "boolean" },
+            "require_risk_classification": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "sla_policy": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["proof_level_floor_minimum", "provable_surface_minimum", "max_open_critical_gaps", "max_open_high_gaps", "retention_policy_required"],
+          "properties": {
+            "proof_level_floor_minimum": { "type": "string", "enum": ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"] },
+            "provable_surface_minimum": { "type": "number", "minimum": 0, "maximum": 1 },
+            "max_open_critical_gaps": { "type": "integer", "minimum": 0 },
+            "max_open_high_gaps": { "type": ["integer", "null"], "minimum": 0 },
+            "retention_policy_required": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
   },
   "not": { "required": ["reliance_mode"] },
   "additionalProperties": false,

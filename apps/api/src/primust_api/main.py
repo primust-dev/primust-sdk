@@ -240,13 +240,17 @@ app.add_middleware(RequestLoggingMiddleware)
 
 from .routes.gaps import router as gaps_router  # noqa: E402
 from .routes.packs import router as packs_router  # noqa: E402
+from .routes.proofs import router as proofs_router  # noqa: E402
 from .routes.runs import router as runs_router  # noqa: E402
 from .routes.vpecs import router as vpecs_router  # noqa: E402
+from .routes.webhook import router as webhook_router  # noqa: E402
 
 app.include_router(runs_router)
 app.include_router(vpecs_router)
 app.include_router(packs_router)
 app.include_router(gaps_router)
+app.include_router(proofs_router)
+app.include_router(webhook_router)
 
 
 @app.get("/api/v1/health")

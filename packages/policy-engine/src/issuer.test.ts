@@ -118,13 +118,13 @@ describe('VPEC issuance (P7-A)', () => {
     expect(json).not.toContain('reliance_mode');
   });
 
-  it('MUST PASS: schema_version = "3.0.0"', () => {
+  it('MUST PASS: schema_version = "4.0.0"', () => {
     openTestRun();
     setupSnapshot();
     addRecord();
 
     const vpec = closeRun('run_001', store, signerRecord, privateKey);
-    expect(vpec.schema_version).toBe('3.0.0');
+    expect(vpec.schema_version).toBe('4.0.0');
   });
 
   it('MUST PASS: proof_level = proof_distribution.weakest_link', () => {
@@ -273,7 +273,7 @@ describe('VPEC issuance (P7-A)', () => {
     openTestRun();
     setupSnapshot();
 
-    const levels: ProofLevel[] = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'];
+    const levels: ProofLevel[] = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
     for (const level of levels) {
       addRecord({ proof_level_achieved: level });
     }
@@ -282,7 +282,7 @@ describe('VPEC issuance (P7-A)', () => {
 
     // All 5 levels should appear in the distribution
     expect(vpec.proof_distribution.mathematical).toBe(1);
-    expect(vpec.proof_distribution.execution_zkml).toBe(1);
+    expect(vpec.proof_distribution.verifiable_inference).toBe(1);
     expect(vpec.proof_distribution.execution).toBe(1);
     expect(vpec.proof_distribution.witnessed).toBe(1);
     expect(vpec.proof_distribution.attestation).toBe(1);

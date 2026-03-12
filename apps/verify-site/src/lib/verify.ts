@@ -36,7 +36,7 @@ export function verifyArtifact(artifact: Record<string, unknown>): VerificationR
 
   // Schema validation
   if (!vpec_id) errors.push("missing_vpec_id");
-  if (schema_version !== "3.0.0") errors.push("invalid_schema_version");
+  if (schema_version !== "4.0.0") errors.push("invalid_schema_version");
 
   // Reliance mode banned
   if ("reliance_mode" in artifact) errors.push("banned_field_reliance_mode");

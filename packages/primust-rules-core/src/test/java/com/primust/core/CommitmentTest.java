@@ -37,10 +37,10 @@ class CommitmentTest {
     }
 
     @Test
-    void commitOutputAlwaysPoseidon2() {
+    void commitOutputDefaultSha256() {
         var r = Commitment.commitOutput("test output".getBytes());
-        assertEquals("poseidon2", r.algorithm());
-        assertTrue(r.hash().startsWith("poseidon2:"));
+        assertEquals("sha256", r.algorithm());
+        assertTrue(r.hash().startsWith("sha256:"));
     }
 
     @Test
@@ -48,6 +48,8 @@ class CommitmentTest {
         var r1 = Commitment.commit("deterministic".getBytes());
         var r2 = Commitment.commit("deterministic".getBytes());
         assertEquals(r1.hash(), r2.hash());
+        // Default algorithm is sha256
+        assertEquals("sha256", r1.algorithm());
     }
 
     @Test
@@ -67,10 +69,22 @@ class CommitmentTest {
     }
 
     @Test
-    void buildCommitmentRootTwoHashes() {
+    void buildCommitmentRootDefaultSha256TwoHashes() {
         String h1 = "poseidon2:0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1";
         String h2 = "poseidon2:2c9c245e34a2bbbdc320d92f1df0e5e435de6a991a80bf9b90d908bc8b8a1960";
+        // Default path: SHA-256 intermediate nodes
         String result = Commitment.buildCommitmentRoot(List.of(h1, h2));
+        assertEquals(
+            "sha256:f38d3e31305f6071a1042bc7bedfdd0dfc87f96e6d1d42aa5c7257ffb83090c3",
+            result
+        );
+    }
+
+    @Test
+    void buildCommitmentRootPoseidon2ExplicitTwoHashes() {
+        String h1 = "poseidon2:0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1";
+        String h2 = "poseidon2:2c9c245e34a2bbbdc320d92f1df0e5e435de6a991a80bf9b90d908bc8b8a1960";
+        String result = Commitment.buildCommitmentRoot(List.of(h1, h2), "poseidon2");
         assertEquals(
             "poseidon2:0986c2eb74fa0774e9d04991e4e3853796d264478409cd94900b86c875732ef0",
             result
@@ -78,11 +92,11 @@ class CommitmentTest {
     }
 
     @Test
-    void buildCommitmentRootThreeHashes() {
+    void buildCommitmentRootPoseidon2ExplicitThreeHashes() {
         String h1 = "poseidon2:0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1";
         String h2 = "poseidon2:2c9c245e34a2bbbdc320d92f1df0e5e435de6a991a80bf9b90d908bc8b8a1960";
         String h3 = "poseidon2:287bf2eb6b6e174667ce2927eaefe1b151b758a8db683a43e41fb4f44c074b23";
-        String result = Commitment.buildCommitmentRoot(List.of(h1, h2, h3));
+        String result = Commitment.buildCommitmentRoot(List.of(h1, h2, h3), "poseidon2");
         assertEquals(
             "poseidon2:276d577a0c7471c9656aa4b3fb08eda71e5c66079085bc5993fa854ef06dfdce",
             result
@@ -102,11 +116,12 @@ class CommitmentTest {
 
     @Test
     void selectProofLevel() {
-        assertEquals("mathematical", ProofLevel.selectProofLevel("deterministic_rule"));
-        assertEquals("mathematical", ProofLevel.selectProofLevel("policy_engine"));
+        // TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
+        assertEquals("execution", ProofLevel.selectProofLevel("deterministic_rule"));
+        assertEquals("execution", ProofLevel.selectProofLevel("policy_engine"));
         assertEquals("execution", ProofLevel.selectProofLevel("ml_model"));
-        assertEquals("execution_zkml", ProofLevel.selectProofLevel("zkml_model"));
-        assertEquals("witnessed", ProofLevel.selectProofLevel("human_review"));
+        assertEquals("verifiable_inference", ProofLevel.selectProofLevel("zkml_model"));
+        assertEquals("witnessed", ProofLevel.selectProofLevel("witnessed"));
     }
 
     @Test

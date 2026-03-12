@@ -2,7 +2,7 @@
 
 Enforces all invariants from the schema spec:
   1. No banned field names anywhere
-  2. human_review stage type → witnessed proof level (NEVER attestation)
+  2. witnessed stage type → witnessed proof level (NEVER attestation)
   3. manifest_hash captured per CheckExecutionRecord at record time
   4. reviewer_credential required when proof_level_achieved = witnessed
   5. skip_rationale_hash required when check_result = not_applicable
@@ -70,19 +70,19 @@ def scan_banned_fields(
 def validate_manifest_stage(stage: ManifestStage) -> list[ValidationError]:
     """Validate a ManifestStage — invariant 2."""
     errors: list[ValidationError] = []
-    if stage.type == "human_review" and stage.proof_level == "attestation":
+    if stage.type == "witnessed" and stage.proof_level == "attestation":
         errors.append(
             ValidationError(
-                code="human_review_attestation_forbidden",
-                message="human_review stage type must use witnessed proof level, "
+                code="witnessed_attestation_forbidden",
+                message="witnessed stage type must use witnessed proof level, "
                 "NEVER attestation (invariant 2)",
             )
         )
-    if stage.type == "human_review" and stage.proof_level != "witnessed":
+    if stage.type == "witnessed" and stage.proof_level != "witnessed":
         errors.append(
             ValidationError(
-                code="human_review_must_be_witnessed",
-                message="human_review stage type must use witnessed proof level",
+                code="witnessed_must_be_witnessed",
+                message="witnessed stage type must use witnessed proof level",
             )
         )
     return errors

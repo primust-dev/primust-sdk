@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/observation_surface/v3.0.0",
+  "$id": "https://primust.com/schemas/observation_surface/v4.0.0",
   "title": "Primust ObservationSurface",
   "description": "Observation surface registration — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -42,7 +42,7 @@
     "surface_coverage_statement": { "type": "string" },
     "proof_ceiling": {
       "type": "string",
-      "enum": ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+      "enum": ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"]
     },
     "gaps_detectable": {
       "type": "array",

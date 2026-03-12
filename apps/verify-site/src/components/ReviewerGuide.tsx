@@ -15,8 +15,8 @@ const PROOF_LEVELS = [
       "Examples: regex validation, threshold checks, allowlist membership.",
   },
   {
-    name: "Execution+ZKML",
-    level: "execution_zkml",
+    name: "Verifiable Inference",
+    level: "verifiable_inference",
     description:
       "ML model with ZK proof; no human reviewer needed. " +
       "The model output is bound to a zero-knowledge proof of correct execution.",

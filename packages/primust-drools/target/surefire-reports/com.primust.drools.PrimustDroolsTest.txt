@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.primust.drools.PrimustDroolsTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.088 s -- in com.primust.drools.PrimustDroolsTest
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.099 s -- in com.primust.drools.PrimustDroolsTest

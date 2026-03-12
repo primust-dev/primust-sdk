@@ -26,7 +26,7 @@ from primust_verify.types import VerifyOptions, VerificationResult
 
 PROOF_LEVEL_DISPLAY = {
     "mathematical": "mathematical",
-    "execution_zkml": "execution+zkml",
+    "verifiable_inference": "verifiable_inference",
     "execution": "execution",
     "witnessed": "witnessed",
     "attestation": "attestation",
@@ -38,7 +38,7 @@ def _format_proof_level(level: str) -> str:
 
 
 def _format_distribution(dist: dict) -> str:
-    levels = ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    levels = ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"]
     parts = []
     for l in levels:
         v = dist.get(l)

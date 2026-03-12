@@ -105,7 +105,7 @@ class TestSyncQueue:
 
     # ── MUST PASS: Mode 1 — API unavailable does not throw ──
 
-    def test_mode1_push_succeeds_when_api_unavailable(self) -> None:
+    def test_mode1_push_succeeds_when_engine_error(self) -> None:
         open_default_run(self.store)
         queue = SyncQueue(store=self.store, target=None)
 
@@ -144,9 +144,9 @@ class TestSyncQueue:
         assert run is not None
         assert run["state"] == "auto_closed"
 
-        # api_unavailable gap should exist
+        # engine_error gap should exist
         gaps = self.store.get_gaps("run_001")
-        api_gap = next((g for g in gaps if g["gap_type"] == "api_unavailable"), None)
+        api_gap = next((g for g in gaps if g["gap_type"] == "engine_error"), None)
         assert api_gap is not None
         assert api_gap["severity"] == "High"
 

@@ -212,9 +212,12 @@ export async function verify(
 
   // ── Step 9: ZK proof verification ──
   const pendingFlags = artifact.pending_flags as Record<string, unknown> | undefined;
-  if (artifact.zk_proof && !(pendingFlags?.proof_pending)) {
+  const proofPending = pendingFlags?.proof_pending === true;
+
+  if (artifact.zk_proof && !proofPending) {
     const zkProof = artifact.zk_proof as Record<string, unknown>;
-    const provingSystem = zkProof.proving_system as string | undefined;
+    // Accept both 'prover_system' (canonical) and 'proving_system' (legacy)
+    const provingSystem = (zkProof.prover_system ?? zkProof.proving_system) as string | undefined;
 
     if (provingSystem === 'ultrahonk') {
       result.zk_proof_valid = await verifyUltraHonk(zkProof);
@@ -229,14 +232,24 @@ export async function verify(
       result.zk_proof_valid = null;
       result.warnings.push(`unknown_proving_system: ${provingSystem ?? 'none'}`);
     }
+  } else if (proofPending) {
+    // Proof in flight — cannot verify yet
+    result.zk_proof_valid = null;
+    result.warnings.push('proof_pending');
   } else {
     result.zk_proof_valid = null;
   }
 
   // ── Step 9b: Mathematical proof_level requires verified ZK proof ──
-  if (artifact.proof_level === 'mathematical' && result.zk_proof_valid === null) {
-    result.errors.push('mathematical_proof_not_verified');
-    return result;
+  if (artifact.proof_level === 'mathematical') {
+    if (proofPending) {
+      // proof_pending + mathematical: proof hasn't arrived yet — warning, not error
+      result.warnings.push('mathematical_proof_pending');
+    } else if (result.zk_proof_valid === null) {
+      // No proof and not pending — this is an error
+      result.errors.push('mathematical_proof_not_verified');
+      return result;
+    }
   }
 
   // ── Step 10: test_mode check ──

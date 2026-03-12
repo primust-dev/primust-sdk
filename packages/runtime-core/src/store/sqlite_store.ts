@@ -249,6 +249,7 @@ export class SqliteStore {
                 },
                 detected_at: now,
                 resolved_at: null,
+                incident_report_ref: null,
               };
               driftGaps.push(gap);
               this.insertGap(gap);

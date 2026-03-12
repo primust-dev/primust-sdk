@@ -20,7 +20,7 @@ export interface ValidationResult {
 
 const PROOF_LEVELS: ProofLevel[] = [
   'mathematical',
-  'execution_zkml',
+  'verifiable_inference',
   'execution',
   'witnessed',
   'attestation',
@@ -68,11 +68,11 @@ export function validateArtifact(artifact: Record<string, unknown>): ValidationR
   }
   checkNestedRelianceMode(artifact, '', errors);
 
-  // schema_version must be 3.0.0
-  if (artifact.schema_version !== '3.0.0') {
+  // schema_version must be 4.0.0
+  if (artifact.schema_version !== '4.0.0') {
     errors.push({
       code: 'INVALID_SCHEMA_VERSION',
-      message: `schema_version must be "3.0.0", got "${artifact.schema_version}"`,
+      message: `schema_version must be "4.0.0", got "${artifact.schema_version}"`,
       path: 'schema_version',
     });
   }

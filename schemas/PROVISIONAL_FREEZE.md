@@ -1,8 +1,28 @@
-# Primust Schema Provisional Freeze — v3.0.0
+# Primust Schema Provisional Freeze — v4.0.0
 
-**Date:** 2026-03-10
+**Date:** 2026-03-12
 **Status:** Provisional-frozen
-**Schema Version:** 3.0.0
+**Schema Version:** 4.0.0
+**Previous Version:** 3.0.0 (2026-03-10)
+
+---
+
+## v3.0.0 → v4.0.0 Migration (P4-D)
+
+### Breaking changes
+- **StageType renames:** `byollm` → `llm_api`, `human_review` → `witnessed`
+- **ProofLevel rename:** `execution_zkml` → `verifiable_inference`
+- **GapType:** removed `api_unavailable` (codebase drift, not in canonical spec)
+- **Waiver:** `risk_treatment` is now REQUIRED (no default for new records)
+
+### Additive changes
+- **GapType:** added `explanation_missing` (Medium), `bias_audit_missing` (High) → 18 total (spec says 17 but lists 16 existing + 2 new)
+- **CheckExecutionRecord:** added `actor_id`, `explanation_commitment`, `bias_audit` (all nullable)
+- **Gap:** added `incident_report_ref` (nullable)
+- **Waiver:** added `risk_treatment` (required: accept | mitigate | transfer | avoid)
+- **PolicyPack:** added `compliance_requirements`, `sla_policy` (both nullable)
+- **PolicySnapshot:** added `retention_policy`, `risk_classification`, `regulatory_context` (all nullable)
+- **CheckManifest:** added `prompt_version_id`, `prompt_approved_by`, `prompt_approved_at` (all nullable)
 
 ---
 
@@ -24,8 +44,8 @@
 ## Frozen Enums
 
 **From artifact-core:**
-- ProofLevel: mathematical, execution_zkml, execution, witnessed, attestation
-- GapType: 16 values (check_not_executed through zkml_proof_failed)
+- ProofLevel: mathematical, verifiable_inference, execution, witnessed, attestation
+- GapType: 18 values (check_not_executed, enforcement_override, engine_error, check_degraded, external_boundary_traversal, lineage_token_missing, admission_gate_override, check_timing_suspect, reviewer_credential_invalid, witnessed_display_missing, witnessed_rationale_missing, deterministic_consistency_violation, skip_rationale_missing, policy_config_drift, zkml_proof_pending_timeout, zkml_proof_failed, explanation_missing, bias_audit_missing)
 - GapSeverity: Critical, High, Medium, Low, Informational
 - SurfaceType: in_process_adapter, network_proxy, log_collector, api_gateway, sidecar
 - ObservationMode: pre_action, post_action, streaming, batch
@@ -37,7 +57,7 @@
 **From runtime-core:**
 - ManifestDomain: ai_agent, cicd, financial, pharma, generic
 - ImplementationType: ml_model, rule, threshold, approval_chain, zkml_model, custom
-- StageType: deterministic_rule, ml_model, zkml_model, statistical_test, custom_code, human_review
+- StageType: deterministic_rule, ml_model, zkml_model, statistical_test, custom_code, witnessed, policy_engine, llm_api, open_source_ml, hardware_attested
 - EvaluationScope: per_run, per_action_unit, per_surface, per_window
 - AggregationMethod: all_stages_must_pass, worst_case, threshold_vote, sequential_gate
 - CheckResult: pass, fail, error, skipped, degraded, override, not_applicable, timed_out
@@ -46,16 +66,18 @@
 - CommitmentType: input_commitment, metadata_commitment, foreign_event_commitment
 - KeyBinding: software, hardware
 
-## Critical Invariants (8)
+## Critical Invariants (10)
 
 1. **No banned field names** — agent_id, pipeline_id, tool_name, session_id, trace_id, reliance_mode, PGC, attestation (as a field name) are forbidden everywhere.
-2. **human_review → witnessed** — human_review stage type must use witnessed proof level, NEVER attestation.
+2. **witnessed stage → witnessed proof** — witnessed stage type must use witnessed proof level, NEVER attestation.
 3. **manifest_hash captured** — Every CheckExecutionRecord must include manifest_hash at record time for drift detection.
 4. **reviewer_credential required** — When proof_level_achieved = witnessed, reviewer_credential is mandatory.
 5. **skip_rationale_hash required** — When check_result = not_applicable, skip_rationale_hash is mandatory.
 6. **Append-only records** — CheckExecutionRecord is append-only after commit (no UPDATE).
 7. **No permanent waivers** — Waiver expires_at is REQUIRED. Maximum 90 days from approved_at. Reason minimum 50 characters.
 8. **Coverage sum = 100** — EvidencePack: coverage_verified_pct + coverage_pending_pct + coverage_ungoverned_pct must equal 100.
+9. **risk_treatment required** — Waiver risk_treatment is REQUIRED, no default. Must be: accept, mitigate, transfer, or avoid.
+10. **Banned stage type terms** — `byollm`, `human_review`, `execution_zkml` must not appear anywhere in codebase. Build must fail if found.
 
 ## Banned Field Names (8)
 
@@ -67,6 +89,12 @@
 - `reliance_mode`
 - `PGC`
 - `attestation` (as a field name)
+
+## Banned Stage Type / Proof Level Terms (3)
+
+- `byollm` (replaced by `llm_api`)
+- `human_review` (replaced by `witnessed`)
+- `execution_zkml` (replaced by `verifiable_inference`)
 
 ## JSON Schema Files
 
@@ -98,7 +126,7 @@ All schemas located at `schemas/json/`:
 
 ## Freeze Condition
 
-Schema changes after 2026-03-10 require a version bump in schema_version and a migration.
+Schema changes after 2026-03-12 require a version bump in schema_version and a migration.
 
 ## Amendment Process
 

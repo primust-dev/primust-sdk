@@ -21,7 +21,7 @@ function buildArtifactBody(
 ): Record<string, unknown> {
   const base: Record<string, unknown> = {
     vpec_id: 'vpec_00000000-0000-0000-0000-000000000001',
-    schema_version: '3.0.0',
+    schema_version: '4.0.0',
     org_id: 'org_test',
     run_id: 'run_00000000-0000-0000-0000-000000000001',
     workflow_id: 'wf_test',
@@ -43,7 +43,7 @@ function buildArtifactBody(
     proof_level: 'execution',
     proof_distribution: {
       mathematical: 0,
-      execution_zkml: 0,
+      verifiable_inference: 0,
       execution: 5,
       witnessed: 0,
       attestation: 0,
@@ -245,14 +245,14 @@ describe('verify()', () => {
   });
 
   it('MUST PASS: all 5 proof levels parse correctly in VerificationResult', async () => {
-    const levels = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'];
+    const levels = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
 
     for (const level of levels) {
       const { artifact, publicKeyB64Url } = createSignedArtifact({
         proof_level: level,
         proof_distribution: {
           mathematical: 0,
-          execution_zkml: 0,
+          verifiable_inference: 0,
           execution: 0,
           witnessed: 0,
           attestation: 0,
@@ -311,7 +311,7 @@ describe('verify()', () => {
       proof_level: 'mathematical',
       proof_distribution: {
         mathematical: 5,
-        execution_zkml: 0,
+        verifiable_inference: 0,
         execution: 0,
         witnessed: 0,
         attestation: 0,
@@ -407,15 +407,15 @@ describe('CLI (main)', () => {
   });
 
   it('MUST PASS: all 5 proof levels display correctly in human output', async () => {
-    const levels = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'];
-    const expected = ['mathematical', 'execution+zkml', 'execution', 'witnessed', 'attestation'];
+    const levels = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
+    const expected = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
 
     for (let i = 0; i < levels.length; i++) {
       const { artifact, publicKeyB64Url } = createSignedArtifact({
         proof_level: levels[i],
         proof_distribution: {
           mathematical: 0,
-          execution_zkml: 0,
+          verifiable_inference: 0,
           execution: 0,
           witnessed: 0,
           attestation: 0,
@@ -453,17 +453,17 @@ describe('CLI (main)', () => {
     fetchSpy.mockRestore();
   });
 
-  it('MUST PASS: execution_zkml renders as "execution+zkml" in human output', async () => {
+  it('MUST PASS: verifiable_inference renders as "verifiable_inference" in human output', async () => {
     const { artifact, publicKeyB64Url } = createSignedArtifact({
-      proof_level: 'execution_zkml',
+      proof_level: 'verifiable_inference',
       proof_distribution: {
         mathematical: 0,
-        execution_zkml: 5,
+        verifiable_inference: 5,
         execution: 0,
         witnessed: 0,
         attestation: 0,
-        weakest_link: 'execution_zkml',
-        weakest_link_explanation: 'All at execution_zkml',
+        weakest_link: 'verifiable_inference',
+        weakest_link_explanation: 'All at verifiable_inference',
       },
     });
     const trustRoot = writeTrustRoot(publicKeyB64Url);
@@ -478,7 +478,6 @@ describe('CLI (main)', () => {
     console.log = origLog;
 
     const output = logs.join('\n');
-    expect(output).toContain('execution+zkml');
-    expect(output).not.toContain('execution_zkml');
+    expect(output).toContain('verifiable_inference');
   });
 });

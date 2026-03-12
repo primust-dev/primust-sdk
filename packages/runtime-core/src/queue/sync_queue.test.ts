@@ -41,6 +41,9 @@ function makeRecord(
     freshness_warning: false,
     idempotency_key: `idem_${index}`,
     recorded_at: `2026-03-10T00:00:${String(index).padStart(2, '0')}Z`,
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     ...overrides,
   };
 }
@@ -114,7 +117,7 @@ describe('SyncQueue', () => {
     expect(records.length).toBe(1);
   });
 
-  it('Mode 1: close retries with backoff and emits api_unavailable gap after max retries', async () => {
+  it('Mode 1: close retries with backoff and emits engine_error gap after max retries', async () => {
     openDefaultRun(store);
     const target = createMockTarget('fail_retryable');
     const sleepCalls: number[] = [];
@@ -137,11 +140,11 @@ describe('SyncQueue', () => {
     const run = store.getProcessRun('run_001');
     expect(run!.state).toBe('auto_closed');
 
-    // api_unavailable gap should exist
+    // engine_error gap should exist
     const gaps = store.getGaps('run_001');
-    const apiGap = gaps.find((g) => g.gap_type === 'api_unavailable');
+    const apiGap = gaps.find((g) => g.gap_type === 'engine_error');
     expect(apiGap).not.toBeNull();
-    expect(apiGap!.gap_type).toBe('api_unavailable');
+    expect(apiGap!.gap_type).toBe('engine_error');
     expect(apiGap!.severity).toBe('High');
   });
 
@@ -221,6 +224,7 @@ describe('SyncQueue', () => {
       details: { check_id: 'check_001', reason: 'adapter_timeout' },
       detected_at: '2026-03-10T00:00:00Z',
       resolved_at: null,
+      incident_report_ref: null,
     };
 
     // Must not throw

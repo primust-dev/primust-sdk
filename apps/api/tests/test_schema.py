@@ -121,7 +121,7 @@ class TestSchema:
         """MUST PASS: all 5 proof level enum values present."""
         proof_levels = [
             "mathematical",
-            "execution_zkml",
+            "verifiable_inference",
             "execution",
             "witnessed",
             "attestation",

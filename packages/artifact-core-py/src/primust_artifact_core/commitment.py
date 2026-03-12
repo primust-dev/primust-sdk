@@ -1,14 +1,16 @@
 """
 Primust Artifact Core — Commitment Layer (P6-A) — Python mirror
 
-Poseidon2 (default, ZK-friendly) and SHA-256 (legacy fallback) commitments.
-Pure Python implementation, no external dependencies beyond hashlib.
+SHA-256 (default) and Poseidon2 (opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2) commitments.
+Poseidon2 uses a pure Python implementation — opt-in only until an audited reference
+(e.g. Barretenberg) is validated.
 
 PRIVACY INVARIANT: Raw content NEVER leaves the customer environment.
 Only the commitment hash transits to Primust API.
 """
 
 import hashlib
+import os
 from typing import List, Optional, Tuple
 
 # ── BN254 Field ──
@@ -328,45 +330,81 @@ def _parse_hash_to_field(hash_str: str) -> int:
     return int(hex_str, 16) % BN254_P
 
 
+# ── Algorithm Resolution ──
+
+
+def _resolve_algorithm() -> str:
+    """Resolve commitment algorithm from env var or default.
+    Default is 'sha256'. Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2
+    until an audited implementation (e.g. Barretenberg) is validated.
+    """
+    alg = os.environ.get("PRIMUST_COMMITMENT_ALGORITHM")
+    if alg == "poseidon2":
+        return "poseidon2"
+    return "sha256"
+
+
+def _parse_hash_to_raw_bytes(hash_str: str) -> bytes:
+    """Parse 'algorithm:hex' hash string to raw bytes."""
+    colon = hash_str.index(":")
+    hex_str = hash_str[colon + 1:]
+    return bytes.fromhex(hex_str)
+
+
 # ── Public API ──
 
 CommitmentResult = Tuple[str, str]  # (hash, algorithm)
 
 
-def commit(data: bytes, algorithm: str = "poseidon2") -> CommitmentResult:
+def commit(data: bytes, algorithm: Optional[str] = None) -> CommitmentResult:
     """
     Compute a commitment hash over input bytes.
 
     Args:
         data: Raw content bytes (NEVER transmitted)
-        algorithm: 'poseidon2' (default) or 'sha256'
+        algorithm: 'sha256' (default) or 'poseidon2'. If None, uses
+                   PRIMUST_COMMITMENT_ALGORITHM env var or defaults to 'sha256'.
 
     Returns:
         (hash_string, algorithm)
     """
-    if algorithm == "sha256":
-        return (_sha256_bytes(data), "sha256")
-    return (_poseidon2_bytes(data), "poseidon2")
+    alg = algorithm if algorithm is not None else _resolve_algorithm()
+    if alg == "poseidon2":
+        return (_poseidon2_bytes(data), "poseidon2")
+    return (_sha256_bytes(data), "sha256")
 
 
 def commit_output(data: bytes) -> CommitmentResult:
-    """Commitment for check output. Always poseidon2."""
-    return (_poseidon2_bytes(data), "poseidon2")
+    """Commitment for check output. Uses resolved algorithm."""
+    alg = _resolve_algorithm()
+    if alg == "poseidon2":
+        return (_poseidon2_bytes(data), "poseidon2")
+    return (_sha256_bytes(data), "sha256")
 
 
-def build_commitment_root(hashes: List[str]) -> Optional[str]:
+def build_commitment_root(
+    hashes: List[str], algorithm: Optional[str] = None
+) -> Optional[str]:
     """
     Build Merkle root over commitment hashes.
+    Uses resolved algorithm (SHA-256 default) for intermediate nodes.
 
     Returns:
-        poseidon2 Merkle root string, or None for empty list.
+        Merkle root string, or None for empty list.
         Single hash returns unchanged.
     """
+    alg = algorithm if algorithm is not None else _resolve_algorithm()
     if len(hashes) == 0:
         return None
     if len(hashes) == 1:
         return hashes[0]
 
+    if alg == "poseidon2":
+        return _build_poseidon2_merkle_root(hashes)
+    return _build_sha256_merkle_root(hashes)
+
+
+def _build_poseidon2_merkle_root(hashes: List[str]) -> str:
     layer = [_parse_hash_to_field(h) for h in hashes]
 
     while len(layer) > 1:
@@ -380,25 +418,43 @@ def build_commitment_root(hashes: List[str]) -> Optional[str]:
     return "poseidon2:" + format(layer[0], "064x")
 
 
+def _build_sha256_merkle_root(hashes: List[str]) -> str:
+    layer = [_parse_hash_to_raw_bytes(h) for h in hashes]
+
+    while len(layer) > 1:
+        next_layer = []
+        for i in range(0, len(layer), 2):
+            left = layer[i]
+            right = layer[i + 1] if i + 1 < len(layer) else layer[i]
+            next_layer.append(hashlib.sha256(left + right).digest())
+        layer = next_layer
+
+    return "sha256:" + layer[0].hex()
+
+
 def select_proof_level(stage_type: str) -> str:
     """
     Select the proof level for a given stage type.
 
-    deterministic_rule → mathematical
-    zkml_model         → execution_zkml
+    TODO(zk-integration): Restore deterministic_rule/policy_engine to "mathematical"
+    when ZK proof integration is live.
+
+    deterministic_rule → execution (mathematical when ZK wired)
+    zkml_model         → verifiable_inference
     ml_model           → execution
     statistical_test   → execution
     custom_code        → execution
-    human_review       → witnessed
+    witnessed          → witnessed
+    policy_engine      → execution (mathematical when ZK wired)
     """
     mapping = {
-        "deterministic_rule": "mathematical",
-        "zkml_model": "execution_zkml",
+        "deterministic_rule": "execution",
+        "zkml_model": "verifiable_inference",
         "ml_model": "execution",
         "statistical_test": "execution",
         "custom_code": "execution",
-        "human_review": "witnessed",
-        "policy_engine": "mathematical",
+        "witnessed": "witnessed",
+        "policy_engine": "execution",
     }
     result = mapping.get(stage_type)
     if result is None:

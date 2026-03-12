@@ -145,7 +145,7 @@ def assemble_pack(
     # Build pack JSON
     proof_dist: dict[str, int] = {
         "mathematical": 0,
-        "execution_zkml": 0,
+        "verifiable_inference": 0,
         "execution": 0,
         "witnessed": 0,
         "attestation": 0,

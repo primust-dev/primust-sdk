@@ -30,6 +30,12 @@ import {
   buildCommitmentRoot,
   ZK_IS_BLOCKING,
 } from '@primust/artifact-core';
+import {
+  buildWitness,
+  proveAsync,
+  StubProverClient,
+} from '@primust/zk-core';
+import type { ProverClient } from '@primust/zk-core';
 import type {
   VPECArtifact,
   ProofLevel,
@@ -62,6 +68,8 @@ export interface CloseRunOptions {
   test_mode?: boolean;
   org_region?: OrgRegion;
   public_key_url?: string;
+  /** ProverClient for ZK proof generation. Defaults to StubProverClient. */
+  prover_client?: ProverClient;
 }
 
 // ── Constants ──
@@ -69,7 +77,7 @@ export interface CloseRunOptions {
 /** Proof level hierarchy: lower index = stronger. */
 const PROOF_LEVEL_ORDER: ProofLevel[] = [
   'mathematical',
-  'execution_zkml',
+  'verifiable_inference',
   'execution',
   'witnessed',
   'attestation',
@@ -143,7 +151,7 @@ export function closeRun(
   // Step 5: Build proof_distribution
   const dist: Record<string, number> = {
     mathematical: 0,
-    execution_zkml: 0,
+    verifiable_inference: 0,
     execution: 0,
     witnessed: 0,
     attestation: 0,
@@ -156,7 +164,7 @@ export function closeRun(
 
   const proofDistribution: ProofDistribution = {
     mathematical: dist.mathematical,
-    execution_zkml: dist.execution_zkml,
+    verifiable_inference: dist.verifiable_inference,
     execution: dist.execution,
     witnessed: dist.witnessed,
     attestation: dist.attestation,
@@ -262,7 +270,7 @@ export function closeRun(
   // Build the document for signing (state = provisional at this point)
   const vpecDocument: Record<string, unknown> = {
     vpec_id: vpecId,
-    schema_version: '3.0.0',
+    schema_version: '4.0.0',
     org_id: run.org_id,
     run_id: runId,
     workflow_id: run.workflow_id,
@@ -280,7 +288,7 @@ export function closeRun(
     gaps: gapEntries,
     manifest_hashes: manifestHashes,
     commitment_root: commitmentRoot,
-    commitment_algorithm: 'poseidon2',
+    commitment_algorithm: 'sha256',
     zk_proof: null,
     issuer,
     // signature placeholder — will be replaced
@@ -327,9 +335,28 @@ export function closeRun(
   // timestamp_anchor already set to { type: 'none', tsa: 'none', value: null }
 
   // Step 14: ZK proof queuing (non-blocking)
-  if (requestZk && dist.mathematical > 0) {
+  // Trigger proof generation when requested, regardless of current proof levels.
+  // Records report 'execution' until ZK is verified; the proof, when it completes,
+  // upgrades the VPEC from execution → mathematical.
+  if (requestZk && records.length > 0) {
     (vpecDocument.pending_flags as PendingFlags).proof_pending = true;
-    // ZK_IS_BLOCKING is false — VPEC returned immediately
+
+    // ZK_IS_BLOCKING is false — VPEC returned immediately, proof runs async
+    const proverClient = options.prover_client ?? new StubProverClient();
+    try {
+      const witness = buildWitness(runId, store, run.policy_snapshot_hash);
+      // Fire-and-forget: proof completes asynchronously via webhook
+      void proveAsync(witness, runId, 'mathematical', proverClient).catch(
+        (err) => {
+          // eslint-disable-next-line no-console
+          console.error(`[primust] Proof submission failed for run ${runId}:`, err);
+        },
+      );
+    } catch (witnessErr) {
+      // Witness build failure is non-fatal — VPEC still issues with proof_pending
+      // eslint-disable-next-line no-console
+      console.error(`[primust] Witness build failed for run ${runId}:`, witnessErr);
+    }
   }
 
   // Step 15: Rekor stub

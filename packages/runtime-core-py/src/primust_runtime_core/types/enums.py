@@ -1,4 +1,4 @@
-"""Primust Runtime Core — Enum types for domain-neutral object schemas v3.
+"""Primust Runtime Core — Enum types for domain-neutral object schemas v4.
 
 Enums already defined in primust_artifact_core (reuse, do not redefine):
   ProofLevel, GapType, GapSeverity, SurfaceType, ObservationMode,
@@ -23,9 +23,9 @@ StageType = Literal[
     "zkml_model",
     "statistical_test",
     "custom_code",
-    "human_review",
+    "witnessed",
     "policy_engine",
-    "byollm",
+    "llm_api",
     "open_source_ml",
     "hardware_attested",
 ]

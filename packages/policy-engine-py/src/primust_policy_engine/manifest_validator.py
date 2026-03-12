@@ -3,7 +3,7 @@
 Pure functions, no database dependency.
 
 PROOF CEILING: weakest stage.proof_level across all stages.
-Hierarchy: mathematical > execution_zkml > execution > witnessed > attestation
+Hierarchy: mathematical > verifiable_inference > execution > witnessed > attestation
 
 MANIFEST HASH: SHA256(canonical(manifest_without_manifest_id_manifest_hash_and_signature))
 manifest_id = manifest_hash (content-addressed identity)
@@ -29,7 +29,7 @@ from primust_runtime_core.validate_schemas import (
 
 ProofLevel = Literal[
     "mathematical",
-    "execution_zkml",
+    "verifiable_inference",
     "execution",
     "witnessed",
     "attestation",
@@ -37,7 +37,7 @@ ProofLevel = Literal[
 
 PROOF_LEVEL_HIERARCHY: list[str] = [
     "mathematical",
-    "execution_zkml",
+    "verifiable_inference",
     "execution",
     "witnessed",
     "attestation",

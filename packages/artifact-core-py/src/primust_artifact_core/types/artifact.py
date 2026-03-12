@@ -1,6 +1,6 @@
 """Primust VPEC Artifact Schema — Python types.
 
-Provisional-frozen at schema_version 3.0.0
+Provisional-frozen at schema_version 4.0.0
 Canonical source: schemas/json/artifact.schema.json
 
 INVARIANTS (enforced in validate_artifact):
@@ -23,7 +23,7 @@ from typing import Literal, Optional
 
 ProofLevel = Literal[
     "mathematical",
-    "execution_zkml",
+    "verifiable_inference",
     "execution",
     "witnessed",
     "attestation",
@@ -89,7 +89,8 @@ GapType = Literal[
     "policy_config_drift",
     "zkml_proof_pending_timeout",
     "zkml_proof_failed",
-    "api_unavailable",
+    "explanation_missing",
+    "bias_audit_missing",
 ]
 
 
@@ -110,7 +111,7 @@ class SurfaceEntry:
 @dataclass(frozen=True)
 class ProofDistribution:
     mathematical: int
-    execution_zkml: int
+    verifiable_inference: int
     execution: int
     witnessed: int
     attestation: int
@@ -195,7 +196,7 @@ class PendingFlags:
 @dataclass(frozen=True)
 class VPECArtifact:
     vpec_id: str
-    schema_version: Literal["3.0.0"]
+    schema_version: Literal["4.0.0"]
 
     org_id: str
     run_id: str

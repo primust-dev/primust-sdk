@@ -35,7 +35,7 @@ def _make_signed_artifact(**overrides: Any) -> dict[str, Any]:
 
     body: dict[str, Any] = {
         "vpec_id": "vpec_test001",
-        "schema_version": "3.0.0",
+        "schema_version": "4.0.0",
         "org_id": "org_test",
         "run_id": "run_001",
         "workflow_id": "wf_001",
@@ -47,7 +47,7 @@ def _make_signed_artifact(**overrides: Any) -> dict[str, Any]:
         "proof_level": "execution",
         "proof_distribution": {
             "mathematical": 0,
-            "execution_zkml": 0,
+            "verifiable_inference": 0,
             "execution": 5,
             "witnessed": 0,
             "attestation": 0,
@@ -104,7 +104,7 @@ def _make_valid_pack(artifact_ids: list[str] | None = None) -> dict[str, Any]:
     import hashlib
 
     ids = artifact_ids or ["vpec_001", "vpec_002"]
-    proof_dist = {"mathematical": 0, "execution_zkml": 0, "execution": 10, "witnessed": 0, "attestation": 0}
+    proof_dist = {"mathematical": 0, "verifiable_inference": 0, "execution": 10, "witnessed": 0, "attestation": 0}
     report_content = json.dumps(
         {"artifact_ids": ids, "proof_distribution": proof_dist},
         sort_keys=True,

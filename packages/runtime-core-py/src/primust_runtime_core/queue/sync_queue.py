@@ -185,7 +185,7 @@ class SyncQueue:
 
     async def close(self, run_id: str) -> None:
         """Close a pipeline run with retry. On all retries failing,
-        auto-closes the run and emits an api_unavailable gap."""
+        auto-closes the run and emits an engine_error gap."""
         try:
             flushed = False
 
@@ -208,9 +208,9 @@ class SyncQueue:
 
                 now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 gap = {
-                    "gap_id": f"gap_api_unavailable_{run_id}",
+                    "gap_id": f"gap_engine_error_{run_id}",
                     "run_id": run_id,
-                    "gap_type": "api_unavailable",
+                    "gap_type": "engine_error",
                     "severity": "High",
                     "state": "open",
                     "details": {

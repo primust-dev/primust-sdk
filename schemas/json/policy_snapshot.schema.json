@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/policy_snapshot/v3.0.0",
+  "$id": "https://primust.com/schemas/policy_snapshot/v4.0.0",
   "title": "Primust PolicySnapshot",
   "description": "Policy snapshot — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -39,6 +39,14 @@
     "policy_basis": {
       "type": "string",
       "enum": ["P1_self_declared", "P2_auditor_reviewed", "P3_regulator_mandated"]
+    },
+    "retention_policy": { "type": ["string", "null"] },
+    "risk_classification": { "type": ["string", "null"] },
+    "regulatory_context": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
     }
   },
   "not": { "required": ["reliance_mode"] },

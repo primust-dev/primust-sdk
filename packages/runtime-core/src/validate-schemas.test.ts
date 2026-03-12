@@ -40,6 +40,10 @@ function makeCheckRecord(overrides: Partial<CheckExecutionRecord> = {}): CheckEx
     chain_hash: 'sha256:' + 'c'.repeat(64),
     idempotency_key: 'idem_001',
     recorded_at: '2026-03-10T00:00:00Z',
+    // P4-D compliance fields
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     ...overrides,
   };
 }
@@ -53,6 +57,7 @@ function makeWaiver(overrides: Partial<Waiver> = {}): Waiver {
     approver_user_id: 'user_apr',
     reason: 'This is a sufficiently long reason that explains why this waiver is needed for the gap.',
     compensating_control: null,
+    risk_treatment: 'accept',
     expires_at: '2026-04-10T00:00:00Z', // 31 days from approved_at
     signature: {
       signer_id: 'signer_test',
@@ -76,7 +81,7 @@ function makeEvidencePack(overrides: Partial<EvidencePack> = {}): EvidencePack {
     merkle_root: 'sha256:' + 'd'.repeat(64),
     proof_distribution: {
       mathematical: 0,
-      execution_zkml: 0,
+      verifiable_inference: 0,
       execution: 5,
       witnessed: 0,
       attestation: 0,
@@ -171,7 +176,7 @@ describe('validateManifestStage', () => {
     const stage: ManifestStage = {
       stage: 1,
       name: 'Human Review',
-      type: 'human_review',
+      type: 'witnessed',
       proof_level: 'witnessed',
       redacted: false,
     };
@@ -182,24 +187,24 @@ describe('validateManifestStage', () => {
     const stage: ManifestStage = {
       stage: 1,
       name: 'Human Review',
-      type: 'human_review',
+      type: 'witnessed',
       proof_level: 'attestation',
       redacted: false,
     };
     const errors = validateManifestStage(stage);
-    expect(errors.some((e) => e.code === 'human_review_attestation_forbidden')).toBe(true);
+    expect(errors.some((e) => e.code === 'witnessed_attestation_forbidden')).toBe(true);
   });
 
   it('rejects human_review + execution', () => {
     const stage: ManifestStage = {
       stage: 1,
       name: 'Human Review',
-      type: 'human_review',
+      type: 'witnessed',
       proof_level: 'execution',
       redacted: false,
     };
     const errors = validateManifestStage(stage);
-    expect(errors.some((e) => e.code === 'human_review_must_be_witnessed')).toBe(true);
+    expect(errors.some((e) => e.code === 'witnessed_must_be_witnessed')).toBe(true);
   });
 
   it('passes for deterministic_rule + mathematical', () => {

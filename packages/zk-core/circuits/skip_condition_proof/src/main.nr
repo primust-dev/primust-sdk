@@ -1,6 +1,12 @@
 // Skip Condition Proof Circuit
 //
-// Proves that a recorded skip was justified — the declared skip
+// WARNING - NOT_PRODUCTION_READY: merkle_path uses placeholder Array(20).fill(0)
+// in the witness builder (buildSkipConditionWitness). This circuit will
+// compile but will NOT produce valid proofs until the real Merkle path
+// is implemented. Do not route to this circuit in Phase 3 (Modal worker)
+// until the witness builder provides actual Merkle paths.
+//
+// Proves that a recorded skip was justified -- the declared skip
 // condition evaluated to true. Upgrades skip records from attestation
 // to mathematical proof level.
 //
@@ -19,7 +25,7 @@
 //   2. Merkle path from leaf to commitment_root closes correctly
 //   3. At least one condition_value is non-zero (condition is not vacuous)
 
-use std::hash::poseidon2;
+use dep::poseidon::poseidon2;
 
 fn main(
     // Public inputs

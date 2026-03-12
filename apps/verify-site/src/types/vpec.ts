@@ -1,6 +1,6 @@
 export type ProofLevel =
   | "mathematical"
-  | "execution_zkml"
+  | "verifiable_inference"
   | "execution"
   | "witnessed"
   | "attestation";

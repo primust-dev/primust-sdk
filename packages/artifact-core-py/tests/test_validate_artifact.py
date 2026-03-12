@@ -14,7 +14,7 @@ def valid_artifact(**overrides: Any) -> dict[str, Any]:
     """Build a valid VPEC artifact fixture. Override fields as needed."""
     base: dict[str, Any] = {
         "vpec_id": "vpec_00000000-0000-0000-0000-000000000001",
-        "schema_version": "3.0.0",
+        "schema_version": "4.0.0",
         "org_id": "org_test",
         "run_id": "run_00000000-0000-0000-0000-000000000001",
         "workflow_id": "wf_test",
@@ -36,7 +36,7 @@ def valid_artifact(**overrides: Any) -> dict[str, Any]:
         "proof_level": "execution",
         "proof_distribution": {
             "mathematical": 0,
-            "execution_zkml": 0,
+            "verifiable_inference": 0,
             "execution": 5,
             "witnessed": 0,
             "attestation": 0,
@@ -114,7 +114,7 @@ class TestValidateArtifact:
             proof_level="mathematical",
             proof_distribution={
                 "mathematical": 0,
-                "execution_zkml": 0,
+                "verifiable_inference": 0,
                 "execution": 5,
                 "witnessed": 0,
                 "attestation": 0,
@@ -177,7 +177,7 @@ class TestValidateArtifact:
     def test_all_5_proof_levels_valid(self):
         levels = [
             "mathematical",
-            "execution_zkml",
+            "verifiable_inference",
             "execution",
             "witnessed",
             "attestation",
@@ -187,7 +187,7 @@ class TestValidateArtifact:
                 proof_level=level,
                 proof_distribution={
                     "mathematical": 0,
-                    "execution_zkml": 0,
+                    "verifiable_inference": 0,
                     "execution": 0,
                     "witnessed": 0,
                     "attestation": 0,
@@ -300,7 +300,7 @@ class TestValidateArtifact:
             proof_level="quantum_proof",
             proof_distribution={
                 "mathematical": 0,
-                "execution_zkml": 0,
+                "verifiable_inference": 0,
                 "execution": 0,
                 "witnessed": 0,
                 "attestation": 5,

@@ -53,7 +53,7 @@ class MockTransport(httpx.BaseTransport):
         if "/close" in path and request.method == "POST":
             return httpx.Response(200, json={
                 "vpec_id": "vpec_test001",
-                "schema_version": "3.0.0",
+                "schema_version": "4.0.0",
                 "state": "signed",
             })
         return httpx.Response(404, json={"detail": "not found"})

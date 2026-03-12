@@ -22,7 +22,7 @@ class CheckResult(str, Enum):
 
 class ProofLevel(str, Enum):
     MATHEMATICAL = "mathematical"
-    EXECUTION_ZKML = "execution_zkml"
+    VERIFIABLE_INFERENCE = "verifiable_inference"
     EXECUTION = "execution"
     WITNESSED = "witnessed"
     ATTESTATION = "attestation"
@@ -78,9 +78,32 @@ class ManifestRegistration:
 
 
 @dataclass
+class PrimustLogEvent:
+    """
+    Passed to the logger callback on every record() call.
+    All fields namespaced primust_* to avoid collision in customer logs.
+    No content fields. Only governance metadata.
+    """
+    primust_record_id: str
+    primust_commitment_hash: str       # poseidon2:hex — linkage anchor
+    primust_check_result: str          # pass|fail|error|etc.
+    primust_proof_level: str           # mathematical|execution|etc.
+    primust_workflow_id: str
+    primust_run_id: str
+    primust_recorded_at: str           # ISO 8601
+    gap_types_emitted: Optional[list[str]] = None  # only if include_gap_types
+
+
+@dataclass
+class LoggerOptions:
+    """Options for Pipeline.set_logger()."""
+    include_gap_types: bool = False
+
+
+@dataclass
 class ProofLevelBreakdown:
     mathematical: int = 0
-    execution_zkml: int = 0
+    verifiable_inference: int = 0
     execution: int = 0
     witnessed: int = 0
     attestation: int = 0

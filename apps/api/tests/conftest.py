@@ -308,6 +308,13 @@ _PATCHES = [
     ("primust_api.routes.gaps.execute", dict(side_effect=_db.execute)),
     ("primust_api.routes.gaps.kms_sign", dict(side_effect=_mock_kms_sign)),
     ("primust_api.routes.gaps.get_region_config", dict(side_effect=_mock_get_region_config)),
+    # Route-level patches (webhook)
+    ("primust_api.routes.webhook.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.routes.webhook.fetch_all", dict(side_effect=_db.fetch_all)),
+    ("primust_api.routes.webhook.execute", dict(side_effect=_db.execute)),
+    # Service-level patches (webhook dispatcher)
+    ("primust_api.services.webhook_dispatcher.fetch_one", dict(side_effect=_db.fetch_one)),
+    ("primust_api.services.webhook_dispatcher.execute", dict(side_effect=_db.execute)),
 ]
 
 

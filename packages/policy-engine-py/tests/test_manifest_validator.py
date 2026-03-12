@@ -101,7 +101,7 @@ class TestManifestValidator:
         manifest = make_manifest(
             supported_proof_level="witnessed",
             stages=[
-                {"stage": 1, "name": "Human Review", "type": "human_review",
+                {"stage": 1, "name": "Human Review", "type": "witnessed",
                  "proof_level": "witnessed", "redacted": False},
             ],
         )
@@ -111,13 +111,13 @@ class TestManifestValidator:
         manifest = make_manifest(
             supported_proof_level="attestation",
             stages=[
-                {"stage": 1, "name": "Human Review", "type": "human_review",
+                {"stage": 1, "name": "Human Review", "type": "witnessed",
                  "proof_level": "attestation", "redacted": False},
             ],
         )
         errors = validate_manifest(manifest)
         codes = [e.code for e in errors]
-        assert "human_review_attestation_forbidden" in codes
+        assert "witnessed_attestation_forbidden" in codes
 
     def test_proof_level_above_ceiling_error(self) -> None:
         manifest = make_manifest(
@@ -172,19 +172,19 @@ class TestManifestValidator:
 
     def test_all_5_proof_levels(self) -> None:
         assert PROOF_LEVEL_HIERARCHY == [
-            "mathematical", "execution_zkml", "execution", "witnessed", "attestation",
+            "mathematical", "verifiable_inference", "execution", "witnessed", "attestation",
         ]
         assert len(PROOF_LEVEL_HIERARCHY) == 5
 
     def test_zkml_model_proof_ceiling(self) -> None:
         manifest = make_manifest(
-            supported_proof_level="execution_zkml",
+            supported_proof_level="verifiable_inference",
             stages=[
                 {"stage": 1, "name": "ZKML Eval", "type": "zkml_model",
-                 "proof_level": "execution_zkml", "redacted": False},
+                 "proof_level": "verifiable_inference", "redacted": False},
             ],
         )
-        assert compute_proof_ceiling(manifest) == "execution_zkml"
+        assert compute_proof_ceiling(manifest) == "verifiable_inference"
 
     def test_skip_rationale_required_not_applicable(self) -> None:
         record = make_record(check_result="not_applicable", skip_rationale_hash=None)
@@ -198,7 +198,7 @@ class TestManifestValidator:
             stages=[
                 {"stage": 1, "name": "Rule", "type": "deterministic_rule",
                  "proof_level": "mathematical", "redacted": False},
-                {"stage": 2, "name": "Review", "type": "human_review",
+                {"stage": 2, "name": "Review", "type": "witnessed",
                  "proof_level": "witnessed", "redacted": False},
             ],
         )

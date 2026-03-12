@@ -23,7 +23,7 @@ import { GAP_TYPE_LABELS } from "../src/lib/constants";
 function makeVpec(overrides: Partial<VPECArtifact> = {}): VPECArtifact {
   return {
     vpec_id: "vpec_001",
-    schema_version: "3.0.0",
+    schema_version: "4.0.0",
     run_id: "run_001",
     workflow_id: "wf_001",
     org_id: "org_001",
@@ -33,7 +33,7 @@ function makeVpec(overrides: Partial<VPECArtifact> = {}): VPECArtifact {
     proof_level: "execution",
     proof_distribution: {
       mathematical: 2,
-      execution_zkml: 3,
+      verifiable_inference: 3,
       execution: 10,
       witnessed: 1,
       attestation: 1,
@@ -141,7 +141,7 @@ describe("P12-A: Dashboard Foundation + Run Explorer", () => {
   it("MUST PASS: all 5 proof levels render in run list and detail", () => {
     const levels = [
       "mathematical",
-      "execution_zkml",
+      "verifiable_inference",
       "execution",
       "witnessed",
       "attestation",

@@ -71,7 +71,7 @@ function createMockFetch(): {
       return new Response(
         JSON.stringify({
           vpec_id: 'vpec_test001',
-          schema_version: '3.0.0',
+          schema_version: '4.0.0',
           state: 'signed',
           partial: body.partial ?? false,
           test_mode: false,
@@ -119,7 +119,7 @@ describe('TypeScript SDK (P10-B)', () => {
     const body = recordReq[0].body;
     const rawBody = recordReq[0].rawBody;
 
-    expect(body.commitment_hash).toMatch(/^poseidon2:/);
+    expect(body.commitment_hash).toMatch(/^poseidon2:|^sha256:/);
     expect(rawBody).not.toContain(rawInput);
     expect(JSON.stringify(body)).not.toContain(rawInput);
   });
@@ -149,7 +149,7 @@ describe('TypeScript SDK (P10-B)', () => {
 
     expect(body.commitment_hash).toMatch(/^poseidon2:|^sha256:/);
     expect(body.output_commitment).toBeTypeOf('string');
-    expect(body.commitment_algorithm).toBe('poseidon2');
+    expect(['poseidon2', 'sha256']).toContain(body.commitment_algorithm);
     expect(body.commitment_type).toBe('input_output');
     expect(body.check_result).toBe('pass');
     expect(body.proof_level_achieved).toBeTypeOf('string');
@@ -210,9 +210,9 @@ describe('TypeScript SDK (P10-B)', () => {
 
     // Hashes present
     const cred = body.reviewer_credential as Record<string, unknown>;
-    expect(cred.display_hash).toMatch(/^poseidon2:/);
-    expect(cred.rationale_hash).toMatch(/^poseidon2:/);
-    expect(body.skip_rationale_hash).toMatch(/^poseidon2:/);
+    expect(cred.display_hash).toMatch(/^poseidon2:|^sha256:/);
+    expect(cred.rationale_hash).toMatch(/^poseidon2:|^sha256:/);
+    expect(body.skip_rationale_hash).toMatch(/^poseidon2:|^sha256:/);
 
     // Raw content not in body
     expect(rawBody).not.toContain('base64_image_data');
@@ -251,13 +251,13 @@ describe('TypeScript SDK (P10-B)', () => {
     const result2 = commit(input2);
 
     expect(result1.hash).toBe(result2.hash); // deterministic
-    expect(result1.hash).toMatch(/^poseidon2:/);
+    expect(result1.hash).toMatch(/^poseidon2:|^sha256:/);
 
     const result3 = commit(new TextEncoder().encode('test_input_2'));
     expect(result3.hash).not.toBe(result1.hash); // different input
 
     const output = commitOutput(new TextEncoder().encode('output_data'));
-    expect(output.algorithm).toBe('poseidon2');
-    expect(output.hash).toMatch(/^poseidon2:/);
+    expect(['poseidon2', 'sha256']).toContain(output.algorithm);
+    expect(output.hash).toMatch(/^poseidon2:|^sha256:/);
   });
 });

@@ -34,6 +34,9 @@ function makeRecord(
     freshness_warning: false,
     idempotency_key: `idem_${index}`,
     recorded_at: `2026-03-10T00:00:${String(index).padStart(2, '0')}Z`,
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     ...overrides,
   };
 }

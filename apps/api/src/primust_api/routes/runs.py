@@ -21,6 +21,7 @@ from ..auth import AuthContext, require_api_key
 from ..banned import reject_banned_fields
 from ..db import execute, fetch_all, fetch_one, get_region_config, transaction
 from ..kms import kms_sign
+from ..services.webhook_dispatcher import dispatch_vpec_issued, dispatch_gap_created
 from ..tsa import get_timestamp_anchor
 
 logger = logging.getLogger("primust.runs")
@@ -52,7 +53,7 @@ class CreateRecordRequest(BaseModel):
     commitment_type: Literal["input_only", "input_output"] = "input_only"
     check_result: Literal["pass", "fail", "degraded", "error", "not_applicable"]
     proof_level_achieved: Literal[
-        "mathematical", "execution_zkml", "execution", "witnessed", "attestation"
+        "mathematical", "verifiable_inference", "execution", "witnessed", "attestation"
     ]
     output_commitment: str | None = Field(default=None, max_length=256)
     check_open_tst: str | None = Field(default=None, max_length=64)
@@ -310,12 +311,12 @@ async def close_run(
     # Build proof distribution
     proof_dist = {
         "mathematical": 0,
-        "execution_zkml": 0,
+        "verifiable_inference": 0,
         "execution": 0,
         "witnessed": 0,
         "attestation": 0,
     }
-    proof_hierarchy = ["mathematical", "execution_zkml", "execution", "witnessed", "attestation"]
+    proof_hierarchy = ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"]
     weakest_idx = 0
 
     for rec in records:
@@ -363,7 +364,7 @@ async def close_run(
     vpec_id = f"vpec_{uuid.uuid4()}"
     vpec = {
         "vpec_id": vpec_id,
-        "schema_version": "3.0.0",
+        "schema_version": "4.0.0",
         "org_id": auth.org_id,
         "run_id": run_id,
         "workflow_id": run["workflow_id"],
@@ -379,7 +380,7 @@ async def close_run(
         "gaps": gap_entries,
         "manifest_hashes": manifest_hashes,
         "commitment_root": None,
-        "commitment_algorithm": "poseidon2",
+        "commitment_algorithm": "sha256",
         "zk_proof": None,
         "issuer": {
             "signer_id": "api_signer",
@@ -443,7 +444,7 @@ async def close_run(
             auth.org_id,
             run_id,
             run["workflow_id"],
-            "3.0.0",
+            "4.0.0",
             run["process_context_hash"],
             body.partial,
             weakest_link,
@@ -458,6 +459,19 @@ async def close_run(
         asyncio.create_task(
             _retry_kms_sign(vpec_id, vpec_json, region_config.kms_key, region)
         )
+
+    # SIEM webhook dispatch — fire-and-forget, never blocks VPEC issuance
+    await dispatch_vpec_issued(region, auth.org_id, vpec, auth.test_mode)
+
+    # Dispatch gap_created for critical/high gaps
+    for g in gap_entries:
+        if g["severity"] in ("Critical", "High"):
+            await dispatch_gap_created(
+                region, auth.org_id, vpec, auth.test_mode,
+                gap_id=g["gap_id"],
+                gap_severity=g["severity"],
+                gap_type=g["gap_type"],
+            )
 
     return vpec
 

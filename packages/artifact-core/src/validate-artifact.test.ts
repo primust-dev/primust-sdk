@@ -6,7 +6,7 @@ import type { VPECArtifact } from './types/artifact.js';
 function validArtifact(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const base: VPECArtifact = {
     vpec_id: 'vpec_00000000-0000-0000-0000-000000000001',
-    schema_version: '3.0.0',
+    schema_version: '4.0.0',
     org_id: 'org_test',
     run_id: 'run_00000000-0000-0000-0000-000000000001',
     workflow_id: 'wf_test',
@@ -28,7 +28,7 @@ function validArtifact(overrides: Record<string, unknown> = {}): Record<string, 
     proof_level: 'execution',
     proof_distribution: {
       mathematical: 0,
-      execution_zkml: 0,
+      verifiable_inference: 0,
       execution: 5,
       witnessed: 0,
       attestation: 0,
@@ -104,7 +104,7 @@ describe('validateArtifact', () => {
         proof_level: 'mathematical',
         proof_distribution: {
           mathematical: 0,
-          execution_zkml: 0,
+          verifiable_inference: 0,
           execution: 5,
           witnessed: 0,
           attestation: 0,
@@ -172,7 +172,7 @@ describe('validateArtifact', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('schema_version: "3.0.0" on all issued artifacts', () => {
+    it('schema_version: "4.0.0" on all issued artifacts', () => {
       const artifact = validArtifact({ schema_version: '2.0.0' });
 
       const result = validateArtifact(artifact);
@@ -181,14 +181,14 @@ describe('validateArtifact', () => {
     });
 
     it('all 5 proof levels valid in proof_level enum', () => {
-      const levels = ['mathematical', 'execution_zkml', 'execution', 'witnessed', 'attestation'];
+      const levels = ['mathematical', 'verifiable_inference', 'execution', 'witnessed', 'attestation'];
 
       for (const level of levels) {
         const artifact = validArtifact({
           proof_level: level,
           proof_distribution: {
             mathematical: 0,
-            execution_zkml: 0,
+            verifiable_inference: 0,
             execution: 0,
             witnessed: 0,
             attestation: 0,
@@ -320,7 +320,7 @@ describe('validateArtifact', () => {
         proof_level: 'quantum_proof',
         proof_distribution: {
           mathematical: 0,
-          execution_zkml: 0,
+          verifiable_inference: 0,
           execution: 0,
           witnessed: 0,
           attestation: 5,

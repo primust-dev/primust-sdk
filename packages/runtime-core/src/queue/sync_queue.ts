@@ -173,7 +173,7 @@ export class SyncQueue {
 
   /**
    * Close a pipeline run with retry. On all retries failing,
-   * auto-closes the run and emits an api_unavailable gap.
+   * auto-closes the run and emits an engine_error gap.
    */
   async close(runId: string): Promise<void> {
     try {
@@ -199,14 +199,14 @@ export class SyncQueue {
       if (flushed || this.buffer.length === 0) {
         this.store.closeRun(runId, 'closed');
       } else {
-        // All retries failed → auto_closed + api_unavailable gap
+        // All retries failed → auto_closed + engine_error gap
         this.store.closeRun(runId, 'auto_closed');
 
         const now = new Date().toISOString();
         const gap: Gap = {
-          gap_id: `gap_api_unavailable_${runId}`,
+          gap_id: `gap_engine_error_${runId}`,
           run_id: runId,
-          gap_type: 'api_unavailable',
+          gap_type: 'engine_error',
           severity: 'High',
           state: 'open',
           details: {
@@ -214,6 +214,7 @@ export class SyncQueue {
           },
           detected_at: now,
           resolved_at: null,
+          incident_report_ref: null,
         };
         this.store.insertGap(gap);
         this.callbacks.onGapDetected?.(gap);

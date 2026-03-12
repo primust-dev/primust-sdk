@@ -55,7 +55,7 @@ class DiscoveryReport:
         }
         for dp in self.decision_points:
             level = dp.pattern.proof_level
-            if level == "execution_zkml":
+            if level == "verifiable_inference":
                 level = "execution"
             result.setdefault(level, []).append(dp)
         return result

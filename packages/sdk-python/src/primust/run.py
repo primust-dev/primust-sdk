@@ -14,17 +14,20 @@ import datetime
 import hashlib
 import json
 import logging
+import os
 import threading
 import time
 import uuid
 from typing import Any, Optional, Union
 
-from primust_artifact_core import commit, commit_output
+from primust_artifact_core import commit
 
 from .models import (
     CheckResult,
     CheckSession,
     GovernanceGap,
+    LoggerOptions,
+    PrimustLogEvent,
     ProofLevel,
     ProofLevelBreakdown,
     RecordResult,
@@ -68,6 +71,8 @@ class Run:
         policy_snapshot_hash: str,
         transport: PrimustTransport,
         test_mode: bool,
+        logger_callback: Optional[Any] = None,
+        logger_options: Optional[LoggerOptions] = None,
     ):
         self.run_id = run_id
         self.workflow_id = workflow_id
@@ -81,6 +86,8 @@ class Run:
         self._chain_hash = ""
         self._sequence = 0
         self._proof_levels: list[str] = []
+        self._logger_callback = logger_callback
+        self._logger_options = logger_options or LoggerOptions()
 
     # ------------------------------------------------------------------
     # run.record()
@@ -117,22 +124,25 @@ class Run:
             recorded_at = datetime.datetime.utcnow().isoformat() + "Z"
 
             # ── LOCAL COMMITMENT — raw input never leaves ──
+            # Explicit SHA-256 default: not contingent on artifact-core package default.
+            # Poseidon2 opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2 env var.
+            _alg = os.environ.get("PRIMUST_COMMITMENT_ALGORITHM", "sha256")
             input_bytes = _to_bytes(input)
-            input_commitment, algorithm = commit(input_bytes)
+            input_commitment, algorithm = commit(input_bytes, _alg)
 
             output_commitment = None
             if output is not None:
                 output_bytes = _to_bytes(output)
-                output_commitment, _ = commit_output(output_bytes)
+                output_commitment, _ = commit(output_bytes, _alg)
 
             display_hash = None
             if display_content is not None:
-                dh, _ = commit(_to_bytes(display_content))
+                dh, _ = commit(_to_bytes(display_content), _alg)
                 display_hash = dh
 
             rationale_hash = None
             if rationale is not None:
-                rh, _ = commit(rationale.encode("utf-8"))
+                rh, _ = commit(rationale.encode("utf-8"), _alg)
                 rationale_hash = rh
             # ──────────────────────────────────────────────
 
@@ -186,6 +196,23 @@ class Run:
                     }
 
             self._proof_levels.append(proof_level)
+
+            # Logger callback — called synchronously after commitment_hash
+            # computed, before ObservationEnvelope sent to API.
+            if self._logger_callback is not None:
+                event = PrimustLogEvent(
+                    primust_record_id=record_id,
+                    primust_commitment_hash=input_commitment,
+                    primust_check_result=check_result if isinstance(check_result, str) else check_result.value,
+                    primust_proof_level=proof_level,
+                    primust_workflow_id=self.workflow_id,
+                    primust_run_id=self.run_id,
+                    primust_recorded_at=recorded_at,
+                )
+                try:
+                    self._logger_callback(event)
+                except Exception:
+                    log.warning("Logger callback raised an exception — suppressed", exc_info=True)
 
             # ── TRANSMIT — only the envelope (no raw data) ──
             response = self._transport.post_record(self.run_id, envelope)
@@ -300,7 +327,7 @@ class Run:
             ProofLevel.ATTESTATION.value,
             ProofLevel.WITNESSED.value,
             ProofLevel.EXECUTION.value,
-            ProofLevel.EXECUTION_ZKML.value,
+            ProofLevel.VERIFIABLE_INFERENCE.value,
             ProofLevel.MATHEMATICAL.value,
         ]
         if not self._proof_levels:
@@ -371,7 +398,7 @@ class Run:
         breakdown_raw = data.get("proof_distribution", data.get("proof_level_breakdown", {}))
         breakdown = ProofLevelBreakdown(
             mathematical=breakdown_raw.get("mathematical", 0),
-            execution_zkml=breakdown_raw.get("execution_zkml", 0),
+            verifiable_inference=breakdown_raw.get("verifiable_inference", 0),
             execution=breakdown_raw.get("execution", 0),
             witnessed=breakdown_raw.get("witnessed", 0),
             attestation=breakdown_raw.get("attestation", 0),

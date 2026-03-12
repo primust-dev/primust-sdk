@@ -13,7 +13,7 @@ import { GAP_SEVERITIES, PROOF_LEVELS } from "../src/lib/constants";
 function makeDistribution(overrides: Partial<ProofDistribution> = {}): ProofDistribution {
   return {
     mathematical: 5,
-    execution_zkml: 10,
+    verifiable_inference: 10,
     execution: 20,
     witnessed: 3,
     attestation: 2,

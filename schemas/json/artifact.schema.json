@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/artifact/v3.0.0",
+  "$id": "https://primust.com/schemas/artifact/v4.0.0",
   "title": "Primust VPEC Artifact",
   "description": "Verified Process Execution Credential — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -43,7 +43,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "3.0.0"
+      "const": "4.0.0"
     },
     "org_id": {
       "type": "string",
@@ -153,7 +153,7 @@
       "type": "string",
       "enum": [
         "mathematical",
-        "execution_zkml",
+        "verifiable_inference",
         "execution",
         "witnessed",
         "attestation"
@@ -223,7 +223,7 @@
       "type": "object",
       "required": [
         "mathematical",
-        "execution_zkml",
+        "verifiable_inference",
         "execution",
         "witnessed",
         "attestation",
@@ -232,7 +232,7 @@
       ],
       "properties": {
         "mathematical": { "type": "integer", "minimum": 0 },
-        "execution_zkml": { "type": "integer", "minimum": 0 },
+        "verifiable_inference": { "type": "integer", "minimum": 0 },
         "execution": { "type": "integer", "minimum": 0 },
         "witnessed": { "type": "integer", "minimum": 0 },
         "attestation": { "type": "integer", "minimum": 0 },
@@ -302,7 +302,9 @@
             "skip_rationale_missing",
             "policy_config_drift",
             "zkml_proof_pending_timeout",
-            "zkml_proof_failed"
+            "zkml_proof_failed",
+            "explanation_missing",
+            "bias_audit_missing"
           ]
         },
         "severity": {

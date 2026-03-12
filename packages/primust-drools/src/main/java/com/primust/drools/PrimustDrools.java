@@ -64,9 +64,9 @@ public class PrimustDrools {
      */
     public String recordEvaluation(List<Map<String, Object>> facts, int rulesFired,
                                    String checkResult) {
-        // Canonical JSON of facts list → Poseidon2 commitment
+        // Canonical JSON of facts list → commitment (SHA-256 default)
         String inputJson = CanonicalJson.canonical(facts);
-        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8), "poseidon2");
+        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8));
 
         var details = new LinkedHashMap<String, Object>();
         details.put("rules_fired", rulesFired);
@@ -87,7 +87,7 @@ public class PrimustDrools {
     public String recordEvaluationWithRules(List<Map<String, Object>> facts,
                                             List<String> ruleNames, String checkResult) {
         String inputJson = CanonicalJson.canonical(facts);
-        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8), "poseidon2");
+        var commitment = Commitment.commit(inputJson.getBytes(StandardCharsets.UTF_8));
 
         var details = new LinkedHashMap<String, Object>();
         details.put("rules_fired", ruleNames.size());

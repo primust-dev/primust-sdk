@@ -11,4 +11,6 @@ export type {
   RecordOptions,
   CloseOptions,
   ResumedContext,
+  PrimustLogEvent,
+  LoggerOptions,
 } from './pipeline.js';

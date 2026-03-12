@@ -3,7 +3,7 @@ import type { GapType, GapSeverity, ProofLevel } from "../types/vpec";
 /** Proof level color mapping — all 5 levels, never abbreviate or combine. */
 export const PROOF_LEVEL_COLORS: Record<ProofLevel, string> = {
   mathematical: "bg-green-600 text-white",
-  execution_zkml: "bg-blue-600 text-white",
+  verifiable_inference: "bg-blue-600 text-white",
   execution: "bg-yellow-500 text-black",
   witnessed: "bg-orange-500 text-white",
   attestation: "bg-gray-500 text-white",
@@ -11,7 +11,7 @@ export const PROOF_LEVEL_COLORS: Record<ProofLevel, string> = {
 
 export const PROOF_LEVEL_LABELS: Record<ProofLevel, string> = {
   mathematical: "Mathematical",
-  execution_zkml: "Execution+ZKML",
+  verifiable_inference: "Execution+ZKML",
   execution: "Execution",
   witnessed: "Witnessed",
   attestation: "Attestation",
@@ -20,7 +20,7 @@ export const PROOF_LEVEL_LABELS: Record<ProofLevel, string> = {
 /** All 5 proof levels in order from strongest to weakest. */
 export const PROOF_LEVELS: ProofLevel[] = [
   "mathematical",
-  "execution_zkml",
+  "verifiable_inference",
   "execution",
   "witnessed",
   "attestation",
