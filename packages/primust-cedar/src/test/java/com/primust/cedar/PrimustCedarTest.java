@@ -17,6 +17,7 @@ class PrimustCedarTest {
         var decl = SurfaceDeclaration.DECLARATION;
         assertEquals("policy_engine", decl.get("surface_type"));
         assertEquals("mathematical", decl.get("proof_ceiling"));
+        assertEquals("deterministic_rule", decl.get("stage_type"));
         assertEquals("instrumentation", decl.get("observation_mode"));
         assertEquals("AWS Cedar", decl.get("engine"));
     }

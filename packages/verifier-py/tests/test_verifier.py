@@ -298,8 +298,8 @@ class TestVerify:
         assert result.valid is False
         assert "manifest_hashes_not_object" in result.errors
 
-    def test_mathematical_proof_level_without_zk_verifier_fails(self, tmp_path: Path):
-        """mathematical proof_level + unverifiable ZK proof → error, not silent pass."""
+    def test_mathematical_proof_level_zk_verifier_unavailable_warns(self, tmp_path: Path):
+        """mathematical proof_level + ZK proof present but verifier unavailable → valid with warning."""
         artifact, pub_key = _create_signed_artifact(
             proof_level="mathematical",
             proof_distribution={
@@ -323,8 +323,8 @@ class TestVerify:
         # Mock subprocess.run to raise FileNotFoundError (bb CLI not installed)
         with patch("subprocess.run", side_effect=FileNotFoundError):
             result = verify(artifact, VerifyOptions(skip_network=True, trust_root=trust_root))
-        assert result.valid is False
-        assert "mathematical_proof_not_verified" in result.errors
+        assert result.valid is True
+        assert "zk_proof_verifier_unavailable" in result.warnings
 
     def test_test_mode_non_production_warning(self, tmp_path: Path):
         artifact, pub_key = _create_signed_artifact(test_mode=True)

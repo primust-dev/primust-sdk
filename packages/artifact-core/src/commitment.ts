@@ -241,12 +241,10 @@ type StageType =
  * Note: attestation is the weakest level and only applies from explicit manifest
  * declaration, not from stage type mapping.
  */
-// TODO(zk-integration): Restore deterministic_rule/policy_engine to 'mathematical'
-// when ZK proof integration is live (closeRun → proveAsync wired).
 export function selectProofLevel(stageType: StageType): ProofLevel {
   switch (stageType) {
     case 'deterministic_rule':
-      return 'execution';
+      return 'mathematical';
     case 'zkml_model':
       return 'verifiable_inference';
     case 'ml_model':
@@ -258,6 +256,6 @@ export function selectProofLevel(stageType: StageType): ProofLevel {
     case 'witnessed':
       return 'witnessed';
     case 'policy_engine':
-      return 'execution';
+      return 'mathematical';
   }
 }

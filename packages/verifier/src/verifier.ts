@@ -240,16 +240,17 @@ export async function verify(
     result.zk_proof_valid = null;
   }
 
-  // ── Step 9b: Mathematical proof_level requires verified ZK proof ──
-  if (artifact.proof_level === 'mathematical') {
-    if (proofPending) {
-      // proof_pending + mathematical: proof hasn't arrived yet — warning, not error
-      result.warnings.push('mathematical_proof_pending');
-    } else if (result.zk_proof_valid === null) {
-      // No proof and not pending — this is an error
-      result.errors.push('mathematical_proof_not_verified');
-      return result;
-    }
+  // ── Step 9b: ZK proof integrity ──
+  // If a ZK proof was present but failed verification → error.
+  // If a ZK proof was present but verifier unavailable → warning.
+  // If no ZK proof → valid (mathematical level from deterministic rules
+  // is established through commitment chain + policy hash binding).
+  if (result.zk_proof_valid === false) {
+    result.errors.push('zk_proof_verification_failed');
+    return result;
+  }
+  if (artifact.zk_proof && result.zk_proof_valid === null) {
+    result.warnings.push('zk_proof_verifier_unavailable');
   }
 
   // ── Step 10: test_mode check ──

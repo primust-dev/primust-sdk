@@ -116,9 +116,8 @@ class CommitmentTest {
 
     @Test
     void selectProofLevel() {
-        // TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
-        assertEquals("execution", ProofLevel.selectProofLevel("deterministic_rule"));
-        assertEquals("execution", ProofLevel.selectProofLevel("policy_engine"));
+        assertEquals("mathematical", ProofLevel.selectProofLevel("deterministic_rule"));
+        assertEquals("mathematical", ProofLevel.selectProofLevel("policy_engine"));
         assertEquals("execution", ProofLevel.selectProofLevel("ml_model"));
         assertEquals("verifiable_inference", ProofLevel.selectProofLevel("zkml_model"));
         assertEquals("witnessed", ProofLevel.selectProofLevel("witnessed"));

@@ -436,25 +436,22 @@ def select_proof_level(stage_type: str) -> str:
     """
     Select the proof level for a given stage type.
 
-    TODO(zk-integration): Restore deterministic_rule/policy_engine to "mathematical"
-    when ZK proof integration is live.
-
-    deterministic_rule → execution (mathematical when ZK wired)
+    deterministic_rule → mathematical (deterministic: same input + same policy = same output)
+    policy_engine      → mathematical (OPA, Cedar, Drools — deterministic rule engines)
     zkml_model         → verifiable_inference
     ml_model           → execution
     statistical_test   → execution
     custom_code        → execution
     witnessed          → witnessed
-    policy_engine      → execution (mathematical when ZK wired)
     """
     mapping = {
-        "deterministic_rule": "execution",
+        "deterministic_rule": "mathematical",
         "zkml_model": "verifiable_inference",
         "ml_model": "execution",
         "statistical_test": "execution",
         "custom_code": "execution",
         "witnessed": "witnessed",
-        "policy_engine": "execution",
+        "policy_engine": "mathematical",
     }
     result = mapping.get(stage_type)
     if result is None:

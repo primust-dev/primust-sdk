@@ -23,19 +23,17 @@ export type ImplementationType =
   | 'custom';
 
 /** Stage type → default proof_level mapping:
- *   TODO(zk-integration): Restore deterministic_rule/policy_engine/hardware_attested
- *   to mathematical when ZK proof integration is live.
  *
- *   deterministic_rule → execution (mathematical when ZK wired)
+ *   deterministic_rule → mathematical (deterministic: same input + same policy = same output)
+ *   policy_engine      → mathematical (OPA, Cedar, Drools — deterministic rule engines)
+ *   hardware_attested  → mathematical
  *   zkml_model         → verifiable_inference
  *   ml_model           → execution
  *   statistical_test   → execution
  *   custom_code        → execution (if code_hash) or attestation
  *   witnessed          → witnessed (NEVER attestation — invariant 13)
- *   policy_engine      → execution (mathematical when ZK wired)
  *   llm_api            → attestation (opaque hosted API — hard ceiling, no upgrade path)
  *   open_source_ml     → execution (self-hosted, weights hashable, model_version_hash required)
- *   hardware_attested  → execution (mathematical when ZK wired)
  */
 export type StageType =
   | 'deterministic_rule'

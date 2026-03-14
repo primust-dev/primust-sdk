@@ -23,6 +23,9 @@ func TestSurfaceDeclaration(t *testing.T) {
 	if decl["observation_mode"] != "instrumentation" {
 		t.Errorf("observation_mode = %v, want instrumentation", decl["observation_mode"])
 	}
+	if decl["stage_type"] != "deterministic_rule" {
+		t.Errorf("stage_type = %v, want deterministic_rule", decl["stage_type"])
+	}
 }
 
 func TestHashPolicy(t *testing.T) {

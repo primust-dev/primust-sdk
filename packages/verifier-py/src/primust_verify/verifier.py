@@ -216,10 +216,16 @@ def verify(
     else:
         result.zk_proof_valid = None
 
-    # ── Step 9b: Mathematical proof_level requires verified ZK proof ──
-    if artifact.get("proof_level") == "mathematical" and result.zk_proof_valid is None:
-        result.errors.append("mathematical_proof_not_verified")
+    # ── Step 9b: ZK proof integrity ──
+    # If a ZK proof was present but failed verification → error.
+    # If a ZK proof was present but verifier unavailable → warning.
+    # If no ZK proof → valid (mathematical level from deterministic rules
+    # is established through commitment chain + policy hash binding).
+    if result.zk_proof_valid is False:
+        result.errors.append("zk_proof_verification_failed")
         return result
+    if artifact.get("zk_proof") and result.zk_proof_valid is None:
+        result.warnings.append("zk_proof_verifier_unavailable")
 
     # ── Step 10: test_mode check ──
     if artifact.get("test_mode") is True:

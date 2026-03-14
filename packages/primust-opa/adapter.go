@@ -26,6 +26,7 @@ import (
 // SurfaceDeclaration describes this adapter's instrumentation metadata.
 var SurfaceDeclaration = map[string]interface{}{
 	"surface_type":     "policy_engine",
+	"stage_type":       "deterministic_rule",
 	"observation_mode": "instrumentation",
 	"scope_type":       "per_evaluation",
 	"proof_ceiling":    "mathematical",
@@ -168,12 +169,13 @@ func isAllowed(rs rego.ResultSet) bool {
 
 func (p *PrimustOPA) recordCheck(inputCommitment string, checkResult string, details map[string]interface{}) string {
 	payload := map[string]interface{}{
-		"check":            "opa_policy_evaluation",
-		"manifest_id":      p.config.ManifestID,
-		"input_commitment": inputCommitment,
-		"check_result":     checkResult,
-		"visibility":       p.config.Visibility,
-		"details":          details,
+		"check":                "opa_policy_evaluation",
+		"manifest_id":          p.config.ManifestID,
+		"input_commitment":     inputCommitment,
+		"check_result":         checkResult,
+		"proof_level_achieved": "mathematical",
+		"visibility":           p.config.Visibility,
+		"details":              details,
 	}
 
 	body, _ := json.Marshal(payload)

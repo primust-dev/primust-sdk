@@ -134,8 +134,7 @@ describe('commitment', () => {
 
     const proofLevels = new Set(stageTypes.map(selectProofLevel));
 
-    // TODO(zk-integration): Restore mathematical assertion when ZK proofs are wired
-    // mathematical is not reachable until closeRun → proveAsync is wired
+    expect(proofLevels).toContain('mathematical');
     expect(proofLevels).toContain('verifiable_inference');
     expect(proofLevels).toContain('execution');
     expect(proofLevels).toContain('witnessed');

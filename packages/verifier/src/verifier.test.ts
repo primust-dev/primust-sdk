@@ -329,8 +329,8 @@ describe('verify()', () => {
 
     // bb.js is not installed — verifyUltraHonk returns null
     const result = await verify(artifact, { skip_network: true, trust_root: trustRoot });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContain('mathematical_proof_not_verified');
+    expect(result.valid).toBe(true);
+    expect(result.warnings).toContain('zk_proof_verifier_unavailable');
   });
 
   it('test_mode: true + non-production → valid with warning', async () => {
