@@ -112,6 +112,7 @@ public class PrimustDrools {
             payload.put("manifest_id", manifestId);
             payload.put("input_commitment", inputCommitment);
             payload.put("check_result", checkResult);
+            payload.put("proof_level_achieved", "mathematical");
             payload.put("visibility", visibility);
             payload.put("details", details);
 

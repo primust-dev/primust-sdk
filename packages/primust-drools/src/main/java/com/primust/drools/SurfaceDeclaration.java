@@ -9,12 +9,13 @@ public final class SurfaceDeclaration {
 
     private SurfaceDeclaration() {}
 
-    public static final Map<String, Object> DECLARATION = Map.of(
-        "surface_type", "policy_engine",
-        "observation_mode", "instrumentation",
-        "scope_type", "per_evaluation",
-        "proof_ceiling", "mathematical",
-        "adapter", "primust-drools",
-        "engine", "Drools (KIE)"
+    public static final Map<String, Object> DECLARATION = Map.ofEntries(
+        Map.entry("surface_type", "policy_engine"),
+        Map.entry("stage_type", "deterministic_rule"),
+        Map.entry("observation_mode", "instrumentation"),
+        Map.entry("scope_type", "per_evaluation"),
+        Map.entry("proof_ceiling", "mathematical"),
+        Map.entry("adapter", "primust-drools"),
+        Map.entry("engine", "Drools (KIE)")
     );
 }

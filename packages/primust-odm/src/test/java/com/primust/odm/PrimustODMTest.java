@@ -17,6 +17,7 @@ class PrimustODMTest {
     void surfaceDeclaration() {
         var decl = SurfaceDeclaration.DECLARATION;
         assertEquals("policy_engine", decl.get("surface_type"));
+        assertEquals("deterministic_rule", decl.get("stage_type"));
         assertEquals("mathematical", decl.get("proof_ceiling"));
         assertEquals("IBM Operational Decision Manager", decl.get("engine"));
     }
