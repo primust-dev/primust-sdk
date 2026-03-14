@@ -1,0 +1,274 @@
+// ════════════════════════════════════════════════════════════════
+// RuleApp: CreditUnderwriting
+// RuleSet: /CreditUnderwriting/Underwriting
+// Version: 1.0.0
+// Engine: IBM Operational Decision Manager
+//
+// Domain: Mortgage loan underwriting
+// 5 levels of rules, deterministic evaluation
+// Same parameters + same ruleset = same decision, every time
+// ════════════════════════════════════════════════════════════════
+
+// ── BOM (Business Object Model) ──
+//
+// LoanApplication:
+//   applicant_name: String
+//   age: int
+//   citizenship: String  (US, PR, GU)
+//   credit_score: int
+//   dti_ratio: double
+//   ltv_ratio: double
+//   has_pmi: boolean
+//   stated_income: double
+//   verified_income: double
+//   applications_last_90_days: int
+//   mailing_state: String
+//   property_state: String
+//   investment_property: boolean
+//   ssn_issue_year: int
+//   birth_year: int
+//   compensating_factors_count: int
+//   loan_amount: double
+//   occupancy_type: String (primary_residence, second_home, investment)
+//
+// Decision output:
+//   eligible: Boolean
+//   credit_tier: String
+//   max_dti_ratio: Double
+//   max_ltv: Double
+//   dti_acceptable: Boolean
+//   collateral_adequate: Boolean
+//   fraud_flags: List<String>
+//   decision: String
+
+// ══════════════════════════════════════════════
+// Level 1: Basic eligibility gates
+// Priority: 0 (high — runs first in ODM conflict resolution)
+// ══════════════════════════════════════════════
+
+// Rule: Eligibility_AgeCheck
+if
+    the age of 'the loan application' is less than 18
+    or the age of 'the loan application' is more than 75
+then
+    set the eligible of 'the loan application' to false ;
+    set the decision of 'the loan application' to "declined_eligibility" ;
+    add "Eligibility_AgeCheck" to the rules fired of 'the loan application' ;
+
+// Rule: Eligibility_CitizenshipCheck
+if
+    the citizenship of 'the loan application' is not one of { "US" , "PR" , "GU" }
+then
+    set the eligible of 'the loan application' to false ;
+    set the decision of 'the loan application' to "declined_eligibility" ;
+    add "Eligibility_CitizenshipCheck" to the rules fired of 'the loan application' ;
+
+// Rule: Eligibility_LoanAmountCheck
+if
+    the loan amount of 'the loan application' is less than 50000
+    or the loan amount of 'the loan application' is more than 2000000
+then
+    set the eligible of 'the loan application' to false ;
+    set the decision of 'the loan application' to "declined_eligibility" ;
+    add "Eligibility_LoanAmountCheck" to the rules fired of 'the loan application' ;
+
+// Rule: Eligibility_Passed
+// Runs only if no eligibility rule declined
+if
+    the eligible of 'the loan application' is null
+then
+    set the eligible of 'the loan application' to true ;
+    add "Eligibility_Passed" to the rules fired of 'the loan application' ;
+
+// ══════════════════════════════════════════════
+// Level 2: Credit tier classification
+// ══════════════════════════════════════════════
+
+// Rule: CreditTier_Prime
+if
+    the eligible of 'the loan application' is true
+    and the credit score of 'the loan application' is at least 740
+then
+    set the credit tier of 'the loan application' to "prime" ;
+    set the max dti ratio of 'the loan application' to 0.43 ;
+    set the max ltv of 'the loan application' to 0.90 ;
+    add "CreditTier_Prime" to the rules fired of 'the loan application' ;
+
+// Rule: CreditTier_PrimeWithPMI
+if
+    the eligible of 'the loan application' is true
+    and the credit score of 'the loan application' is at least 740
+    and the has pmi of 'the loan application' is true
+then
+    set the max ltv of 'the loan application' to 0.95 ;
+    add "CreditTier_PrimeWithPMI" to the rules fired of 'the loan application' ;
+
+// Rule: CreditTier_NearPrime
+if
+    the eligible of 'the loan application' is true
+    and the credit score of 'the loan application' is at least 680
+    and the credit score of 'the loan application' is less than 740
+then
+    set the credit tier of 'the loan application' to "near_prime" ;
+    set the max dti ratio of 'the loan application' to 0.36 ;
+    set the max ltv of 'the loan application' to 0.80 ;
+    add "CreditTier_NearPrime" to the rules fired of 'the loan application' ;
+
+// Rule: CreditTier_Subprime
+if
+    the eligible of 'the loan application' is true
+    and the credit score of 'the loan application' is at least 620
+    and the credit score of 'the loan application' is less than 680
+    and the compensating factors count of 'the loan application' is at least 2
+then
+    set the credit tier of 'the loan application' to "subprime" ;
+    set the max dti ratio of 'the loan application' to 0.28 ;
+    set the max ltv of 'the loan application' to 0.70 ;
+    add "CreditTier_Subprime" to the rules fired of 'the loan application' ;
+
+// Rule: CreditTier_Reject
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is null
+then
+    set the credit tier of 'the loan application' to "reject" ;
+    set the decision of 'the loan application' to "declined_credit" ;
+    add "CreditTier_Reject" to the rules fired of 'the loan application' ;
+
+// ══════════════════════════════════════════════
+// Level 3: DTI and collateral checks
+// ══════════════════════════════════════════════
+
+// Rule: DTI_Check
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the dti ratio of 'the loan application' is at most
+        the max dti ratio of 'the loan application'
+then
+    set the dti acceptable of 'the loan application' to true ;
+    add "DTI_Check_Passed" to the rules fired of 'the loan application' ;
+
+// Rule: DTI_Fail
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the dti ratio of 'the loan application' is more than
+        the max dti ratio of 'the loan application'
+then
+    set the dti acceptable of 'the loan application' to false ;
+    add "DTI_Check_Failed" to the rules fired of 'the loan application' ;
+
+// Rule: Collateral_Check
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the ltv ratio of 'the loan application' is at most
+        the max ltv of 'the loan application'
+then
+    set the collateral adequate of 'the loan application' to true ;
+    add "Collateral_Check_Passed" to the rules fired of 'the loan application' ;
+
+// Rule: Collateral_Fail
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the ltv ratio of 'the loan application' is more than
+        the max ltv of 'the loan application'
+then
+    set the collateral adequate of 'the loan application' to false ;
+    add "Collateral_Check_Failed" to the rules fired of 'the loan application' ;
+
+// ══════════════════════════════════════════════
+// Level 4: Fraud detection
+// ══════════════════════════════════════════════
+
+// Rule: Fraud_IncomeInconsistency
+if
+    the stated income of 'the loan application' is more than
+        the verified income of 'the loan application' * 1.30
+then
+    add "Fraud_IncomeInconsistency" to the fraud flags of 'the loan application' ;
+    add "Fraud_IncomeInconsistency" to the rules fired of 'the loan application' ;
+
+// Rule: Fraud_VelocityAlert
+if
+    the applications last 90 days of 'the loan application' is more than 3
+then
+    add "Fraud_VelocityAlert" to the fraud flags of 'the loan application' ;
+    add "Fraud_VelocityAlert" to the rules fired of 'the loan application' ;
+
+// Rule: Fraud_AddressMismatch
+if
+    the mailing state of 'the loan application' is not
+        the property state of 'the loan application'
+    and the investment property of 'the loan application' is false
+then
+    add "Fraud_AddressMismatch" to the fraud flags of 'the loan application' ;
+    add "Fraud_AddressMismatch" to the rules fired of 'the loan application' ;
+
+// Rule: Fraud_SyntheticIdentity
+if
+    the ssn issue year of 'the loan application' is more than
+        the birth year of 'the loan application' + 18
+then
+    add "Fraud_SyntheticIdentity" to the fraud flags of 'the loan application' ;
+    add "Fraud_SyntheticIdentity" to the rules fired of 'the loan application' ;
+
+// ══════════════════════════════════════════════
+// Level 5: Final decision (compound logic)
+// Priority: -1 (low — runs after all other rules)
+// ══════════════════════════════════════════════
+
+// Rule: Decision_Approved
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the dti acceptable of 'the loan application' is true
+    and the collateral adequate of 'the loan application' is true
+    and the number of elements in the fraud flags of 'the loan application' is 0
+    and the decision of 'the loan application' is null
+then
+    set the decision of 'the loan application' to "approved" ;
+    add "Decision_Approved" to the rules fired of 'the loan application' ;
+
+// Rule: Decision_Referred
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the dti acceptable of 'the loan application' is true
+    and the collateral adequate of 'the loan application' is true
+    and the number of elements in the fraud flags of 'the loan application' is at least 1
+    and the number of elements in the fraud flags of 'the loan application' is at most 2
+    and the decision of 'the loan application' is null
+then
+    set the decision of 'the loan application' to "referred" ;
+    add "Decision_Referred" to the rules fired of 'the loan application' ;
+
+// Rule: Decision_DeclinedFraud
+if
+    the number of elements in the fraud flags of 'the loan application' is more than 2
+    and the decision of 'the loan application' is null
+then
+    set the decision of 'the loan application' to "declined_fraud" ;
+    add "Decision_DeclinedFraud" to the rules fired of 'the loan application' ;
+
+// Rule: Decision_DeclinedDTI
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the dti acceptable of 'the loan application' is false
+    and the decision of 'the loan application' is null
+then
+    set the decision of 'the loan application' to "declined_dti" ;
+    add "Decision_DeclinedDTI" to the rules fired of 'the loan application' ;
+
+// Rule: Decision_DeclinedCollateral
+if
+    the eligible of 'the loan application' is true
+    and the credit tier of 'the loan application' is not "reject"
+    and the collateral adequate of 'the loan application' is false
+    and the decision of 'the loan application' is null
+then
+    set the decision of 'the loan application' to "declined_collateral" ;
+    add "Decision_DeclinedCollateral" to the rules fired of 'the loan application' ;

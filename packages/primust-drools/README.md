@@ -102,6 +102,55 @@ SurfaceDeclaration.DECLARATION
 // }
 ```
 
+## End-to-end example: mortgage underwriting
+
+A real credit decisioning pipeline — 5 levels of rules, 7 decision outcomes,
+526 test scenarios proving deterministic evaluation with commitment consistency.
+
+```java
+// Loan application facts
+List<Map<String, Object>> facts = List.of(
+    Map.of(
+        "type", "LoanApplication",
+        "applicant", "Alice Johnson",
+        "credit_score", 780,
+        "dti_ratio", 0.30,
+        "ltv_ratio", 0.75,
+        "has_pmi", false,
+        "loan_amount", 400000
+    )
+);
+
+// Drools evaluates: Eligibility_Passed → CreditTier_Prime → DTI_Check_Passed
+//                    → Collateral_Check_Passed → Decision_Approved
+KieSession session = kieContainer.newKieSession();
+facts.forEach(session::insert);
+int rulesFired = session.fireAllRules();  // 5 rules fired
+
+// Record with Primust — one line
+String commitmentHash = adapter.recordEvaluation(facts, rulesFired, "pass");
+```
+
+The VPEC your auditor receives:
+
+```
+pip install primust-verify
+primust verify vpec.json
+
+  Signature valid
+  Chain intact
+  Proof level floor: mathematical
+
+  Decision: approved
+  Credit tier: prime
+  Rules fired: 5
+  Fraud flags: 0
+  Commitment: poseidon2:a1b2c3...
+```
+
+The auditor doesn't need your applicant data, your rule base, or a Primust account.
+They verify the arithmetic. The proof is the math.
+
 ## Verify a VPEC
 
 ```bash

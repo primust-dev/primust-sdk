@@ -1,0 +1,241 @@
+package com.primust.test.underwriting
+
+// ── Domain model ──
+
+declare LoanApplication
+    applicantName : String
+    age : int
+    citizenship : String
+    creditScore : int
+    dtiRatio : double
+    ltvRatio : double
+    hasPMI : boolean
+    statedIncome : double
+    verifiedIncome : double
+    applicationsLast90Days : int
+    mailingState : String
+    propertyState : String
+    investmentProperty : boolean
+    ssnIssueYear : int
+    birthYear : int
+    compensatingFactorsCount : int
+    loanAmount : double
+    occupancyType : String
+
+    // Decision output fields
+    eligible : Boolean
+    creditTier : String
+    maxDtiRatio : Double
+    maxLtv : Double
+    dtiAcceptable : Boolean
+    collateralAdequate : Boolean
+    fraudFlags : java.util.List
+    decision : String
+end
+
+// ══════════════════════════════════════════════
+// Level 1: Basic eligibility gates
+// ══════════════════════════════════════════════
+
+rule "Eligibility_AgeCheck"
+    salience 100
+    when
+        $app : LoanApplication( age < 18 || age > 75, eligible == null )
+    then
+        modify($app) { setEligible(false), setDecision("declined_eligibility") }
+end
+
+rule "Eligibility_CitizenshipCheck"
+    salience 100
+    when
+        $app : LoanApplication( citizenship not in ("US", "PR", "GU"), eligible == null )
+    then
+        modify($app) { setEligible(false), setDecision("declined_eligibility") }
+end
+
+rule "Eligibility_LoanAmountCheck"
+    salience 100
+    when
+        $app : LoanApplication( loanAmount < 50000 || loanAmount > 2000000, eligible == null )
+    then
+        modify($app) { setEligible(false), setDecision("declined_eligibility") }
+end
+
+rule "Eligibility_Passed"
+    salience 99
+    when
+        $app : LoanApplication( eligible == null )
+    then
+        modify($app) { setEligible(true) }
+end
+
+// ══════════════════════════════════════════════
+// Level 2: Credit tier classification
+// ══════════════════════════════════════════════
+
+rule "CreditTier_Prime"
+    salience 90
+    when
+        $app : LoanApplication( eligible == true, creditScore >= 740, creditTier == null )
+    then
+        modify($app) { setCreditTier("prime"), setMaxDtiRatio(0.43), setMaxLtv(0.90) }
+end
+
+rule "CreditTier_PrimeWithPMI"
+    salience 91
+    when
+        $app : LoanApplication( eligible == true, creditScore >= 740, hasPMI == true, creditTier == null )
+    then
+        modify($app) { setCreditTier("prime"), setMaxDtiRatio(0.43), setMaxLtv(0.95) }
+end
+
+rule "CreditTier_NearPrime"
+    salience 89
+    when
+        $app : LoanApplication( eligible == true, creditScore >= 680, creditScore < 740, creditTier == null )
+    then
+        modify($app) { setCreditTier("near_prime"), setMaxDtiRatio(0.36), setMaxLtv(0.80) }
+end
+
+rule "CreditTier_Subprime"
+    salience 88
+    when
+        $app : LoanApplication( eligible == true, creditScore >= 620, creditScore < 680,
+                                 compensatingFactorsCount >= 2, creditTier == null )
+    then
+        modify($app) { setCreditTier("subprime"), setMaxDtiRatio(0.28), setMaxLtv(0.70) }
+end
+
+rule "CreditTier_Reject"
+    salience 87
+    when
+        $app : LoanApplication( eligible == true, creditTier == null )
+    then
+        modify($app) { setCreditTier("reject"), setDecision("declined_credit") }
+end
+
+// ══════════════════════════════════════════════
+// Level 3: DTI and collateral checks
+// ══════════════════════════════════════════════
+
+rule "DTI_Check"
+    salience 80
+    when
+        $app : LoanApplication( eligible == true, creditTier != null, creditTier != "reject",
+                                 maxDtiRatio != null, dtiAcceptable == null )
+    then
+        boolean acceptable = $app.getDtiRatio() <= $app.getMaxDtiRatio();
+        modify($app) { setDtiAcceptable(acceptable) }
+end
+
+rule "Collateral_Check"
+    salience 80
+    when
+        $app : LoanApplication( eligible == true, creditTier != null, creditTier != "reject",
+                                 maxLtv != null, collateralAdequate == null )
+    then
+        boolean adequate = $app.getLtvRatio() <= $app.getMaxLtv();
+        modify($app) { setCollateralAdequate(adequate) }
+end
+
+// ══════════════════════════════════════════════
+// Level 4: Fraud detection
+// ══════════════════════════════════════════════
+
+rule "Fraud_Init"
+    salience 75
+    when
+        $app : LoanApplication( eligible == true, fraudFlags == null )
+    then
+        modify($app) { setFraudFlags(new java.util.ArrayList()) }
+end
+
+rule "Fraud_IncomeInconsistency"
+    salience 70
+    when
+        $app : LoanApplication( fraudFlags != null,
+                                 statedIncome > verifiedIncome * 1.3 )
+    then
+        $app.getFraudFlags().add("income_inconsistency");
+end
+
+rule "Fraud_VelocityAlert"
+    salience 70
+    when
+        $app : LoanApplication( fraudFlags != null,
+                                 applicationsLast90Days > 3 )
+    then
+        $app.getFraudFlags().add("velocity_alert");
+end
+
+rule "Fraud_AddressMismatch"
+    salience 70
+    when
+        $app : LoanApplication( fraudFlags != null,
+                                 mailingState != propertyState,
+                                 investmentProperty == false )
+    then
+        $app.getFraudFlags().add("address_mismatch");
+end
+
+rule "Fraud_SyntheticIdentity"
+    salience 70
+    when
+        $app : LoanApplication( fraudFlags != null,
+                                 ssnIssueYear > birthYear + 18 )
+    then
+        $app.getFraudFlags().add("synthetic_identity");
+end
+
+// ══════════════════════════════════════════════
+// Level 5: Final decision (compound)
+// ══════════════════════════════════════════════
+
+rule "Decision_Approved"
+    salience 50
+    when
+        $app : LoanApplication( eligible == true, creditTier != "reject",
+                                 dtiAcceptable == true, collateralAdequate == true,
+                                 fraudFlags != null, fraudFlags.size() == 0,
+                                 decision == null )
+    then
+        modify($app) { setDecision("approved") }
+end
+
+rule "Decision_Referred"
+    salience 49
+    when
+        $app : LoanApplication( eligible == true, creditTier != "reject",
+                                 dtiAcceptable == true, collateralAdequate == true,
+                                 fraudFlags != null, fraudFlags.size() > 0, fraudFlags.size() <= 2,
+                                 decision == null )
+    then
+        modify($app) { setDecision("referred") }
+end
+
+rule "Decision_DeclinedFraud"
+    salience 48
+    when
+        $app : LoanApplication( fraudFlags != null, fraudFlags.size() > 2,
+                                 decision == null )
+    then
+        modify($app) { setDecision("declined_fraud") }
+end
+
+rule "Decision_DeclinedDTI"
+    salience 47
+    when
+        $app : LoanApplication( eligible == true, creditTier != "reject",
+                                 dtiAcceptable == false, decision == null )
+    then
+        modify($app) { setDecision("declined_dti") }
+end
+
+rule "Decision_DeclinedCollateral"
+    salience 46
+    when
+        $app : LoanApplication( eligible == true, creditTier != "reject",
+                                 collateralAdequate == false, decision == null )
+    then
+        modify($app) { setDecision("declined_collateral") }
+end
