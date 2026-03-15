@@ -5,6 +5,7 @@ on:
     branches: [main, dev]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -129,11 +130,21 @@ jobs:
           echo "No banned fields found."
 
   deploy:
-    name: Deploy (manual)
-    if: github.event_name == 'workflow_dispatch'
+    name: Deploy to Fly.io
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: [test-typescript, test-python, lint-python, schema-validate, banned-fields]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy stub
-        run: echo "Deploy step — configure Fly.io deployment here"
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy to Fly.io (US - ewr)
+        run: flyctl deploy --app primust-api --config apps/api/fly.toml
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Deploy to Fly.io (EU)
+        if: env.PRIMUST_EU_APP != ''
+        run: flyctl deploy --app ${{ env.PRIMUST_EU_APP }} --config apps/api/fly.toml
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          PRIMUST_EU_APP: ${{ secrets.PRIMUST_EU_APP }}

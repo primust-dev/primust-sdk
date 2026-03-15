@@ -1,0 +1,23 @@
+bundle_id: eu_ai_act_art12_v1
+name: EU AI Act Article 12
+version: "1.0"
+framework_mappings: ["eu_ai_act_art12", "eu_ai_act_art9"]
+estimated_provable_surface: 0.85
+checks:
+  - check_id: enforcement_rate
+    required: true
+    threshold: 0.99
+    proof_ceiling: mathematical
+    zk_circuit: primust_governance_v1
+  - check_id: pii_non_detection
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+    zk_circuit: coverage_check
+  - check_id: policy_continuity
+    required: true
+    proof_ceiling: mathematical
+    zk_circuit: config_epoch_continuity
+  - check_id: human_approval_coverage
+    required: false
+    proof_ceiling: witnessed

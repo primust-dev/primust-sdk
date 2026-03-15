@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "pre_tool_use": [
+      {
+        "command": "primust-hook check"
+      }
+    ]
+  }
+}

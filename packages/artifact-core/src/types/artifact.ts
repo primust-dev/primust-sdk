@@ -221,6 +221,6 @@ export interface VPECArtifact {
   issued_at: string;
   pending_flags: PendingFlags;
 
-  /** true when issued with pk_test_xxx key. Rejected by primust-verify in --production. */
+  /** true when issued with pk_test_xxx or pk_sb_xxx key. Rejected by primust-verify in --production. */
   test_mode: boolean;
 }

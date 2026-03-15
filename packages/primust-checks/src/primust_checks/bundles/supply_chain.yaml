@@ -1,0 +1,20 @@
+bundle_id: supply_chain_v1
+name: Supply Chain Verification
+version: "1.0"
+framework_mappings: ["slsa_l2", "nist_ssdf"]
+estimated_provable_surface: 0.90
+checks:
+  - check_id: upstream_vpec_verify
+    required: true
+    proof_ceiling: mathematical
+  - check_id: dependency_hash_check
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: schema_validation
+    required: false
+    proof_ceiling: mathematical
+  - check_id: secrets_scanner
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical

@@ -35,7 +35,7 @@ export function GapDetail({ gap }: GapDetailProps) {
       </div>
 
       {/* Policy config drift — show hash diff */}
-      {gap.gap_type === "policy_config_drift" && (
+      {gap.gap_type === "policy_config_drift" ? (
         <div data-testid="config-drift-diff">
           <h3 className="font-semibold mb-1">Configuration Drift</h3>
           <div className="text-sm space-y-1 bg-gray-50 p-2 rounded">
@@ -53,20 +53,20 @@ export function GapDetail({ gap }: GapDetailProps) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Witnessed gaps — show reviewer credential */}
       {(gap.gap_type === "reviewer_credential_invalid" ||
         gap.gap_type === "witnessed_display_missing" ||
         gap.gap_type === "witnessed_rationale_missing") &&
-        details.reviewer_credential && (
+        details.reviewer_credential ? (
           <div data-testid="reviewer-credential-block">
             <h3 className="font-semibold mb-1">Reviewer Credential</h3>
             <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto">
               {JSON.stringify(details.reviewer_credential, null, 2)}
             </pre>
           </div>
-        )}
+        ) : null}
 
       {/* Full details JSON */}
       <div>

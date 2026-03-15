@@ -4,18 +4,32 @@ build-backend = "hatchling.build"
 
 [project]
 name = "primust-openai-agents"
-version = "0.0.1"
+version = "1.0.0"
 description = "Primust governance adapter for OpenAI Agents SDK"
 requires-python = ">=3.11"
 license = "LicenseRef-Proprietary"
+authors = [{ name = "Primust, Inc.", email = "eng@primust.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 dependencies = [
-  "primust",
+  "primust>=1.0.0",
+  "openai-agents>=0.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
 ]
+
+[project.urls]
+Homepage = "https://primust.com"
+Documentation = "https://docs.primust.com/adapters/openai-agents"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/primust_openai_agents"]

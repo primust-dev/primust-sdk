@@ -6,14 +6,6 @@ interface VerificationPanelProps {
 }
 
 export function VerificationPanel({ result, artifact }: VerificationPanelProps) {
-  const witnessedCount = (artifact?.gaps as Array<Record<string, string>> | undefined)
-    ?.filter(
-      (g) =>
-        g.gap_type === "witnessed_display_missing" ||
-        g.gap_type === "witnessed_rationale_missing" ||
-        g.gap_type === "reviewer_credential_invalid",
-    ).length ?? 0;
-
   const configDriftCount = (artifact?.gaps as Array<Record<string, string>> | undefined)
     ?.filter((g) => g.gap_type === "policy_config_drift").length ?? 0;
 

@@ -42,7 +42,7 @@ public class Pipeline {
         this.workflowId = workflowId;
         this.baseUrl = baseUrl;
         this.surfaceId = surfaceId;
-        this.testMode = apiKey.startsWith("pk_test_");
+        this.testMode = apiKey.startsWith("pk_test_") || apiKey.startsWith("pk_sb_");
         this.transport = new HttpTransport(apiKey, baseUrl);
     }
 

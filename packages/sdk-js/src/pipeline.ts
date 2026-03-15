@@ -19,7 +19,7 @@ export { ZK_IS_BLOCKING };
 // ── Types ──
 
 export interface PipelineConfig {
-  apiKey: string; // pk_live_xxx | pk_test_xxx
+  apiKey: string; // pk_live_xxx | pk_sb_xxx
   workflowId: string;
   policy?: string[] | string;
   processContextHash?: string;
@@ -86,8 +86,7 @@ export interface LoggerOptions {
 function toBytes(value: unknown): Uint8Array {
   if (value instanceof Uint8Array) return value;
   if (typeof value === 'string') return new TextEncoder().encode(value);
-  const json = JSON.stringify(value, Object.keys(value as Record<string, unknown>).sort());
-  return new TextEncoder().encode(json);
+  return new TextEncoder().encode(canonical(value));
 }
 
 // ── Pipeline ──

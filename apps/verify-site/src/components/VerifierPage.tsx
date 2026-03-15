@@ -101,7 +101,7 @@ export function VerifierPage() {
           <div className="space-y-1 text-sm">
             <div>
               Coverage:{" "}
-              {(result.coverage as Record<string, unknown>).policy_coverage_pct ?? "—"}%
+              {String((result.coverage as Record<string, unknown>).policy_coverage_pct ?? "—")}%
             </div>
             <div>
               Proof Level:{" "}

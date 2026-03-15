@@ -1,0 +1,1 @@
+{"version":3,"file":"VerificationPanel.d.ts","sourceRoot":"","sources":["VerificationPanel.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,eAAe,CAAC;AAExD,UAAU,sBAAsB;IAC9B,MAAM,EAAE,kBAAkB,CAAC;IAC3B,QAAQ,EAAE,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,GAAG,IAAI,CAAC;CAC1C;AAED,wBAAgB,iBAAiB,CAAC,EAAE,MAAM,EAAE,QAAQ,EAAE,EAAE,sBAAsB,+BAqG7E"}

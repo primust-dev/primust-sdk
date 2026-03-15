@@ -38,7 +38,7 @@ public sealed class Pipeline
         _apiKey = key;
         _workflowId = workflowId;
         _baseUrl = baseUrl.TrimEnd('/');
-        _testMode = key.StartsWith("pk_test_");
+        _testMode = key.StartsWith("pk_test_") || key.StartsWith("pk_sb_");
         _transport = new HttpTransport(key, _baseUrl);
     }
 

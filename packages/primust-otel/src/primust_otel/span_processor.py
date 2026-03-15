@@ -254,7 +254,7 @@ class PrimustSpanProcessor:
             # Input commitment — structured tool arguments (OTL-2, OTL-6)
             payload = {
                 "tool_name": str(attrs.get("gen_ai.tool.name", span.name)),
-                "tool_call_id": str(attrs.get("gen_ai.tool.call.id", "")),
+                "action_unit_id": str(attrs.get("gen_ai.tool.call.id", "")),
                 "arguments": attrs.get("gen_ai.tool.call.function.arguments", {}),
             }
             return json.dumps(payload, sort_keys=True, separators=(",", ":")), "input_commitment"

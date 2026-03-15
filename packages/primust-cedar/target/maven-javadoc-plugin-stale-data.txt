@@ -1,0 +1,43 @@
+@options
+@packages
+-classpath
+'/Users/adamlayman/.m2/repository/com/primust/primust-rules-core/1.0.0/primust-rules-core-1.0.0.jar'
+-encoding
+'UTF-8'
+-protected
+-source
+'17'
+-sourcepath
+'/Users/adamlayman/primust/packages/primust-cedar/src/main/java:/Users/adamlayman/primust/packages/primust-cedar/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/adamlayman/primust/packages/primust-cedar/target/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Primust Cedar Adapter 1.0.0 API'
+-use
+-version
+-windowtitle
+'Primust Cedar Adapter 1.0.0 API'
+com.primust.cedar
+/Users/adamlayman/.m2/repository/com/primust/primust-rules-core/1.0.0/primust-rules-core-1.0.0.jar = 1773601197200
+/Users/adamlayman/primust/packages/primust-cedar/src/main/java = 1773277912806
+/Users/adamlayman/primust/packages/primust-cedar/target/generated-sources/annotations = 1773601228162
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/tag-search-index.js = 1773601229947
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/overview-tree.html = 1773601229941
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/module-search-index.js = 1773601229946
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/index.html = 1773601229950
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/package-search-index.js = 1773601229946
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/index-all.html = 1773601229949
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/allpackages-index.html = 1773601229946
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/member-search-index.js = 1773601229947
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/help-doc.html = 1773601229952
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/element-list = 1773601229932
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/search.html = 1773601229950
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/allclasses-index.html = 1773601229945
+/Users/adamlayman/primust/packages/primust-cedar/target/apidocs/type-search-index.js = 1773601229947

@@ -186,7 +186,7 @@ function statusName(span: ReadableSpan): string {
 }
 
 function canonicalJson(obj: unknown): string {
-  return JSON.stringify(obj, Object.keys(obj as any).sort());
+  return canonical(obj);
 }
 
 // ── Span Processor ──
@@ -293,7 +293,7 @@ export class PrimustSpanProcessor {
       // Input commitment — structured tool arguments (OTL-2, OTL-6)
       const payload = {
         arguments: attrs['gen_ai.tool.call.function.arguments'] ?? {},
-        tool_call_id: String(attrs['gen_ai.tool.call.id'] ?? ''),
+        action_unit_id: String(attrs['gen_ai.tool.call.id'] ?? ''),
         tool_name: String(attrs['gen_ai.tool.name'] ?? span.name),
       };
       return {
@@ -333,7 +333,7 @@ export class PrimustSpanProcessor {
       }
     }
     return {
-      canonical: JSON.stringify(safeAttrs, Object.keys(safeAttrs).sort()),
+      canonical: canonical(safeAttrs),
       commitmentType: 'metadata_commitment',
     };
   }

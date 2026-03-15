@@ -67,8 +67,8 @@ class PrimustODMTest {
         List<String> rulesFired = List.of("Rule1", "Rule2", "Rule3");
         String json = CanonicalJson.canonical(rulesFired);
         var commitment = Commitment.commitOutput(json.getBytes(StandardCharsets.UTF_8));
-        assertEquals("poseidon2", commitment.algorithm());
-        assertTrue(commitment.hash().startsWith("poseidon2:"));
+        assertEquals("sha256", commitment.algorithm());
+        assertTrue(commitment.hash().startsWith("sha256:"));
     }
 
     @Test

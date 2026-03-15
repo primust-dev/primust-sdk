@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Primust — Verifiable Process Execution Credentials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E0E0E;
+  --ink: #EDEAE2;
+  --amber: #C8890A;
+  --rule: #222222;
+  --muted: #666666;
+  --mid: #888;
+  --surface: #141414;
+  --surface2: #181818;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Mono', monospace; overflow-x: hidden; }
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.animate-1 { animation: fadeUp 0.7s ease both; animation-delay: 0.1s; }
+.animate-2 { animation: fadeUp 0.7s ease both; animation-delay: 0.25s; }
+.animate-3 { animation: fadeUp 0.7s ease both; animation-delay: 0.4s; }
+.animate-4 { animation: fadeUp 0.7s ease both; animation-delay: 0.55s; }
+.animate-5 { animation: fadeUp 0.7s ease both; animation-delay: 0.7s; }
+
+/* ─── MARK ─── */
+.mark {
+  background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.mark-amber { background: var(--amber); }
+.mark-dark { background: var(--bg); }
+.wordmark {
+  font-family: 'Syne', sans-serif; font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding-right: 0.2em; color: var(--ink);
+}
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 52px; padding: 0 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--rule);
+  background: rgba(14,14,14,0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-links a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #777; text-decoration: none;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-cta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--bg); background: var(--ink);
+  border: none; padding: 7px 16px; cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-cta:hover { background: var(--amber); color: var(--bg); }
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh; padding: 120px 56px 80px;
+  display: flex; flex-direction: column; justify-content: center;
+  position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+}
+.hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(200,137,10,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-grid-bg {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: #555; margin-bottom: 32px;
+}
+.hero-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 8vw, 120px);
+  line-height: 0.92; letter-spacing: 0.02em;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.hero-headline .amber-word { color: var(--amber); }
+.hero-sub {
+  font-family: 'Libre Baskerville', serif;
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.65; color: #888;
+  max-width: 560px; margin: 28px 0 40px;
+}
+.hero-sub strong { color: var(--ink); font-weight: 700; }
+.hero-ctas { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cta-primary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bg); background: var(--ink);
+  padding: 14px 28px; text-decoration: none;
+  transition: background 0.15s;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.cta-primary:hover { background: var(--amber); }
+.cta-secondary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+  padding: 14px 0;
+  transition: color 0.15s;
+  border-bottom: 1px solid transparent;
+}
+.cta-secondary:hover { color: var(--ink); border-bottom-color: var(--rule); }
+
+/* ─── HERO VPEC PREVIEW ─── */
+.hero-right {
+  position: absolute; right: 56px; top: 50%; transform: translateY(-50%);
+  width: 340px;
+}
+@media (max-width: 1024px) { .hero-right { display: none; } }
+
+.vpec-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 24px; font-family: 'IBM Plex Mono', monospace;
+}
+.vpec-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.vpec-badge {
+  font-size: 7px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--amber); display: flex; align-items: center; gap: 6px;
+}
+.vpec-badge::before {
+  content: ''; width: 5px; height: 5px;
+  background: var(--amber); display: inline-block;
+  animation: pulse 2s ease infinite;
+}
+.vpec-field { margin-bottom: 12px; }
+.vpec-label {
+  font-size: 7px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #666; margin-bottom: 3px;
+}
+.vpec-value { font-size: 10px; color: var(--ink); letter-spacing: 0.04em; }
+.vpec-value.mono-sm { font-size: 8px; color: #777; }
+.vpec-bar {
+  background: #222; height: 3px; margin: 16px 0 12px;
+  position: relative; overflow: hidden;
+}
+.vpec-bar-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--amber); width: 62%;
+}
+.vpec-stat {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.vpec-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; color: var(--amber); letter-spacing: 0.04em;
+}
+.vpec-stat-label {
+  font-size: 7px; letter-spacing: 0.16em; text-transform: uppercase; color: #666;
+}
+
+/* ─── VPEC DEFINITION ─── */
+.vpec-def {
+  padding: 80px 56px;
+  display: grid; grid-template-columns: 280px 1fr;
+  gap: 64px; align-items: start;
+}
+@media (max-width: 768px) { .vpec-def { grid-template-columns: 1fr; gap: 32px; } }
+.vpec-def-acronym {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.vpec-def-letter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px; line-height: 1; color: var(--ink);
+  display: flex; align-items: baseline; gap: 12px;
+}
+.vpec-def-letter .expansion {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.vpec-def-letter:first-child .expansion { color: var(--amber); }
+.vpec-def-body {
+  padding-top: 8px;
+}
+.vpec-def-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; color: var(--ink); margin-bottom: 20px;
+  line-height: 0.95;
+}
+.vpec-def-text {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 15px; line-height: 1.75; color: #888;
+  margin-bottom: 20px; max-width: 560px;
+}
+.vpec-def-text strong { color: var(--ink); font-weight: 700; }
+.vpec-def-props {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px; background: var(--rule); margin-top: 32px;
+}
+@media (max-width: 768px) { .vpec-def-props { grid-template-columns: 1fr; } }
+.vpec-def-prop {
+  background: var(--bg); padding: 20px 24px;
+}
+.vpec-def-prop-label {
+  font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--amber); margin-bottom: 8px;
+}
+.vpec-def-prop-value {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; color: #888; line-height: 1.6;
+}
+
+/* ─── SECTIONS ─── */
+section { border-bottom: 1px solid var(--rule); }
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: #666; padding: 44px 56px 20px;
+  display: flex; align-items: center; gap: 16px;
+}
+.section-num { color: var(--amber); }
+
+/* ─── HOW IT WORKS ─── */
+.how-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px; background: var(--rule);
+}
+@media (max-width: 768px) { .how-grid { grid-template-columns: 1fr 1fr; } }
+.how-step {
+  background: var(--bg); padding: 40px 32px 48px;
+  position: relative;
+}
+.how-step-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px; color: #1A1A1A;
+  line-height: 1; margin-bottom: 24px;
+  position: absolute; top: 20px; right: 20px; opacity: 1;
+}
+.how-step-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; letter-spacing: 0.04em;
+  color: var(--ink); margin-bottom: 12px;
+}
+.how-step-body {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; line-height: 1.7; color: #888;
+}
+.how-input-output {
+  padding: 32px 56px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+.io-item {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; letter-spacing: 0.08em; color: var(--muted);
+}
+.io-arrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px; color: var(--rule); margin: 0 20px;
+}
+.io-item.active { color: var(--amber); }
+
+/* ─── CODE BLOCK ─── */
+.code-section {
+  background: var(--surface);
+  padding: 56px;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 48px; align-items: start;
+}
+@media (max-width: 768px) { .code-section { grid-template-columns: 1fr; } }
+.code-eyebrow {
+  font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--amber); margin-bottom: 16px;
+}
+.code-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; line-height: 0.95; color: var(--ink);
+  margin-bottom: 20px;
+}
+.code-body {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 14px; line-height: 1.7; color: #888;
+  margin-bottom: 24px;
+}
+.code-block {
+  background: var(--bg); border: 1px solid var(--rule);
+  padding: 24px; position: relative;
+}
+.code-block-label {
+  position: absolute; top: -1px; right: -1px;
+  font-size: 7px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--bg); background: var(--ink);
+  padding: 4px 10px;
+}
+pre {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; line-height: 1.7;
+  color: #444; overflow-x: auto;
+  white-space: pre;
+}
+.c-comment { color: #3A3A3A; }
+.c-keyword { color: var(--ink); }
+.c-string { color: #888; }
+.c-fn { color: #999; }
+.c-amber { color: var(--amber); }
+
+/* ─── WHY PRIMUST ─── */
+.why-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--rule);
+}
+@media (max-width: 768px) { .why-grid { grid-template-columns: 1fr; } }
+.why-item {
+  background: var(--bg); padding: 40px 36px 48px;
+  transition: background 0.15s;
+}
+.why-item:hover { background: var(--surface); }
+.why-number {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 0.2em; color: var(--amber);
+  margin-bottom: 20px; text-transform: uppercase;
+}
+.why-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 0.04em;
+  color: var(--ink); margin-bottom: 12px;
+}
+.why-body {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; line-height: 1.7; color: #888;
+}
+
+/* ─── PROOF LEVELS ─── */
+.levels-section { padding: 0 56px 56px; }
+.levels-header {
+  padding: 20px 0 32px;
+  display: flex; align-items: baseline; gap: 24px;
+}
+.levels-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px; color: var(--ink);
+}
+.levels-subtitle {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 14px; color: #888; font-style: italic;
+}
+.levels-table { width: 100%; border-collapse: collapse; }
+.levels-table thead tr {
+  border-bottom: 1px solid var(--rule);
+}
+.levels-table th {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #666; padding: 0 16px 14px 0;
+  text-align: left; font-weight: 400;
+}
+.levels-table th:first-child { padding-left: 0; }
+.levels-table tbody tr {
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.12s;
+}
+.levels-table tbody tr:hover { background: var(--surface); }
+.levels-table td {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; color: #888;
+  padding: 18px 16px 18px 0; vertical-align: top;
+}
+.levels-table td:first-child { padding-left: 0; }
+.level-badge {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink); white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+}
+.level-dot {
+  width: 5px; height: 5px; flex-shrink: 0;
+  background: #444;
+}
+.level-dot.math { background: var(--amber); }
+.level-dot.vi { background: #999; }
+.level-dot.exec { background: #777; }
+.level-dot.wit { background: #555; }
+.level-dot.att { background: #333; }
+.level-trust {
+  font-size: 9px; color: #666; font-style: italic;
+  font-family: 'Libre Baskerville', serif;
+}
+.weakest-link {
+  background: var(--surface); border: 1px solid var(--rule);
+  padding: 16px 20px; margin-top: 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.weakest-link-label {
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--amber);
+}
+.weakest-link-copy {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; color: #888; font-style: italic;
+}
+
+/* ─── INTEGRATIONS ─── */
+.integrations-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 1px; background: var(--rule);
+}
+@media (max-width: 768px) { .integrations-grid { grid-template-columns: repeat(3, 1fr); } }
+.integration-chip {
+  background: var(--bg); padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: background 0.12s;
+}
+.integration-chip:hover { background: var(--surface); }
+.integration-name {
+  font-size: 10px; letter-spacing: 0.1em; color: var(--ink);
+  text-transform: uppercase;
+}
+.integration-lang {
+  font-size: 8px; letter-spacing: 0.12em; color: #666;
+  text-transform: uppercase;
+}
+
+/* ─── OPEN SOURCE ─── */
+.os-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--rule);
+}
+@media (max-width: 768px) { .os-grid { grid-template-columns: 1fr; } }
+.os-card {
+  background: var(--bg); padding: 44px 40px 48px;
+}
+.os-license {
+  font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--amber); margin-bottom: 12px;
+}
+.os-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px; letter-spacing: 0.04em; color: var(--ink);
+  margin-bottom: 12px;
+}
+.os-body {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 13px; line-height: 1.7; color: #888;
+  margin-bottom: 24px;
+}
+.os-cmd {
+  background: var(--surface); border: 1px solid var(--rule);
+  padding: 12px 16px;
+  font-size: 10px; color: #888; letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+/* ─── FINAL CTA ─── */
+.final-cta {
+  padding: 100px 56px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.final-cta::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(200,137,10,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.final-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 6vw, 80px);
+  color: var(--ink); margin-bottom: 20px;
+  line-height: 0.95;
+}
+.final-sub {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 16px; color: #555; line-height: 1.6;
+  max-width: 440px; margin: 0 auto 40px;
+}
+.final-ctas { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+/* ─── FOOTER ─── */
+footer {
+  padding: 32px 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--rule);
+  flex-wrap: wrap; gap: 16px;
+}
+.footer-copy {
+  font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: #555;
+}
+.footer-links { display: flex; gap: 24px; }
+.footer-links a {
+  font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #555; text-decoration: none;
+  transition: color 0.12s;
+}
+.footer-links a:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- NAV -->
+<!-- ═══════════════════════════════════════════════════ -->
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="mark" style="width:26px;height:26px;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none">
+        <line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/>
+        <line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/>
+      </svg>
+    </div>
+    <span class="wordmark" style="font-size:12px;">PRIMUST</span>
+  </a>
+
+  <div class="nav-links">
+    <a href="https://docs.primust.com">Docs</a>
+    <a href="https://github.com/primust-dev/primust">GitHub</a>
+    <a href="https://verify.primust.com">Verify</a>
+    <a href="https://app.primust.com" class="nav-cta">Dashboard</a>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- HERO -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+
+  <div class="hero-eyebrow animate-1">Cryptographic Governance Proof · GEP Primitive</div>
+
+  <h1 class="hero-headline animate-2">
+    WE MAKE<br>
+    GOVERNANCE<br>
+    <span class="amber-word">PROVABLE.</span>
+  </h1>
+
+  <p class="hero-sub animate-3">
+    Portable, offline-verifiable cryptographic proof that your governance checks actually ran.
+    <strong>Not a log. Not an assertion. A credential anyone can verify, forever.</strong>
+  </p>
+
+  <div class="hero-ctas animate-4">
+    <a href="https://app.primust.com/sandbox" class="cta-primary">
+      Start with Sandbox
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <line x1="0" y1="5" x2="9" y2="5" stroke="#0E0E0E" stroke-width="1.5"/>
+        <line x1="5" y1="1" x2="9" y2="5" stroke="#0E0E0E" stroke-width="1.5"/>
+        <line x1="5" y1="9" x2="9" y2="5" stroke="#0E0E0E" stroke-width="1.5"/>
+      </svg>
+    </a>
+    <a href="https://docs.primust.com" class="cta-secondary">Read the Docs →</a>
+  </div>
+
+  <!-- VPEC Preview Card -->
+  <div class="hero-right animate-5">
+    <div class="vpec-card">
+      <div class="vpec-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="mark mark-amber" style="width:24px;height:24px;">
+            <svg width="13" height="18" viewBox="0 0 13 18" fill="none">
+              <line x1="3.2" y1="0" x2="3.2" y2="18" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/>
+              <line x1="3.2" y1="9" x2="13" y2="9" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/>
+            </svg>
+          </div>
+          <span class="wordmark" style="font-size:10px;">PRIMUST</span>
+        </div>
+        <div class="vpec-badge">Verified</div>
+      </div>
+
+      <div class="vpec-field">
+        <div class="vpec-label">Credential ID</div>
+        <div class="vpec-value">VPEC-2026-0312-A4F9</div>
+      </div>
+
+      <div class="vpec-field">
+        <div class="vpec-label">Policy</div>
+        <div class="vpec-value">ai_agent_general_v1</div>
+      </div>
+
+      <div class="vpec-field">
+        <div class="vpec-label">Provable Surface</div>
+        <div class="vpec-bar"><div class="vpec-bar-fill"></div></div>
+        <div class="vpec-stat">
+          <div>
+            <div class="vpec-stat-num">62%</div>
+            <div class="vpec-stat-label">Mathematically proven</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#777;">27% Execution</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#666;margin-top:2px;">11% Attestation</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--rule);padding-top:12px;margin-top:4px;">
+        <div class="vpec-label">Signed · Timestamped · Offline-verifiable</div>
+        <div class="vpec-value mono-sm" style="margin-top:4px;">Issued 2026-03-12T14:22:01Z · primust.com</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- WHAT IS A VPEC -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label"><span class="section-num">00</span>The Primitive</div>
+
+  <div class="vpec-def">
+    <div class="vpec-def-acronym">
+      <div class="vpec-def-letter">V <span class="expansion">Verifiable</span></div>
+      <div class="vpec-def-letter">P <span class="expansion">Process</span></div>
+      <div class="vpec-def-letter">E <span class="expansion">Execution</span></div>
+      <div class="vpec-def-letter">C <span class="expansion">Credential</span></div>
+    </div>
+
+    <div class="vpec-def-body">
+      <div class="vpec-def-headline">A Signed, Portable Proof That Your Checks Ran</div>
+      <p class="vpec-def-text">
+        A VPEC is a <strong>cryptographically signed JSON credential</strong> that proves a specific set of governance checks executed against specific inputs and produced specific outputs. It contains commitment hashes — never raw content — so the credential is portable, shareable, and verifiable by anyone without exposing the underlying data.
+      </p>
+      <p class="vpec-def-text">
+        Think of it as a <strong>receipt for governance</strong>. A PDF report says "we checked." A VPEC proves it — mathematically, with a timestamp anchor, offline-verifiable forever. No trust in Primust required to verify one.
+      </p>
+
+      <div class="vpec-def-props">
+        <div class="vpec-def-prop">
+          <div class="vpec-def-prop-label">Portable</div>
+          <div class="vpec-def-prop-value">JSON. Attach to any artifact, store anywhere, forward across org boundaries.</div>
+        </div>
+        <div class="vpec-def-prop">
+          <div class="vpec-def-prop-label">Offline-Verifiable</div>
+          <div class="vpec-def-prop-value">Verify with a single public key fetch. No network calls after that. Works forever.</div>
+        </div>
+        <div class="vpec-def-prop">
+          <div class="vpec-def-prop-label">Content-Blind</div>
+          <div class="vpec-def-prop-value">Only cryptographic hashes. The credential proves execution without revealing what was checked.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- HOW IT WORKS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">
+    <span class="section-num">01</span>How It Works
+  </div>
+
+  <div class="how-input-output">
+    <span class="io-item active">Input</span>
+    <span class="io-arrow">→</span>
+    <span class="io-item active">Checks</span>
+    <span class="io-arrow">→</span>
+    <span class="io-item active">Output</span>
+    <span class="io-arrow">→</span>
+    <span class="io-item active">Verify</span>
+  </div>
+
+  <div style="padding:0 56px 20px;font-family:'Libre Baskerville',serif;font-size:14px;color:#999;font-style:italic;max-width:560px;">
+    You run whatever checks you run. We make the cryptographic proof that they ran. Content never transits Primust — only hashes reach the signing endpoint.
+  </div>
+
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-step-num">01</div>
+      <div class="how-step-title">Define</div>
+      <div class="how-step-body">Declare what checks your process runs. Use our policy bundles or bring your own policy engine — OPA, Cedar, Drools.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">02</div>
+      <div class="how-step-title">Instrument</div>
+      <div class="how-step-body">Two lines of code. The SDK captures check inputs, outputs, and timing. Zero content leaves your environment — only cryptographic hashes reach the signing endpoint.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">03</div>
+      <div class="how-step-title">Sign</div>
+      <div class="how-step-body">Hashes are signed with tamper-evident keys and anchored to a trusted timestamp. Enterprise customers sign with their own keys — Primust never holds the trust anchor.</div>
+    </div>
+    <div class="how-step">
+      <div class="how-step-num">04</div>
+      <div class="how-step-title">Verify</div>
+      <div class="how-step-body">Anyone verifies offline, forever. No account needed. No network calls. The verifier is Apache-2.0, free forever. Works even if Primust disappears.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CODE SAMPLE -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="code-section">
+    <div>
+      <div class="code-eyebrow">02 · Install. Instrument. Done.</div>
+      <h2 class="code-headline">First VPEC in Under Five Minutes</h2>
+      <p class="code-body">
+        Sandbox key. Two lines after install. No re-instrumentation when you go to production — upgrade key status, same code.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#888;">Sandbox key → Production: zero re-work</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#888;">Content never transits Primust</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:#888;">VPECs verifiable offline, forever</div>
+      </div>
+      <div style="margin-top:32px;display:flex;gap:14px;">
+        <a href="https://app.primust.com/sandbox" class="cta-primary">Get Sandbox Access</a>
+        <a href="https://verify.primust.com" class="cta-secondary">Try the Verifier →</a>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="code-block">
+        <div class="code-block-label">Python · 3 lines</div>
+        <pre><span class="c-comment"># Install</span>
+<span class="c-fn">pip install</span> <span class="c-keyword">primust primust-ai</span>
+
+<span class="c-comment"># Instrument</span>
+<span class="c-keyword">p</span> = primust.Pipeline(
+    api_key=<span class="c-string">"pk_sb_xxx"</span>,
+    policy=<span class="c-string">"ai_agent_general_v1"</span>
+)
+primust_ai.<span class="c-amber">autoinstrument</span>(pipeline=p)
+
+<span class="c-comment"># VPECs flow automatically.</span>
+<span class="c-comment"># Verify anywhere:</span>
+<span class="c-fn">primust verify</span> <span class="c-keyword">vpec.json</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-label">Embedded verifier</div>
+        <pre><span class="c-keyword">from</span> primust_verify <span class="c-keyword">import</span> verify
+
+result = verify(vpec_json)
+<span class="c-keyword">if not</span> result.valid:
+    <span class="c-keyword">raise</span> GovernanceVerificationError(
+        result.failure_reason
+    )
+<span class="c-comment"># Apache-2.0 · zero network · forever</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- WHY PRIMUST -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label"><span class="section-num">03</span>Why Primust</div>
+
+  <div style="padding:0 56px 32px;">
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--ink);line-height:0.95;">
+      Cryptographic Proof,<br>Not Compliance Theater
+    </h2>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-item">
+      <div class="why-number">01 · Offline Verification</div>
+      <div class="why-title">Works Forever</div>
+      <div class="why-body">VPECs verify without network calls after first public key fetch. Works forever — even if Primust disappears. Embed primust-verify as a library call; zero infrastructure dependency.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-number">02 · Provable Surface</div>
+      <div class="why-title">Honest Disclosure</div>
+      <div class="why-body">See exactly what share of your governance is mathematically proven, witnessed, or attested. Your floor is your legal minimum. The distribution across levels is your audit story.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-number">03 · Cross-Org Chains</div>
+      <div class="why-title">Multi-Hop Provenance</div>
+      <div class="why-body">Verify upstream VPECs as a first-class Mathematical-level check. Provenance chains compose across any number of org boundaries. No trust broker. Each link independently verifiable.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-number">04 · BYOK Enterprise</div>
+      <div class="why-title">Zero Trust in Primust</div>
+      <div class="why-body">Sign with your own keys. Auditors verify against your domain's well-known pubkey. Primust = issuance orchestration. Your private key never leaves your environment.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-number">05 · Audit Report</div>
+      <div class="why-title">Signed PDF, Offline-Verifiable</div>
+      <div class="why-body">Evidence Pack → signed PDF Audit Report, verifiable offline. Human-readable for auditors who won't run Python. Framework views included — your evidence, not Primust's assertion.</div>
+    </div>
+    <div class="why-item">
+      <div class="why-number">06 · Domain Neutral</div>
+      <div class="why-title">Any Governed Process</div>
+      <div class="why-body">AI governance, software supply chain, financial data pipelines, pharma, manufacturing QC, legal research. Same primitive. Any process. Policy bundles for 7 frameworks shipped today.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PROOF LEVELS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label"><span class="section-num">04</span>Proof Levels</div>
+
+  <div class="levels-section">
+    <div class="levels-header">
+      <div class="levels-title">Five Levels. Honest Disclosure.</div>
+      <div class="levels-subtitle">Every check gets a proof level. The weakest link sets the credential floor. No faking upward.</div>
+    </div>
+
+    <table class="levels-table">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>How Proven</th>
+          <th>Trust Required</th>
+          <th>Examples</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="level-badge"><div class="level-dot math"></div>Mathematical</div></td>
+          <td>ZK proof — no trust required</td>
+          <td><div class="level-trust">None — pure math</div></td>
+          <td>Regex, allowlist, threshold, OPA, Cedar, Drools</td>
+        </tr>
+        <tr>
+          <td><div class="level-badge"><div class="level-dot vi"></div>Verifiable Inference</div></td>
+          <td>ML model compiled to ZK circuit</td>
+          <td><div class="level-trust">Trust model weights</div></td>
+          <td>XGBoost, Isolation Forest, scikit-learn</td>
+        </tr>
+        <tr>
+          <td><div class="level-badge"><div class="level-dot exec"></div>Execution</div></td>
+          <td>Cryptographic model binding</td>
+          <td><div class="level-trust">Trust the model</div></td>
+          <td>Named ML model, pinned LLM API, custom code</td>
+        </tr>
+        <tr>
+          <td><div class="level-badge"><div class="level-dot wit"></div>Witnessed</div></td>
+          <td>Dual timestamp + signed identity</td>
+          <td><div class="level-trust">Trust reviewer identity</div></td>
+          <td>Human review, CISO sign-off, pharmacist approval</td>
+        </tr>
+        <tr>
+          <td><div class="level-badge"><div class="level-dot att"></div>Attestation</div></td>
+          <td>Invocation record binding</td>
+          <td><div class="level-trust">Trust process owner</div></td>
+          <td>Opaque process, OTEL records</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="weakest-link">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="0.5" y="0.5" width="13" height="13" stroke="#2A2A2A"/>
+        <line x1="7" y1="3" x2="7" y2="8" stroke="#444" stroke-width="1.5"/>
+        <line x1="7" y1="10" x2="7" y2="11" stroke="#444" stroke-width="1.5"/>
+      </svg>
+      <div>
+        <div class="weakest-link-label">Weakest-link rule</div>
+        <div class="weakest-link-copy">The credential floor is the minimum proof level across all checks. Derived automatically. Cannot be faked upward.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- INTEGRATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label"><span class="section-num">05</span>Integrations — Works With What You Already Run</div>
+
+  <div style="padding:0 56px 12px;font-family:'Libre Baskerville',serif;font-size:13px;color:#999;font-style:italic;">
+    SDKs in five languages. Adapters for AI frameworks and rule engines. All shipped.
+  </div>
+
+  <div class="integrations-grid">
+    <div class="integration-chip">
+      <div class="integration-name">LangGraph</div>
+      <div class="integration-lang">Python · PyPI</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">OpenAI Agents</div>
+      <div class="integration-lang">Python · PyPI</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">Google ADK</div>
+      <div class="integration-lang">Python · PyPI</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">OpenTelemetry</div>
+      <div class="integration-lang">Py · TS · npm</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">OPA / Rego</div>
+      <div class="integration-lang">Go · pkg.go.dev</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">Cedar</div>
+      <div class="integration-lang">Java · Maven</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">Drools</div>
+      <div class="integration-lang">Java · Maven</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">IBM ODM</div>
+      <div class="integration-lang">Java · Maven</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">Python SDK</div>
+      <div class="integration-lang">pip install primust</div>
+    </div>
+    <div class="integration-chip">
+      <div class="integration-name">TypeScript SDK</div>
+      <div class="integration-lang">npm · @primust/sdk</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- OPEN SOURCE -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label"><span class="section-num">06</span>Open Source — Verification Is Free. Forever.</div>
+
+  <div style="padding:0 56px 8px;font-family:'Libre Baskerville',serif;font-size:13px;color:#999;font-style:italic;">
+    The verifier and check harness are Apache-2.0. No account needed. Works offline.
+  </div>
+
+  <div class="os-grid">
+    <div class="os-card">
+      <div class="os-license">Apache-2.0</div>
+      <div class="os-name">PRIMUST-VERIFY</div>
+      <div class="os-body">
+        Offline verifier for VPECs. No account, no network calls after first key fetch.
+        Embed as a library in any downstream system, or run via CLI. Free forever.
+      </div>
+      <div class="os-cmd">pip install primust-verify</div>
+      <div class="os-cmd">primust verify vpec.json</div>
+      <div class="os-cmd">primust verify vpec.json --trust-root key.pem</div>
+    </div>
+
+    <div class="os-card">
+      <div class="os-license">Apache-2.0</div>
+      <div class="os-name">PRIMUST-CHECKS</div>
+      <div class="os-body">
+        Open-source governance check harness. 8 built-in checks, 7 preconfigured policy bundles.
+        Runs entirely in your environment. Zero content transits Primust. Without an API key: governance observability. With one: VPECs flow.
+      </div>
+      <div class="os-cmd">pip install primust-checks</div>
+      <div class="os-cmd">from primust_checks import harness</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- FINAL CTA -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="final-cta">
+  <h2 class="final-headline">
+    Make Governance<br>
+    <span style="color:var(--amber);">Provable.</span>
+  </h2>
+  <p class="final-sub">
+    Sandbox key. No re-instrumentation when you go to production. First verifiable credential in under five minutes.
+  </p>
+  <div class="final-ctas">
+    <a href="https://app.primust.com/sandbox" class="cta-primary">Get Sandbox Access</a>
+    <a href="https://verify.primust.com" class="cta-secondary">Try the Verifier →</a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- FOOTER -->
+<!-- ═══════════════════════════════════════════════════ -->
+<footer>
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div class="mark" style="width:20px;height:20px;">
+      <svg width="11" height="15" viewBox="0 0 11 15" fill="none">
+        <line x1="2.7" y1="0" x2="2.7" y2="15" stroke="#0E0E0E" stroke-width="3" stroke-linecap="square"/>
+        <line x1="2.7" y1="7.5" x2="11" y2="7.5" stroke="#0E0E0E" stroke-width="3" stroke-linecap="square"/>
+      </svg>
+    </div>
+    <span class="wordmark" style="font-size:9px;">PRIMUST</span>
+  </div>
+
+  <div class="footer-links">
+    <a href="https://docs.primust.com">Docs</a>
+    <a href="https://github.com/primust-dev/primust">GitHub</a>
+    <a href="https://verify.primust.com">Verify</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+  </div>
+
+  <div class="footer-copy">© 2026 Primust, Inc. · We make governance provable.</div>
+</footer>
+
+</body>
+</html>

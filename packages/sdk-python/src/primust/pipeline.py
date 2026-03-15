@@ -137,7 +137,7 @@ class Pipeline:
         self.surface_id = surface_id
         self.policy = policy
         self.process_context_hash = process_context_hash
-        self.test_mode = resolved_key.startswith("pk_test_")
+        self.test_mode = resolved_key.startswith("pk_test_") or resolved_key.startswith("pk_sb_")
         self.base_url = (_base_url or base_url).rstrip("/")
 
         # Transport + queue for Run-based API

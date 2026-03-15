@@ -1,17 +1,42 @@
 {
   "name": "@primust/otel",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Primust governance adapter for OpenTelemetry (TypeScript)",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "vitest run"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Primust, Inc. <eng@primust.com>",
+  "homepage": "https://primust.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/primust-dev/primust.git",
+    "directory": "packages/primust-otel-js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@primust/artifact-core": "workspace:*"
   },
+  "peerDependencies": {
+    "@opentelemetry/api": ">=1.0.0"
+  },
   "devDependencies": {
     "vitest": "^2.1.0",
     "typescript": "^5.7.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   }
 }

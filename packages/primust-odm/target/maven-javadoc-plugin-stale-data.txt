@@ -1,0 +1,43 @@
+@options
+@packages
+-classpath
+'/Users/adamlayman/.m2/repository/com/primust/primust-rules-core/1.0.0/primust-rules-core-1.0.0.jar'
+-encoding
+'UTF-8'
+-protected
+-source
+'17'
+-sourcepath
+'/Users/adamlayman/primust/packages/primust-odm/src/main/java:/Users/adamlayman/primust/packages/primust-odm/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/adamlayman/primust/packages/primust-odm/target/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Primust IBM ODM Adapter 1.0.0 API'
+-use
+-version
+-windowtitle
+'Primust IBM ODM Adapter 1.0.0 API'
+com.primust.odm
+/Users/adamlayman/.m2/repository/com/primust/primust-rules-core/1.0.0/primust-rules-core-1.0.0.jar = 1773601197200
+/Users/adamlayman/primust/packages/primust-odm/src/main/java = 1773277912811
+/Users/adamlayman/primust/packages/primust-odm/target/generated-sources/annotations = 1773601295285
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/tag-search-index.js = 1773601297012
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/overview-tree.html = 1773601297007
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/module-search-index.js = 1773601297011
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/index.html = 1773601297015
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/package-search-index.js = 1773601297012
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/index-all.html = 1773601297014
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/allpackages-index.html = 1773601297011
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/member-search-index.js = 1773601297012
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/help-doc.html = 1773601297017
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/element-list = 1773601296999
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/search.html = 1773601297015
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/allclasses-index.html = 1773601297010
+/Users/adamlayman/primust/packages/primust-odm/target/apidocs/type-search-index.js = 1773601297012

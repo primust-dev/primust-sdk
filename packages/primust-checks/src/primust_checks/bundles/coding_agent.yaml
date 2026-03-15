@@ -1,0 +1,19 @@
+bundle_id: coding_agent_v1
+name: Coding Agent Governance
+version: "1.0"
+framework_mappings: []
+estimated_provable_surface: 0.95
+checks:
+  - check_id: command_patterns
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: secrets_scanner
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: enforcement_rate
+    required: true
+    threshold: 0.95
+    proof_ceiling: mathematical
+    zk_circuit: primust_governance_v1

@@ -107,7 +107,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Test key daily cap
         api_key = request.headers.get("X-API-Key", "")
-        if api_key.startswith("pk_test_"):
+        if api_key.startswith("pk_test_") or api_key.startswith("pk_sb_"):
             today = time.strftime("%Y-%m-%d")
             if today != self._test_daily_date:
                 self._test_daily.clear()
@@ -181,7 +181,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 # Lightweight metadata call — just verify we can reach KMS
                 from google.cloud import kms as kms_mod
                 kms_client = kms_mod.KeyManagementServiceClient()
-                kms_client.get_crypto_key_version(request={"name": f"{kms_key}/cryptoKeyVersions/1"})
+                # kms_key is already the full version path (e.g. .../cryptoKeyVersions/1)
+                kms_client.get_crypto_key_version(request={"name": kms_key})
                 logger.info("KMS connectivity verified for region=%s", region)
             except Exception:
                 logger.warning(
@@ -190,6 +191,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     region,
                     exc_info=True,
                 )
+
+    # Load .well-known public keys from KMS
+    from .routes.well_known import load_keys_from_kms
+    try:
+        await load_keys_from_kms()
+    except Exception:
+        logger.warning("Could not load .well-known public keys (non-fatal)", exc_info=True)
+
+    # Seed built-in policy bundles
+    from .services.bundle_seeder import seed_builtin_bundles
+    try:
+        await seed_builtin_bundles()
+    except Exception:
+        logger.warning("Could not seed built-in bundles (non-fatal)", exc_info=True)
 
     logger.info("Primust API started (dev_mode=%s)", _DEV_MODE)
     yield
@@ -244,6 +259,12 @@ from .routes.proofs import router as proofs_router  # noqa: E402
 from .routes.runs import router as runs_router  # noqa: E402
 from .routes.vpecs import router as vpecs_router  # noqa: E402
 from .routes.webhook import router as webhook_router  # noqa: E402
+from .routes.well_known import router as well_known_router  # noqa: E402
+from .routes.bundles import router as bundles_router  # noqa: E402
+from .routes.manifests import router as manifests_router  # noqa: E402
+from .routes.onboard import router as onboard_router  # noqa: E402
+from .routes.signing_keys import router as signing_keys_router  # noqa: E402
+from .routes.reports import router as reports_router  # noqa: E402
 
 app.include_router(runs_router)
 app.include_router(vpecs_router)
@@ -251,13 +272,23 @@ app.include_router(packs_router)
 app.include_router(gaps_router)
 app.include_router(proofs_router)
 app.include_router(webhook_router)
+app.include_router(well_known_router)
+app.include_router(bundles_router)
+app.include_router(manifests_router)
+app.include_router(onboard_router)
+app.include_router(signing_keys_router)
+app.include_router(reports_router)
 
 
+@app.get("/health")
+@app.get("/healthz")
 @app.get("/api/v1/health")
 async def health() -> dict[str, Any]:
     """Health check with DB ping and KMS status."""
-    region = os.environ.get("FLY_REGION", os.environ.get("PRIMARY_REGION", "us"))
-    result: dict[str, Any] = {"status": "ok", "region": region}
+    fly_region = os.environ.get("FLY_REGION", os.environ.get("PRIMARY_REGION", "us"))
+    # Map Fly region codes to Primust region (us/eu)
+    region = "eu" if fly_region.startswith("ams") or fly_region.startswith("fra") or fly_region.startswith("lhr") else "us"
+    result: dict[str, Any] = {"status": "ok", "region": region, "fly_region": fly_region}
 
     # DB check
     try:

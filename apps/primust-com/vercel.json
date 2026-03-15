@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/.well-known/primust-pubkeys/:kid",
+      "destination": "https://primust-api.fly.dev/.well-known/primust-pubkeys/:kid"
+    }
+  ]
+}

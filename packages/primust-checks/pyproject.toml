@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "primust-checks"
+version = "1.0.0"
+description = "Open-source governance check harness. Run checks locally. Prove they ran with Primust."
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Primust, Inc.", email = "eng@primust.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "httpx>=0.27.0",
+  "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://primust.com"
+Documentation = "https://docs.primust.com"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/primust_checks"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -126,6 +126,8 @@ class Run:
             # ── LOCAL COMMITMENT — raw input never leaves ──
             # Explicit SHA-256 default: not contingent on artifact-core package default.
             # Poseidon2 opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2 env var.
+            # TODO: Wire Poseidon2 commitment to Noir circuit output. Currently falls back to
+            # SHA256. See poseidon2 test failures in sdk-python, langgraph, openai-agents, google-adk.
             _alg = os.environ.get("PRIMUST_COMMITMENT_ALGORITHM", "sha256")
             input_bytes = _to_bytes(input)
             input_commitment, algorithm = commit(input_bytes, _alg)

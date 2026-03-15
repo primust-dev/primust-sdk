@@ -4,7 +4,6 @@ import { CoverageDisplay } from "./CoverageDisplay";
 import { GapTable } from "./GapTable";
 import { ManifestHashesTable } from "./ManifestHashesTable";
 import { ProofDistributionBar } from "./ProofDistributionBar";
-import { PROOF_LEVELS } from "../lib/constants";
 
 interface RunDetailProps {
   vpec: VPECArtifact;

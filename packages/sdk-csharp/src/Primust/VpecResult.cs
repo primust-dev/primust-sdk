@@ -39,7 +39,7 @@ public sealed class VpecResult
     /// <summary>True if commitment chain is unbroken.</summary>
     public bool ChainIntact { get; init; }
 
-    /// <summary>True if pk_test_ key was used.</summary>
+    /// <summary>True if pk_test_ or pk_sb_ key was used.</summary>
     public bool TestMode { get; init; }
 
     /// <summary>True if chain is intact AND zero governance gaps.</summary>

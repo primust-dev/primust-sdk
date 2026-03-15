@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from ..auth import AuthContext, require_jwt
 from ..db import execute, fetch_all, fetch_one
+from ..kms import encrypt_secret
 from ..services.webhook_dispatcher import retry_delivery, send_test_event
 
 router = APIRouter(prefix="/api/v1", tags=["webhook"])
@@ -88,6 +89,8 @@ async def create_or_update_webhook(
         auth.org_id,
     )
 
+    encrypted_auth = encrypt_secret(body.auth_header)
+
     if existing:
         # Update
         await execute(
@@ -96,7 +99,7 @@ async def create_or_update_webhook(
                SET endpoint_url = $1, auth_header = $2, coverage_threshold_floor = $3
                WHERE org_id = $4""",
             body.endpoint_url,
-            body.auth_header,
+            encrypted_auth,
             body.coverage_threshold_floor,
             auth.org_id,
         )
@@ -112,7 +115,7 @@ async def create_or_update_webhook(
         config_id,
         auth.org_id,
         body.endpoint_url,
-        body.auth_header,
+        encrypted_auth,
         body.coverage_threshold_floor,
     )
     return {"id": config_id, "status": "created"}

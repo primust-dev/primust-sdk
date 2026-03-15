@@ -212,8 +212,8 @@ class TestOTELSpanProcessor:
         assert record_req[0]["body"]["manifest_id"] == "manifest_override_v2"
 
     def test_proof_levels_reachable(self) -> None:
-        """Proof levels reachable in proof_level_achieved (mathematical excluded until ZK wired)."""
-        expected = {"verifiable_inference", "execution", "witnessed", "attestation"}
+        """Proof levels reachable in proof_level_achieved."""
+        expected = {"mathematical", "verifiable_inference", "execution", "witnessed", "attestation"}
         assert set(PROOF_LEVEL_MAP.values()) == expected
 
     def test_unset_status_produces_degraded(
@@ -326,8 +326,7 @@ class TestSpanTypeClassification:
         assert SPAN_TYPE_PROOF_CEILING[SpanType.LLM_INFERENCE] == "attestation"
         assert SPAN_TYPE_PROOF_CEILING[SpanType.TOOL_EXECUTION_INTERNAL] == "execution"
         assert SPAN_TYPE_PROOF_CEILING[SpanType.TOOL_EXECUTION_CLIENT] == "attestation"
-        # TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
-        assert SPAN_TYPE_PROOF_CEILING[SpanType.EVALUATION] == "execution"
+        assert SPAN_TYPE_PROOF_CEILING[SpanType.EVALUATION] == "mathematical"
         assert SPAN_TYPE_PROOF_CEILING[SpanType.UNKNOWN] == "attestation"
 
 
@@ -488,8 +487,8 @@ class TestEvaluationMathematical:
         record_req = [r for r in transport.requests if "/records" in r["url"]]
         assert record_req[0]["body"]["check_result"] == "fail"
 
-    def test_eval_proof_level_execution(self) -> None:
-        """Evaluation proof level is execution until ZK proofs are wired."""
+    def test_eval_proof_level_mathematical(self) -> None:
+        """Evaluation proof level is mathematical."""
         processor = PrimustSpanProcessor(pipeline=None)  # type: ignore
         span = MockSpan(
             name="eval",
@@ -497,8 +496,7 @@ class TestEvaluationMathematical:
             events=[MockEvent(name="gen_ai.evaluation.result", attributes={})],
         )
         proof_level = processor._resolve_proof_level(span, SpanType.EVALUATION)
-        # TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
-        assert proof_level == "execution"
+        assert proof_level == "mathematical"
 
 
 # ---------------------------------------------------------------------------
@@ -602,10 +600,8 @@ class TestNewStageTypes:
     def test_open_source_ml_execution(self) -> None:
         assert PROOF_LEVEL_MAP["open_source_ml"] == "execution"
 
-    def test_hardware_attested_execution(self) -> None:
-        # TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
-        assert PROOF_LEVEL_MAP["hardware_attested"] == "execution"
+    def test_hardware_attested_mathematical(self) -> None:
+        assert PROOF_LEVEL_MAP["hardware_attested"] == "mathematical"
 
-    def test_policy_engine_execution(self) -> None:
-        # TODO(zk-integration): Restore to "mathematical" when ZK proofs are wired
-        assert PROOF_LEVEL_MAP["policy_engine"] == "execution"
+    def test_policy_engine_mathematical(self) -> None:
+        assert PROOF_LEVEL_MAP["policy_engine"] == "mathematical"

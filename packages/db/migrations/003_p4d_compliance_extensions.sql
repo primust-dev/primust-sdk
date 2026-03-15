@@ -17,8 +17,17 @@
 --   Workflow registrations: retention_policy, risk_classification, regulatory_context
 
 -- ── 1. Rename proof_level enum value: execution_zkml → verifiable_inference ──
+-- Guarded: 001_initial.sql may already define verifiable_inference directly.
 
-ALTER TYPE proof_level RENAME VALUE 'execution_zkml' TO 'verifiable_inference';
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_enum
+    WHERE enumlabel = 'execution_zkml'
+    AND enumtypid = 'proof_level'::regtype
+  ) THEN
+    ALTER TYPE proof_level RENAME VALUE 'execution_zkml' TO 'verifiable_inference';
+  END IF;
+END $$;
 
 -- ── 2. CheckExecutionRecord — three new columns ──
 

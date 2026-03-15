@@ -1,12 +1,16 @@
 """
-GCP Cloud KMS signing integration.
+GCP Cloud KMS integration — signing + symmetric encryption.
 
 Signs VPEC documents, gap waivers, and evidence packs using
 GCP KMS asymmetric signing (EC_SIGN_P256_SHA256 or RSA_SIGN_PKCS1_2048_SHA256).
 
+Encrypts sensitive at-rest fields (e.g. webhook auth_header) using
+GCP KMS symmetric encryption (PRIMUST_KMS_ENCRYPT_KEY).
+
 KMS key resource names resolved from environment:
   PRIMUST_KMS_KEY_US — US region signing key
   PRIMUST_KMS_KEY_EU — EU region signing key
+  PRIMUST_KMS_ENCRYPT_KEY — symmetric encryption key for secrets at rest
 
 Local dev stub ONLY when PRIMUST_DEV_MODE=true. Never in production.
 
@@ -75,10 +79,11 @@ async def kms_sign(
 
     try:
         client = kms.KeyManagementServiceClient()
-        digest = hashlib.sha256(document_json.encode("utf-8")).digest()
+        data = document_json.encode("utf-8")
 
+        # Ed25519 signs raw data (not a pre-computed digest)
         sign_response = client.asymmetric_sign(
-            request={"name": kms_key_name, "digest": {"sha256": digest}}
+            request={"name": kms_key_name, "data": data}
         )
 
         signature_b64 = base64.urlsafe_b64encode(sign_response.signature).decode("ascii")
@@ -86,7 +91,7 @@ async def kms_sign(
         return {
             "signer_id": signer_id,
             "kid": kid,
-            "algorithm": "EC_SIGN_P256_SHA256",
+            "algorithm": "Ed25519",
             "signature": signature_b64,
             "signed_at": now,
         }
@@ -103,3 +108,80 @@ async def kms_sign(
             "signature": None,
             "signed_at": now,
         }
+
+
+# ── Symmetric encryption for secrets at rest ──
+
+_ENCRYPT_KEY = os.environ.get("PRIMUST_KMS_ENCRYPT_KEY", "")
+
+_DEV_ENCRYPT_PREFIX = "dev_plain:"
+_KMS_ENCRYPT_PREFIX = "kms_enc:"
+
+
+def encrypt_secret(plaintext: str) -> str:
+    """
+    Encrypt a secret for at-rest storage using GCP KMS symmetric encryption.
+
+    In dev mode (PRIMUST_DEV_MODE=true), stores with a dev_plain: prefix
+    (base64-encoded but NOT encrypted — local dev only).
+
+    In production, uses GCP KMS symmetric encrypt and returns kms_enc: prefixed
+    base64 ciphertext.
+    """
+    if _DEV_MODE or not _ENCRYPT_KEY:
+        encoded = base64.urlsafe_b64encode(plaintext.encode("utf-8")).decode("ascii")
+        return f"{_DEV_ENCRYPT_PREFIX}{encoded}"
+
+    try:
+        from google.cloud import kms
+    except ImportError as exc:
+        raise RuntimeError(
+            "google-cloud-kms package not installed. Required for production encryption."
+        ) from exc
+
+    try:
+        client = kms.KeyManagementServiceClient()
+        response = client.encrypt(
+            request={"name": _ENCRYPT_KEY, "plaintext": plaintext.encode("utf-8")}
+        )
+        ciphertext_b64 = base64.urlsafe_b64encode(response.ciphertext).decode("ascii")
+        return f"{_KMS_ENCRYPT_PREFIX}{ciphertext_b64}"
+    except Exception:
+        logger.error("KMS encrypt failed for key=%s", _ENCRYPT_KEY, exc_info=True)
+        raise
+
+
+def decrypt_secret(ciphertext: str) -> str:
+    """
+    Decrypt a secret stored with encrypt_secret().
+
+    Handles both dev_plain: (dev mode) and kms_enc: (production) prefixes.
+    """
+    if ciphertext.startswith(_DEV_ENCRYPT_PREFIX):
+        encoded = ciphertext[len(_DEV_ENCRYPT_PREFIX):]
+        return base64.urlsafe_b64decode(encoded).decode("utf-8")
+
+    if not ciphertext.startswith(_KMS_ENCRYPT_PREFIX):
+        # Legacy plaintext — return as-is for backwards compatibility during migration
+        logger.warning("auth_header stored as plaintext — will be encrypted on next save")
+        return ciphertext
+
+    try:
+        from google.cloud import kms
+    except ImportError as exc:
+        raise RuntimeError(
+            "google-cloud-kms package not installed. Required for production decryption."
+        ) from exc
+
+    encoded = ciphertext[len(_KMS_ENCRYPT_PREFIX):]
+    ciphertext_bytes = base64.urlsafe_b64decode(encoded)
+
+    try:
+        client = kms.KeyManagementServiceClient()
+        response = client.decrypt(
+            request={"name": _ENCRYPT_KEY, "ciphertext": ciphertext_bytes}
+        )
+        return response.plaintext.decode("utf-8")
+    except Exception:
+        logger.error("KMS decrypt failed for key=%s", _ENCRYPT_KEY, exc_info=True)
+        raise

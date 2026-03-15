@@ -40,3 +40,4 @@ require (
 )
 
 replace github.com/primust-dev/rules-core-go => ../rules-core-go
+

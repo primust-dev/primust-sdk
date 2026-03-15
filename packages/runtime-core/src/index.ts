@@ -33,6 +33,8 @@ export type {
   TimestampAnchorRef,
   EvidencePack,
   SignatureEnvelopeRef,
+  ComplianceRequirements,
+  BiasAudit,
 } from './types/index.js';
 
 export {

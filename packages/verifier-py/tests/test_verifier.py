@@ -403,7 +403,7 @@ class TestCLI:
         ]
         expected = [
             "mathematical",
-            "execution+zkml",
+            "Verifiable Inference",
             "execution",
             "witnessed",
             "attestation",
@@ -445,7 +445,7 @@ class TestCLI:
             assert code == 0
             mock_urlopen.assert_not_called()
 
-    def test_verifiable_inference_renders_as_execution_plus_zkml(
+    def test_verifiable_inference_renders_as_verifiable_inference(
         self, tmp_path: Path, capsys
     ):
         artifact, pub_key = _create_signed_artifact(
@@ -466,5 +466,5 @@ class TestCLI:
         main([file_path, "--skip-network", "--trust-root", trust_root])
 
         captured = capsys.readouterr()
-        assert "execution+zkml" in captured.out
-        assert "verifiable_inference" not in captured.out
+        assert "Verifiable Inference" in captured.out
+        assert "execution+zkml" not in captured.out

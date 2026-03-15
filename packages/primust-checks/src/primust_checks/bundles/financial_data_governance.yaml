@@ -1,0 +1,19 @@
+bundle_id: financial_data_governance_v1
+name: Financial Data Governance
+version: "1.0"
+framework_mappings: []
+estimated_provable_surface: 0.85
+checks:
+  - check_id: schema_validation
+    required: true
+    proof_ceiling: mathematical
+  - check_id: reconciliation_check
+    required: true
+    proof_ceiling: mathematical
+  - check_id: pii_regex
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: upstream_vpec_verify
+    required: false
+    proof_ceiling: mathematical

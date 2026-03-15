@@ -58,6 +58,9 @@ function makeRecord(
     freshness_warning: false,
     idempotency_key: `idem_${Math.random().toString(36).slice(2, 8)}`,
     recorded_at: '2026-03-10T00:00:00Z',
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     ...overrides,
   };
 }
@@ -77,6 +80,9 @@ function makeSnapshot(checks: Array<{ check_id: string; manifest_id: string; req
     })),
     snapshotted_at: '2026-03-10T00:00:00Z',
     policy_basis: 'P1_self_declared',
+    retention_policy: null,
+    risk_classification: null,
+    regulatory_context: null,
   };
 }
 
@@ -140,6 +146,7 @@ describe('gap_detector', () => {
       details: { boundary: 'agent_to_agent' },
       detected_at: '2026-03-10T00:00:00Z',
       resolved_at: null,
+      incident_report_ref: null,
     });
 
     const gaps = detectGaps('run_001', store);
@@ -213,6 +220,7 @@ describe('gap_detector', () => {
       },
       detected_at: '2026-03-10T00:00:00Z',
       resolved_at: null,
+      incident_report_ref: null,
     });
 
     const gaps = detectGaps('run_001', store);

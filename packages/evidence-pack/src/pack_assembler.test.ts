@@ -281,10 +281,12 @@ describe('Evidence Pack assembly (P8-A)', () => {
       { coverage_verified_pct: 100, coverage_pending_pct: 0, coverage_ungoverned_pct: 0 },
     );
 
-    expect(pack.manifest_hashes).toBeTypeOf('object');
-    expect(Array.isArray(pack.manifest_hashes)).toBe(false);
-    expect(pack.manifest_hashes!['manifest_001']).toBeTypeOf('string');
-    expect(pack.manifest_hashes!['manifest_002']).toBeTypeOf('string');
+    const packAny = pack as unknown as Record<string, unknown>;
+    const manifestHashes = packAny.manifest_hashes as Record<string, string>;
+    expect(manifestHashes).toBeTypeOf('object');
+    expect(Array.isArray(manifestHashes)).toBe(false);
+    expect(manifestHashes['manifest_001']).toBeTypeOf('string');
+    expect(manifestHashes['manifest_002']).toBeTypeOf('string');
   });
 });
 

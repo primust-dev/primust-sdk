@@ -1,7 +1,7 @@
 {
   "name": "@primust/sdk",
-  "version": "0.0.1",
-  "description": "JavaScript/TypeScript customer SDK",
+  "version": "1.0.0",
+  "description": "Prove your governance checks ran. Portable, offline-verifiable cryptographic credentials.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,14 +12,28 @@
   "files": [
     "dist"
   ],
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Primust, Inc. <eng@primust.com>",
+  "homepage": "https://primust.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/primust-dev/primust.git",
+    "directory": "packages/sdk-js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@primust/artifact-core": "workspace:*"
   },
-  "license": "UNLICENSED",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./verify": {
+      "import": "./dist/verify.js",
+      "types": "./dist/verify.d.ts"
     }
   }
 }

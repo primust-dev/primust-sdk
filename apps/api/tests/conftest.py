@@ -312,9 +312,11 @@ _PATCHES = [
     ("primust_api.routes.webhook.fetch_one", dict(side_effect=_db.fetch_one)),
     ("primust_api.routes.webhook.fetch_all", dict(side_effect=_db.fetch_all)),
     ("primust_api.routes.webhook.execute", dict(side_effect=_db.execute)),
+    ("primust_api.routes.webhook.encrypt_secret", dict(side_effect=lambda x: x)),
     # Service-level patches (webhook dispatcher)
     ("primust_api.services.webhook_dispatcher.fetch_one", dict(side_effect=_db.fetch_one)),
     ("primust_api.services.webhook_dispatcher.execute", dict(side_effect=_db.execute)),
+    ("primust_api.services.webhook_dispatcher.decrypt_secret", dict(side_effect=lambda x: x)),
 ]
 
 

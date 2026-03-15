@@ -1,0 +1,19 @@
+bundle_id: soc2_cc_v1
+name: SOC 2 Common Criteria
+version: "1.0"
+framework_mappings: ["soc2_cc71", "soc2_cc81", "soc2_cc61"]
+estimated_provable_surface: 0.90
+checks:
+  - check_id: cost_bound_zk
+    required: true
+    proof_ceiling: mathematical
+    zk_circuit: threshold_application
+  - check_id: enforcement_rate
+    required: true
+    threshold: 0.99
+    proof_ceiling: mathematical
+    zk_circuit: primust_governance_v1
+  - check_id: policy_config_integrity
+    required: true
+    proof_ceiling: mathematical
+    zk_circuit: config_epoch_continuity

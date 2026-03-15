@@ -49,8 +49,8 @@ class PrimustDroolsTest {
         List<String> ruleNames = List.of("MinScoreCheck", "MaxDTICheck", "CollateralRequirement");
         String json = CanonicalJson.canonical(ruleNames);
         var commitment = Commitment.commitOutput(json.getBytes(StandardCharsets.UTF_8));
-        assertEquals("poseidon2", commitment.algorithm());
-        assertTrue(commitment.hash().startsWith("poseidon2:"));
+        assertEquals("sha256", commitment.algorithm());
+        assertTrue(commitment.hash().startsWith("sha256:"));
     }
 
     @Test

@@ -142,6 +142,8 @@ export function commitOutput(output: Uint8Array): CommitmentResult {
  * until an audited implementation (e.g. Barretenberg) is validated.
  */
 function resolveAlgorithm(): CommitmentAlgorithm {
+  // TODO: Wire Poseidon2 commitment to Noir circuit output. Currently falls back to
+  // SHA256. See poseidon2 test failures in sdk-python, langgraph, openai-agents, google-adk.
   if (typeof process !== 'undefined' && process.env?.PRIMUST_COMMITMENT_ALGORITHM === 'poseidon2') {
     return 'poseidon2';
   }

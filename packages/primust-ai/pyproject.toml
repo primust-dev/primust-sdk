@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "primust-ai"
+version = "1.0.0"
+description = "Meta-package for Primust AI framework adapters. Auto-detects installed adapters and provides a unified autoinstrument() entry point."
+requires-python = ">=3.11"
+license = "LicenseRef-Proprietary"
+authors = [{ name = "Primust, Inc.", email = "eng@primust.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "primust>=1.0.0",
+]
+
+[project.optional-dependencies]
+langgraph = ["primust-langgraph>=1.0.0"]
+openai-agents = ["primust-openai-agents>=1.0.0"]
+google-adk = ["primust-google-adk>=1.0.0"]
+all = [
+  "primust-langgraph>=1.0.0",
+  "primust-openai-agents>=1.0.0",
+  "primust-google-adk>=1.0.0",
+]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://primust.com"
+Documentation = "https://docs.primust.com/adapters"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/primust_ai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

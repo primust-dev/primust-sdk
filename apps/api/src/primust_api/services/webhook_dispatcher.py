@@ -26,6 +26,7 @@ import httpx
 import structlog
 
 from ..db import execute, fetch_one
+from ..kms import decrypt_secret
 
 logger = structlog.get_logger("primust.webhook")
 
@@ -109,6 +110,15 @@ def build_base_payload(
         count = proof_dist.get(level, 0)
         breakdown[level] = round(count / total, 4) if total > 0 else 0.0
 
+    # Validate breakdown sums to provable_surface (rounding tolerance)
+    breakdown_sum = sum(breakdown.values())
+    if total > 0 and abs(breakdown_sum - provable_surface) > 0.01:
+        logger.warning(
+            "provable_surface_breakdown sum mismatch",
+            breakdown_sum=breakdown_sum,
+            provable_surface=provable_surface,
+        )
+
     # Count gaps
     gaps = vpec.get("gaps", [])
     critical_gaps = sum(1 for g in gaps if g.get("severity") == "Critical")
@@ -185,6 +195,7 @@ async def _dispatch_with_retry(
     delivery_id = payload["delivery_id"]
     vpec_id = payload.get("vpec_id", "")
     event_type = payload.get("event_type", "")
+    auth_header = decrypt_secret(config["auth_header"])
 
     last_status = 0
     last_error: str | None = None
@@ -195,7 +206,7 @@ async def _dispatch_with_retry(
 
         status, err = await _deliver(
             config["endpoint_url"],
-            config["auth_header"],
+            auth_header,
             payload,
         )
         last_status = status
@@ -429,7 +440,8 @@ async def send_test_event(
 
     import time
     start = time.monotonic()
-    status, err = await _deliver(config["endpoint_url"], config["auth_header"], payload)
+    test_auth = decrypt_secret(config["auth_header"])
+    status, err = await _deliver(config["endpoint_url"], test_auth, payload)
     latency_ms = round((time.monotonic() - start) * 1000, 1)
 
     # Update config status
@@ -478,7 +490,8 @@ async def retry_delivery(
 
     import time
     start = time.monotonic()
-    status, err = await _deliver(config["endpoint_url"], config["auth_header"], payload)
+    retry_auth = decrypt_secret(config["auth_header"])
+    status, err = await _deliver(config["endpoint_url"], retry_auth, payload)
     latency_ms = round((time.monotonic() - start) * 1000, 1)
 
     if 200 <= status < 300:

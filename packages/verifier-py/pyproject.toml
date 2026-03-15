@@ -4,17 +4,35 @@ build-backend = "hatchling.build"
 
 [project]
 name = "primust-verify"
-version = "0.0.1"
-description = "Offline verifier (pip install primust-verify)"
+version = "1.0.0"
+description = "Offline verifier for Primust VPECs. Free forever. No account required."
 requires-python = ">=3.11"
 license = "Apache-2.0"
+authors = [{ name = "Primust, Inc.", email = "eng@primust.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security :: Cryptography",
+]
 dependencies = [
-    "primust-artifact-core",
-    "PyNaCl>=1.5.0",
+  "primust-artifact-core>=1.0.0",
+  "cryptography>=41.0",
+  "httpx>=0.27.0",
+  "pypdf>=4.0.0",
 ]
 
 [project.scripts]
 primust-verify = "primust_verify.cli:main"
+
+[project.urls]
+Homepage = "https://primust.com"
+Documentation = "https://docs.primust.com"
+Verify = "https://verify.primust.com"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/primust_verify"]

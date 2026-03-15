@@ -338,6 +338,8 @@ def _resolve_algorithm() -> str:
     Default is 'sha256'. Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2
     until an audited implementation (e.g. Barretenberg) is validated.
     """
+    # TODO: Wire Poseidon2 commitment to Noir circuit output. Currently falls back to
+    # SHA256. See poseidon2 test failures in sdk-python, langgraph, openai-agents, google-adk.
     alg = os.environ.get("PRIMUST_COMMITMENT_ALGORITHM")
     if alg == "poseidon2":
         return "poseidon2"

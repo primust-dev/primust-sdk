@@ -21,6 +21,7 @@ from ..auth import AuthContext, require_api_key
 from ..banned import reject_banned_fields
 from ..db import execute, fetch_all, fetch_one, get_region_config, transaction
 from ..kms import kms_sign
+from ..services.byok_signer import get_active_org_key, sign_with_org_key
 from ..services.webhook_dispatcher import dispatch_vpec_issued, dispatch_gap_created
 from ..tsa import get_timestamp_anchor
 
@@ -192,7 +193,8 @@ async def create_record(
            WHERE run_id = $1 ORDER BY recorded_at DESC LIMIT 1""",
         run_id,
     )
-    prev_hash = prev["chain_hash"] if prev else "genesis"
+    PRIMUST_CHAIN_GENESIS = "PRIMUST_CHAIN_GENESIS"
+    prev_hash = prev["chain_hash"] if prev else PRIMUST_CHAIN_GENESIS
     chain_input = f"{prev_hash}:{body.commitment_hash}:{body.idempotency_key}"
     chain_hash = "sha256:" + hashlib.sha256(chain_input.encode()).hexdigest()
 
@@ -386,7 +388,7 @@ async def close_run(
             "signer_id": "api_signer",
             "kid": "kid_api",
             "algorithm": "Ed25519",
-            "public_key_url": "https://keys.primust.com/jwks",
+            "public_key_url": "https://primust.com/.well-known/primust-pubkeys/kid_api.pem",
             "org_region": region,
         },
         "signature": None,  # placeholder — signed below
@@ -407,17 +409,66 @@ async def close_run(
         "test_mode": auth.test_mode,
     }
 
-    # GCP KMS signing
+    # ── Signing: BYOK (Enterprise) or Primust KMS ──
     region_config = get_region_config(region)
     vpec_json = json.dumps(vpec, sort_keys=True, separators=(",", ":"))
-    sig_envelope = await kms_sign(vpec_json, region_config.kms_key)
-    vpec["signature"] = sig_envelope
+    payload_hash_hex = hashlib.sha256(vpec_json.encode("utf-8")).hexdigest()
 
-    # Detect provisional (KMS failure) — set state and pending flags
-    is_provisional = sig_envelope.get("algorithm") == "UNSIGNED_PENDING"
-    if is_provisional:
-        vpec["state"] = "provisional"
-        vpec["pending_flags"]["signature_pending"] = True
+    is_provisional = False
+    org_key = await get_active_org_key(auth.org_id, region)
+    if org_key and org_key.get("signing_endpoint_url"):
+        # BYOK path: call org's external signing endpoint with SHA-256 hash only
+        byok_result = await sign_with_org_key(auth.org_id, payload_hash_hex, region)
+        if byok_result:
+            sig_envelope = {
+                "signer_id": f"byok_{auth.org_id}",
+                "kid": byok_result["kid"],
+                "algorithm": "Ed25519",
+                "signature": byok_result["signature_hex"],
+                "signed_at": datetime.now(timezone.utc).isoformat(),
+            }
+            vpec["issuer"]["signer_id"] = f"byok_{auth.org_id}"
+            vpec["issuer"]["kid"] = byok_result["kid"]
+            vpec["issuer"]["algorithm"] = "Ed25519"
+            vpec["issuer"]["public_key_url"] = (
+                f"https://primust.com/.well-known/primust-pubkeys/{byok_result['kid']}.pem"
+            )
+            vpec["signature"] = sig_envelope
+        else:
+            # BYOK endpoint failed — fall back to Primust KMS, emit signing_delayed gap
+            sig_envelope = await kms_sign(vpec_json, region_config.kms_key)
+            vpec["signature"] = sig_envelope
+            is_provisional = sig_envelope.get("algorithm") == "UNSIGNED_PENDING"
+            if is_provisional:
+                vpec["state"] = "provisional"
+                vpec["pending_flags"]["signature_pending"] = True
+
+            gap_id = f"gap_signing_delayed_{run_id}_{uuid.uuid4().hex[:8]}"
+            await execute(
+                region,
+                """INSERT INTO gaps (gap_id, run_id, gap_type, severity, state, details, detected_at)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+                gap_id,
+                run_id,
+                "signing_delayed",
+                "Medium",
+                "open",
+                json.dumps({
+                    "reason": "BYOK signing endpoint unreachable, fell back to Primust KMS",
+                    "org_key_kid": org_key.get("kid"),
+                }),
+                datetime.now(timezone.utc),
+            )
+    else:
+        # Standard path: Primust GCP KMS signing
+        sig_envelope = await kms_sign(vpec_json, region_config.kms_key)
+        vpec["signature"] = sig_envelope
+
+        # Detect provisional (KMS failure) — set state and pending flags
+        is_provisional = sig_envelope.get("algorithm") == "UNSIGNED_PENDING"
+        if is_provisional:
+            vpec["state"] = "provisional"
+            vpec["pending_flags"]["signature_pending"] = True
 
     # DigiCert RFC 3161 timestamping
     vpec["timestamp_anchor"] = await get_timestamp_anchor(

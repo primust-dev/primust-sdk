@@ -143,7 +143,7 @@ class VPEC:
     merkle_root: str
     signature: str                # Ed25519 over credential body
     timestamp_rfc3161: str        # RFC 3161 anchor
-    test_mode: bool = False       # True when api_key starts with pk_test_
+    test_mode: bool = False       # True when api_key starts with pk_test_ or pk_sb_
     raw: dict = field(default_factory=dict)  # full JSON for offline verification
 
     def to_dict(self) -> dict:

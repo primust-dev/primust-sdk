@@ -171,12 +171,12 @@ Or online at [verify.primust.com](https://verify.primust.com) — no account req
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.11+
 - `httpx>=0.27.0`
 
 ## License
 
-Apache 2.0
+Proprietary — see LICENSE file.
 
 ---
 

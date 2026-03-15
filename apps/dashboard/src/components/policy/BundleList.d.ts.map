@@ -1,0 +1,1 @@
+{"version":3,"file":"BundleList.d.ts","sourceRoot":"","sources":["BundleList.tsx"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,oBAAoB,CAAC;AAGvD,UAAU,eAAe;IACvB,gBAAgB,EAAE,MAAM,GAAG,IAAI,CAAC;IAChC,cAAc,EAAE,CAAC,MAAM,EAAE,YAAY,KAAK,IAAI,CAAC;CAChD;AAED,wBAAgB,UAAU,CAAC,EAAE,gBAAgB,EAAE,cAAc,EAAE,EAAE,eAAe,+BAmH/E"}

@@ -1,0 +1,25 @@
+bundle_id: ai_agent_general_v1
+name: General AI Agent
+version: "1.0"
+framework_mappings: []
+estimated_provable_surface: 0.80
+checks:
+  - check_id: secrets_scanner
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: pii_regex
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+  - check_id: cost_bounds
+    required: false
+    proof_ceiling: mathematical
+    config:
+      max_cost_usd: 1.00
+      max_tokens_per_run: 100000
+  - check_id: enforcement_rate
+    required: true
+    threshold: 0.99
+    proof_ceiling: mathematical
+    zk_circuit: primust_governance_v1

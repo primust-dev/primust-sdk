@@ -33,7 +33,7 @@ class PrimustTransport:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.queue = queue
-        self.test_mode = api_key.startswith("pk_test_")
+        self.test_mode = api_key.startswith("pk_test_") or api_key.startswith("pk_sb_")
         self._headers = {
             "X-API-Key": api_key,
             "Content-Type": "application/json",

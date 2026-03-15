@@ -1,0 +1,19 @@
+bundle_id: hipaa_safeguards_v1
+name: HIPAA Technical Safeguards
+version: "1.0"
+framework_mappings: ["hipaa_164312"]
+estimated_provable_surface: 0.80
+checks:
+  - check_id: pii_non_detection
+    required: true
+    threshold: 0
+    proof_ceiling: mathematical
+    zk_circuit: coverage_check
+  - check_id: audit_log_coverage
+    required: true
+    proof_ceiling: execution
+  - check_id: enforcement_rate
+    required: true
+    threshold: 0.99
+    proof_ceiling: mathematical
+    zk_circuit: primust_governance_v1

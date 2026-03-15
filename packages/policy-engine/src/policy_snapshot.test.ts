@@ -208,6 +208,9 @@ describe('PolicySnapshotService', () => {
       freshness_warning: false,
       idempotency_key: 'idem_001',
       recorded_at: '2026-03-10T00:00:00Z',
+      actor_id: null,
+      explanation_commitment: null,
+      bias_audit: null,
     });
 
     // Close run1

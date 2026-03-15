@@ -1,0 +1,40 @@
+@options
+@packages
+-encoding
+'UTF-8'
+-protected
+-source
+'17'
+-sourcepath
+'/Users/adamlayman/primust/packages/primust-rules-core/src/main/java:/Users/adamlayman/primust/packages/primust-rules-core/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Primust Rules Core 1.0.0 API'
+-use
+-version
+-windowtitle
+'Primust Rules Core 1.0.0 API'
+com.primust.core
+/Users/adamlayman/primust/packages/primust-rules-core/src/main/java = 1773277175911
+/Users/adamlayman/primust/packages/primust-rules-core/target/generated-sources/annotations = 1773601196318
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/tag-search-index.js = 1773601197934
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/overview-tree.html = 1773601197929
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/module-search-index.js = 1773601197933
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/index.html = 1773601197940
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/package-search-index.js = 1773601197934
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/index-all.html = 1773601197940
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/allpackages-index.html = 1773601197933
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/member-search-index.js = 1773601197934
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/help-doc.html = 1773601197941
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/element-list = 1773601197915
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/search.html = 1773601197940
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/allclasses-index.html = 1773601197933
+/Users/adamlayman/primust/packages/primust-rules-core/target/apidocs/type-search-index.js = 1773601197934

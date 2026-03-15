@@ -11,7 +11,7 @@ export const PROOF_LEVEL_COLORS: Record<ProofLevel, string> = {
 
 export const PROOF_LEVEL_LABELS: Record<ProofLevel, string> = {
   mathematical: "Mathematical",
-  verifiable_inference: "Execution+ZKML",
+  verifiable_inference: "Verifiable Inference",
   execution: "Execution",
   witnessed: "Witnessed",
   attestation: "Attestation",

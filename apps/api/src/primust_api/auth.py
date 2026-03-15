@@ -51,7 +51,7 @@ async def _parse_api_key(api_key: str) -> AuthContext:
     region = parts[3]
     secret_segment = "_".join(parts[4:])
 
-    if mode not in ("live", "test"):
+    if mode not in ("live", "test", "sb"):
         raise HTTPException(status_code=401, detail="Invalid API key mode")
     if region not in ("us", "eu"):
         raise HTTPException(status_code=401, detail="Invalid API key region")
@@ -90,7 +90,8 @@ async def _parse_api_key(api_key: str) -> AuthContext:
         if record["org_id"] != org_id:
             raise HTTPException(status_code=401, detail="Invalid API key")
         # DB is source of truth for key type, not prefix
-        test_mode = record["key_type"] == "test"
+        # Sandbox keys behave like test keys (test_mode=True, daily cap applies)
+        test_mode = record["key_type"] in ("test", "sandbox")
     else:
         # No DB record — HMAC alone is sufficient during bootstrap / migration period.
         # HARD DEADLINE: Remove this allowance before first enterprise contract.
@@ -98,17 +99,20 @@ async def _parse_api_key(api_key: str) -> AuthContext:
         _BOOTSTRAP_DEADLINE = "2026-06-01"
         if datetime.now(timezone.utc).isoformat()[:10] >= _BOOTSTRAP_DEADLINE:
             logger.critical(
-                "BOOTSTRAP DEADLINE PASSED (%s): API key has no DB record "
-                "and should be rejected. org=%s, region=%s. "
-                "Remove bootstrap allowance in auth.py.",
+                "BOOTSTRAP DEADLINE PASSED (%s): API key has no DB record. "
+                "Rejecting. org=%s, region=%s.",
                 _BOOTSTRAP_DEADLINE, org_id, region,
+            )
+            raise HTTPException(
+                status_code=401,
+                detail="API key has no provisioned record. Contact support@primust.com.",
             )
         logger.warning(
             "API key passed HMAC but has no DB record (org=%s, region=%s). "
             "Allowing during bootstrap (deadline: %s).",
             org_id, region, _BOOTSTRAP_DEADLINE,
         )
-        test_mode = mode == "test"
+        test_mode = mode in ("test", "sb")
 
     return AuthContext(
         org_id=org_id,

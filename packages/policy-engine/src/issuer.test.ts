@@ -63,6 +63,9 @@ function addRecord(
     freshness_warning: false,
     idempotency_key: `idem_${Math.random().toString(36).slice(2, 8)}`,
     recorded_at: '2026-03-10T00:00:00Z',
+    actor_id: null,
+    explanation_commitment: null,
+    bias_audit: null,
     ...overrides,
   });
 }

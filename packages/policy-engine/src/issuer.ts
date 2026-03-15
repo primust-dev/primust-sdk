@@ -16,7 +16,7 @@
  *  10. Compute commitment_root
  *  11. Build VPEC document
  *  12. Sign
- *  13. Timestamp stub
+ *  13. Timestamp (DigiCert RFC 3161)
  *  14. ZK proof queuing (non-blocking)
  *  15. Rekor stub
  *  16. Close run
@@ -331,8 +331,8 @@ export function closeRun(
     signed_at: signatureEnvelope.signed_at,
   };
 
-  // Step 13: Timestamp stub (DigiCert TSA — deferred)
-  // timestamp_anchor already set to { type: 'none', tsa: 'none', value: null }
+  // Step 13: Timestamp (DigiCert RFC 3161)
+  // Applied by FastAPI layer after signing — see apps/api/src/primust_api/tsa.py
 
   // Step 14: ZK proof queuing (non-blocking)
   // Trigger proof generation when requested, regardless of current proof levels.
