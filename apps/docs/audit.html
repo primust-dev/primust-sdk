@@ -204,7 +204,9 @@ RESULT: PASS
 
 <p>The Provable Surface Report shows exactly what percentage of a pipeline is covered at each proof level, and where the gaps are.</p>
 
-<pre><code>primust surface loan-underwriting-v3 --format=report</code></pre>
+<pre><code># Surface coverage is shown inside each Evidence Pack and VPEC.
+# Use the dashboard at app.primust.com or inspect the VPEC JSON directly.
+primust-verify vpec_loan-underwriting-v3.json --json | jq .coverage</code></pre>
 
 <h3>Example Output</h3>
 
@@ -238,17 +240,20 @@ STAGE DETAIL
 <!-- VERIFYING AN EVIDENCE PACK -->
 <h2>Verifying an Evidence Pack</h2>
 
-<pre><code># Full verification with verbose output
-primust verify evidence-pack-2026-03-12.json --verbose
+<pre><code># Verify a VPEC artifact
+primust-verify vpec_2026-03-12.json
 
 # Verify and output machine-readable JSON
-primust verify evidence-pack-2026-03-12.json --format=json
+primust-verify vpec_2026-03-12.json --json
 
-# Verify against a specific org public key
-primust verify evidence-pack-2026-03-12.json --pubkey=org-key-abc123.pem
+# Verify against a specific org public key (BYOK)
+primust-verify vpec_2026-03-12.json --trust-root org-key-abc123.pem
 
-# Offline verification (no network calls)
-primust verify evidence-pack-2026-03-12.json --offline</code></pre>
+# Offline verification (skip Rekor transparency log check)
+primust-verify vpec_2026-03-12.json --skip-network
+
+# Reject test-mode credentials in production audit
+primust-verify vpec_2026-03-12.json --production</code></pre>
 
 <!-- FRAMEWORK ALIGNMENT -->
 <h2>Framework Alignment</h2>
@@ -326,27 +331,18 @@ primust verify evidence-pack-2026-03-12.json --offline</code></pre>
 <p>Beyond Evidence Pack verification, auditors can request activity-level data for a deeper review.</p>
 
 <h3>Export Activity</h3>
-<pre><code># Export all activity for a pipeline within a date range
-primust export-activity \
-  --pipeline=loan-underwriting-v3 \
-  --from=2026-03-01 \
-  --to=2026-03-12 \
-  --format=csv \
-  --output=activity-export.csv</code></pre>
+<p>Activity-level data can be exported via the API for deeper review:</p>
+<pre><code># Export all runs for a workflow within a date range
+curl -H "X-API-Key: $PRIMUST_API_KEY" \
+  "https://primust-api.fly.dev/api/v1/runs?workflow_id=loan-underwriting-v3&from=2026-03-01&to=2026-03-12" \
+  | jq . > activity-export.json</code></pre>
 
-<h3>Verify Activity</h3>
-<pre><code># Verify chain integrity across all runs in the export
-primust verify-activity activity-export.csv
-
-# Expected output
-Activity Verification
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Runs verified:    142
-  Records checked:  6,834
-  Chain breaks:     0
-  Missing records:  0
-  RESULT: PASS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</code></pre>
+<h3>Verify Chain Integrity</h3>
+<p>Each VPEC contains a <code>chain_intact</code> boolean and <code>chain_hash</code> field. Verify chain integrity by checking each VPEC in the export:</p>
+<pre><code># Verify each VPEC artifact from the export
+for vpec in vpec_*.json; do
+  primust-verify "$vpec" --production
+done</code></pre>
 
 <!-- ENTERPRISE BYOK -->
 <h2>Enterprise BYOK — Bring Your Own Key</h2>
@@ -381,7 +377,7 @@ def audit_evidence_pack(pack_path, trust_root=None):
     """Standard audit procedure for a Primust Evidence Pack."""
 
     # Step 1: Verify the Evidence Pack
-    cmd = ["primust", "verify", pack_path, "--format=json"]
+    cmd = ["primust-verify", pack_path, "--json"]
     if trust_root:
         cmd.extend(["--trust-root", trust_root])
 
@@ -394,14 +390,13 @@ def audit_evidence_pack(pack_path, trust_root=None):
 
     # Step 2: Extract surface report
     pipeline = verification["pipeline"]
-    surface_cmd = ["primust", "surface", pipeline, "--format=json"]
-    surface_result = subprocess.run(surface_cmd, capture_output=True, text=True)
-    surface = json.loads(surface_result.stdout)
+    # Surface coverage is embedded in the verification result
+    surface = verification.get("coverage", {})
 
     # Step 3: Check for red flags
     flags = []
-    if surface["coverage"]["p3_plus"] < 50:
-        flags.append("LOW_ZK_COVERAGE: Less than 50% of stages are ZK-proven")
+    if surface.get("policy_coverage_pct", 100) < 50:
+        flags.append("LOW_COVERAGE: Less than 50% policy coverage")
     if verification["gaps"]["critical"] > 0:
         flags.append(f"CRITICAL_GAPS: {verification['gaps']['critical']} critical gaps")
     if any(w["expired"] for w in verification.get("waivers", [])):
@@ -414,7 +409,7 @@ def audit_evidence_pack(pack_path, trust_root=None):
         "pack": pack_path,
         "pipeline": pipeline,
         "verification": "PASS",
-        "proof_coverage": surface["coverage"],
+        "proof_coverage": surface,
         "gaps": verification["gaps"],
         "red_flags": flags,
         "recommendation": "CLEAR" if not flags else "REVIEW_REQUIRED"
@@ -441,14 +436,13 @@ if __name__ == "__main__":
 
 <p>To verify cross-org evidence independently:</p>
 
-<pre><code># Verify the upstream VPEC referenced in the evidence
-primust verify --cross-org evidence-pack-2026-03-12.json
+<pre><code># Verify a VPEC that references upstream cross-org VPECs
+primust-verify vpec_cross-org.json --json
 
-# This will:
-# 1. Extract all upstream_vpec_id references
-# 2. Fetch each upstream VPEC from the Primust registry
-# 3. Verify each upstream chain independently
-# 4. Confirm the upstream_chain_hash matches</code></pre>
+# The output includes upstream_vpec_ids and upstream_chain_hash.
+# To verify the upstream chain independently, request the upstream VPEC
+# from the counterparty and verify it with their trust root:
+primust-verify upstream_vpec.json --trust-root partner-pubkey.pem</code></pre>
 
 <!-- AUDIT REPORTS -->
 <h2>Audit Reports</h2>
@@ -456,14 +450,14 @@ primust verify --cross-org evidence-pack-2026-03-12.json
 <p>Primust can generate signed PDF audit reports that bundle verification results, surface coverage, gap analysis, and framework alignment into a single document.</p>
 
 <h3>Generate a Signed Report</h3>
-<pre><code>primust report evidence-pack-2026-03-12.json \
-  --format=pdf \
-  --sign \
-  --output=audit-report-2026-03-12.pdf</code></pre>
+<p>Signed audit reports are generated via the API or dashboard at <code>app.primust.com</code>.</p>
 
 <h3>Verify a Report</h3>
-<pre><code># Verify the PDF signature and embedded evidence hashes
-primust verify-report audit-report-2026-03-12.pdf</code></pre>
+<pre><code># Verify a signed PDF audit report
+primust-verify audit-report-2026-03-12.pdf
+
+# Or explicit report mode for JSON reports (deprecated format)
+primust-verify audit-report.json --type report</code></pre>
 
 <h3>Report Contents</h3>
 <ul>
