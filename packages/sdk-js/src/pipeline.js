@@ -167,7 +167,7 @@ export class Pipeline {
             }
             reviewerCredential = {
                 reviewer_key_id: rs.reviewerKeyId,
-                key_binding: 'org_managed',
+                key_binding: 'software',
                 role: 'reviewer',
                 org_credential_ref: null,
                 reviewer_signature: options.reviewerSignature,
@@ -183,7 +183,7 @@ export class Pipeline {
             manifest_id: checkSession.manifestId,
             commitment_hash: commitmentHash,
             commitment_algorithm: commitmentAlgorithm,
-            commitment_type: options.output === undefined ? 'input_only' : 'input_output',
+            commitment_type: 'input_commitment',
             check_result: checkResult,
             proof_level_achieved: proofLevel,
             check_open_tst: checkSession.checkOpenTst,

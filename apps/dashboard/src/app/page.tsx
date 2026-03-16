@@ -30,6 +30,42 @@ export default function Home() {
             Create and manage live, test, and sandbox keys.
           </p>
         </a>
+        <a
+          href="/runs"
+          className="border rounded-lg p-6 hover:border-blue-500 transition-colors"
+        >
+          <h2 className="font-semibold mb-2">Runs</h2>
+          <p className="text-sm text-gray-500">
+            View all governance runs with status, proof level, and coverage.
+          </p>
+        </a>
+        <a
+          href="/gaps"
+          className="border rounded-lg p-6 hover:border-blue-500 transition-colors"
+        >
+          <h2 className="font-semibold mb-2">Gaps</h2>
+          <p className="text-sm text-gray-500">
+            Review governance gaps by severity and submit waivers.
+          </p>
+        </a>
+        <a
+          href="/evidence"
+          className="border rounded-lg p-6 hover:border-blue-500 transition-colors"
+        >
+          <h2 className="font-semibold mb-2">Evidence</h2>
+          <p className="text-sm text-gray-500">
+            Assemble evidence packs from VPECs for audit and compliance.
+          </p>
+        </a>
+        <a
+          href="/settings/webhooks"
+          className="border rounded-lg p-6 hover:border-blue-500 transition-colors"
+        >
+          <h2 className="font-semibold mb-2">Webhooks</h2>
+          <p className="text-sm text-gray-500">
+            Configure SIEM integration for real-time governance events.
+          </p>
+        </a>
       </div>
     </div>
   );

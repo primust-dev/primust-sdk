@@ -73,6 +73,7 @@ OrgRegion = Literal["us", "eu"]
 GapSeverity = Literal["Critical", "High", "Medium", "Low", "Informational"]
 
 GapType = Literal[
+    # Core gaps (22)
     "check_not_executed",
     "enforcement_override",
     "engine_error",
@@ -84,13 +85,27 @@ GapType = Literal[
     "reviewer_credential_invalid",
     "witnessed_display_missing",
     "witnessed_rationale_missing",
+    "witnessed_timestamp_invalid",
     "deterministic_consistency_violation",
     "skip_rationale_missing",
     "policy_config_drift",
+    "proof_level_floor_breach",
     "zkml_proof_pending_timeout",
     "zkml_proof_failed",
+    "system_error",
+    "sla_breach",
     "explanation_missing",
     "bias_audit_missing",
+    # Unstructured gap (1)
+    "archetype_unmapped",
+    # Cross-org gaps (7)
+    "upstream_vpec_invalid_signature",
+    "upstream_vpec_sandbox",
+    "upstream_vpec_key_revoked",
+    "upstream_vpec_insufficient_proof_level",
+    "upstream_vpec_missing_claim",
+    "upstream_vpec_issuer_mismatch",
+    "upstream_vpec_missing",
 ]
 
 

@@ -48,8 +48,8 @@ circuits_volume = modal.Volume.from_name("primust-circuits", create_if_missing=T
 CIRCUITS_MOUNT = "/circuits"
 NARGO_BIN = "/root/.nargo/bin/nargo"
 
-# In-memory job store (for prototype; production would use KV/DB)
-job_store: dict[str, dict] = {}
+# Persistent job store using Modal Dict — survives worker restarts
+job_store = modal.Dict.from_name("primust-zk-job-store", create_if_missing=True)
 
 
 # ── Helpers ──
@@ -135,13 +135,21 @@ def prove_ultrahonk(
     """
     witness = json.loads(witness_json)
 
+    # Mark job as running
+    job_store[job_id] = {
+        "job_id": job_id,
+        "status": "running",
+    }
+
     circuit_dir = Path(CIRCUITS_MOUNT) / circuit_name
     if not circuit_dir.exists():
-        return {
+        result = {
             "job_id": job_id,
             "status": "failed",
             "error": f"Circuit {circuit_name} not found at {circuit_dir}",
         }
+        job_store[job_id] = result
+        return result
 
     # Write witness to Prover.toml
     _write_prover_toml(witness, circuit_dir)
@@ -157,11 +165,13 @@ def prove_ultrahonk(
         )
 
         if result.returncode != 0:
-            return {
+            fail_result = {
                 "job_id": job_id,
                 "status": "failed",
                 "error": f"nargo prove failed: {result.stderr}",
             }
+            job_store[job_id] = fail_result
+            return fail_result
 
         # Read proof from target/
         proof_path = circuit_dir / "target" / f"{circuit_name}.proof"
@@ -173,11 +183,13 @@ def prove_ultrahonk(
             if proof_files:
                 proof_hex = proof_files[0].read_bytes().hex()
             else:
-                return {
+                no_proof_result = {
                     "job_id": job_id,
                     "status": "failed",
                     "error": "Proof file not found after nargo prove",
                 }
+                job_store[job_id] = no_proof_result
+                return no_proof_result
 
         # Read verification key
         vk_path = circuit_dir / "target" / "vk"
@@ -186,7 +198,7 @@ def prove_ultrahonk(
         # Notify webhook
         _notify_webhook(job_id, run_id, proof_hex, vk_hex)
 
-        return {
+        complete_result = {
             "job_id": job_id,
             "status": "complete",
             "proof_hex": proof_hex,
@@ -194,19 +206,25 @@ def prove_ultrahonk(
             "circuit_name": circuit_name,
             "completed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
+        job_store[job_id] = complete_result
+        return complete_result
 
     except subprocess.TimeoutExpired:
-        return {
+        timeout_result = {
             "job_id": job_id,
             "status": "timed_out",
             "error": "nargo prove timed out after 240s",
         }
+        job_store[job_id] = timeout_result
+        return timeout_result
     except Exception as e:
-        return {
+        exc_result = {
             "job_id": job_id,
             "status": "failed",
             "error": str(e),
         }
+        job_store[job_id] = exc_result
+        return exc_result
 
 
 # ── Web Endpoints ──
@@ -221,6 +239,14 @@ def submit(body: dict) -> dict:
     circuit_name = body.get("circuit", "primust_governance_v1")
     run_id = body.get("run_id", "")
 
+    # Record initial pending state in persistent store
+    submitted_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    job_store[job_id] = {
+        "job_id": job_id,
+        "submitted_at": submitted_at,
+        "status": "pending",
+    }
+
     # Submit async proving job (non-blocking)
     prove_ultrahonk.spawn(
         witness_json=witness_json,
@@ -231,7 +257,7 @@ def submit(body: dict) -> dict:
 
     return {
         "job_id": job_id,
-        "submitted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "submitted_at": submitted_at,
         "status": "pending",
     }
 

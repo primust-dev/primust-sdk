@@ -27,8 +27,20 @@ export default function RootLayout({
             <a href="/policy" className="hover:text-gray-900">
               Policy
             </a>
+            <a href="/runs" className="hover:text-gray-900">
+              Runs
+            </a>
+            <a href="/gaps" className="hover:text-gray-900">
+              Gaps
+            </a>
+            <a href="/evidence" className="hover:text-gray-900">
+              Evidence
+            </a>
             <a href="/settings/api-keys" className="hover:text-gray-900">
               API Keys
+            </a>
+            <a href="/settings/webhooks" className="hover:text-gray-900">
+              Webhooks
             </a>
             <a
               href="https://docs.primust.com"

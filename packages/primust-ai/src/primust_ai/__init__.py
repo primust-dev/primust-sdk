@@ -22,6 +22,9 @@ _ADAPTERS: dict[str, tuple[str, str]] = {
     "primust_langgraph": ("primust_langgraph", "PrimustLangGraph"),
     "primust_openai_agents": ("primust_openai_agents", "PrimustOpenAIAgents"),
     "primust_google_adk": ("primust_google_adk", "PrimustGoogleADK"),
+    # Built-in adapters shipped inside sdk-python
+    "primust.adapters.crewai": ("primust.adapters.crewai", "PrimustCrewAICallback"),
+    "primust.adapters.pydantic_ai": ("primust.adapters.pydantic_ai", "PrimustPydanticAIDep"),
 }
 
 
@@ -54,7 +57,8 @@ def autoinstrument(*, pipeline: Any, **kwargs: Any) -> list[Any]:
     if not installed:
         raise RuntimeError(
             "No Primust AI adapter packages found. Install at least one of: "
-            "primust-langgraph, primust-openai-agents, primust-google-adk. "
+            "primust-langgraph, primust-openai-agents, primust-google-adk, "
+            "or use built-in adapters (crewai, pydantic_ai) via pip install primust. "
             "Example: pip install primust-ai[langgraph]"
         )
 

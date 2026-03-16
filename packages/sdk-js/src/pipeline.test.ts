@@ -150,7 +150,7 @@ describe('TypeScript SDK (P10-B)', () => {
     expect(body.commitment_hash).toMatch(/^poseidon2:|^sha256:/);
     expect(body.output_commitment).toBeTypeOf('string');
     expect(['poseidon2', 'sha256']).toContain(body.commitment_algorithm);
-    expect(body.commitment_type).toBe('input_output');
+    expect(body.commitment_type).toBe('input_commitment');
     expect(body.check_result).toBe('pass');
     expect(body.proof_level_achieved).toBeTypeOf('string');
     expect(body.check_open_tst).toBeTypeOf('string');

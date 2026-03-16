@@ -1,10 +1,9 @@
 // Skip Condition Proof Circuit
 //
-// WARNING - NOT_PRODUCTION_READY: merkle_path uses placeholder Array(20).fill(0)
-// in the witness builder (buildSkipConditionWitness). This circuit will
-// compile but will NOT produce valid proofs until the real Merkle path
-// is implemented. Do not route to this circuit in Phase 3 (Modal worker)
-// until the witness builder provides actual Merkle paths.
+// The witness builder (buildSkipConditionWitness) computes real Merkle
+// proof paths from the record's position in the commitment tree.
+// Single-leaf trees use all-zero siblings (circuit skips zero levels).
+// Multi-leaf trees pass commitmentHashes[] to get the full proof path.
 //
 // Proves that a recorded skip was justified -- the declared skip
 // condition evaluated to true. Upgrades skip records from attestation

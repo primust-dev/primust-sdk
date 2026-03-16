@@ -164,7 +164,7 @@ class Run:
                 "check_result": check_result if isinstance(check_result, str) else check_result.value,
                 "commitment_hash": input_commitment,
                 "commitment_algorithm": algorithm,
-                "commitment_type": "input_only" if output is None else "input_output",
+                "commitment_type": "input_commitment",
                 "proof_level_achieved": proof_level,
                 "idempotency_key": f"idem_{uuid.uuid4().hex[:16]}",
                 "visibility": visibility,
@@ -186,7 +186,7 @@ class Run:
                 if isinstance(check_session, ReviewSession):
                     envelope["reviewer_credential"] = {
                         "reviewer_key_id": check_session.reviewer_key_id,
-                        "key_binding": "org_managed",
+                        "key_binding": "software",
                         "role": "reviewer",
                         "org_credential_ref": None,
                         "reviewer_signature": reviewer_signature or "",

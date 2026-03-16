@@ -418,7 +418,7 @@ class Pipeline:
 
             reviewer_credential = {
                 "reviewer_key_id": check_session.reviewer_key_id,
-                "key_binding": "org_managed",
+                "key_binding": "software",
                 "role": "reviewer",
                 "org_credential_ref": None,
                 "reviewer_signature": reviewer_signature,
@@ -437,7 +437,7 @@ class Pipeline:
             "manifest_id": check_session.manifest_id,
             "commitment_hash": commitment_hash,
             "commitment_algorithm": algorithm,
-            "commitment_type": "input_only" if output is None else "input_output",
+            "commitment_type": "input_commitment",
             "check_result": check_result,
             "proof_level_achieved": proof_level,
             "check_open_tst": check_session.check_open_tst,
@@ -484,7 +484,8 @@ class Pipeline:
     def record_delegation(self, outbound_context: dict[str, Any]) -> dict[str, Any]:
         """Emit external_boundary_traversal gap (Informational). Return lineage token."""
         assert self._run_id, "Pipeline not opened"
-        return {
+
+        lineage_token = {
             "token": f"lt_{uuid.uuid4().hex[:16]}",
             "run_id": self._run_id,
             "surface_id": self._surface_id or "default",
@@ -492,8 +493,56 @@ class Pipeline:
             "issued_at": datetime.datetime.now(timezone.utc).isoformat(),
         }
 
+        # Emit gap: data is leaving this pipeline's governance boundary
+        try:
+            self._client.post(
+                f"/api/v1/gaps",
+                json={
+                    "gap_id": f"gap_{uuid.uuid4().hex[:16]}",
+                    "run_id": self._run_id,
+                    "gap_type": "external_boundary_traversal",
+                    "severity": "Informational",
+                    "state": "open",
+                    "details": {
+                        "direction": "outbound",
+                        "delegation_token": lineage_token["token"],
+                    },
+                    "detected_at": lineage_token["issued_at"],
+                    "resolved_at": None,
+                },
+            )
+        except Exception:
+            log.warning("Failed to emit external_boundary_traversal gap — non-fatal", exc_info=True)
+
+        return lineage_token
+
     def resume_from_lineage(self, token: dict[str, Any]) -> ResumedContext:
         """Validate lineage token. On failure: lineage_token_missing gap (High)."""
+        required_fields = {"token", "run_id", "surface_id", "delegation_context", "issued_at"}
+        missing = required_fields - set(token.keys())
+
+        if missing or not token.get("token") or not token.get("run_id"):
+            # Token is invalid or missing required fields — emit gap
+            try:
+                self._client.post(
+                    f"/api/v1/gaps",
+                    json={
+                        "gap_id": f"gap_{uuid.uuid4().hex[:16]}",
+                        "run_id": self._run_id or "unknown",
+                        "gap_type": "lineage_token_missing",
+                        "severity": "High",
+                        "state": "open",
+                        "details": {
+                            "reason": "invalid_or_incomplete_token",
+                            "missing_fields": list(missing) if missing else ["token_empty"],
+                        },
+                        "detected_at": datetime.datetime.now(timezone.utc).isoformat(),
+                        "resolved_at": None,
+                    },
+                )
+            except Exception:
+                log.warning("Failed to emit lineage_token_missing gap — non-fatal", exc_info=True)
+
         return ResumedContext(
             run_id=token.get("run_id", ""),
             surface_id=token.get("surface_id", ""),

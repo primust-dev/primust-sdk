@@ -51,8 +51,8 @@ class CreateRecordRequest(BaseModel):
     manifest_id: str = Field(max_length=256)
     commitment_hash: str = Field(max_length=256)
     commitment_algorithm: Literal["poseidon2", "sha256"] = "poseidon2"
-    commitment_type: Literal["input_only", "input_output"] = "input_only"
-    check_result: Literal["pass", "fail", "degraded", "error", "not_applicable"]
+    commitment_type: Literal["input_commitment", "metadata_commitment", "foreign_event_commitment"] = "input_commitment"
+    check_result: Literal["pass", "fail", "degraded", "error", "not_applicable", "skipped", "override", "timed_out"]
     proof_level_achieved: Literal[
         "mathematical", "verifiable_inference", "execution", "witnessed", "attestation"
     ]
@@ -62,6 +62,10 @@ class CreateRecordRequest(BaseModel):
     skip_rationale_hash: str | None = Field(default=None, max_length=256)
     reviewer_credential: dict[str, Any] | None = None
     idempotency_key: str = Field(max_length=256)
+    # P4D compliance fields (EU AI Act / AIUC-1)
+    actor_id: str | None = Field(default=None, max_length=256)
+    explanation_commitment: str | None = Field(default=None, max_length=256)
+    bias_audit: dict[str, Any] | None = None
 
 
 class CloseRunRequest(BaseModel):
@@ -213,9 +217,10 @@ async def create_record(
             surface_id, commitment_hash, output_commitment, commitment_algorithm,
             commitment_type, check_result, proof_level_achieved,
             check_open_tst, check_close_tst, skip_rationale_hash,
-            reviewer_credential, chain_hash, idempotency_key, recorded_at)
+            reviewer_credential, chain_hash, idempotency_key, recorded_at,
+            actor_id, explanation_commitment, bias_audit)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-                   $13, $14, $15, $16, $17, $18, $19)""",
+                   $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)""",
         record_id,
         run_id,
         f"au_{uuid.uuid4().hex[:8]}",  # auto-create action_unit_id
@@ -235,6 +240,9 @@ async def create_record(
         chain_hash,
         body.idempotency_key,
         now,
+        body.actor_id,
+        body.explanation_commitment,
+        json.dumps(body.bias_audit) if body.bias_audit else None,
     )
 
     return {"record_id": record_id, "chain_hash": chain_hash}

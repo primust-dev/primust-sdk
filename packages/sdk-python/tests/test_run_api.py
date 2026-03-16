@@ -214,7 +214,8 @@ def test_commitment_hash_in_result(tmp_path, respx_mock):
 
     # Commitment is deterministic — same input produces same hash
     input_bytes = RAW_INPUT.encode("utf-8")
-    hash2, _ = commit(input_bytes)
+    # SDK defaults to SHA-256 (PRIMUST_COMMITMENT_ALGORITHM env var, default "sha256")
+    hash2, _ = commit(input_bytes, "sha256")
     assert result.commitment_hash == hash2
 
 

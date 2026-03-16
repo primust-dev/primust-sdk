@@ -26,6 +26,7 @@ class WaiveRequest(BaseModel):
     approver_user_id: str = Field(max_length=256)
     compensating_control: str | None = Field(default=None, max_length=2000)
     expires_at: str | None = Field(default=None, max_length=64)
+    risk_treatment: str = Field(default="accept", max_length=64)
 
 
 @router.get("/gaps")
@@ -135,8 +136,9 @@ async def waive_gap(
         region,
         """INSERT INTO waivers
            (waiver_id, gap_id, org_id, requestor_user_id, approver_user_id,
-            reason, compensating_control, expires_at, signature, approved_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
+            reason, compensating_control, expires_at, signature, approved_at,
+            risk_treatment)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)""",
         waiver_id,
         gap_id,
         auth.org_id,
@@ -147,6 +149,7 @@ async def waive_gap(
         body.expires_at,
         json.dumps(waiver_sig),
         now,
+        body.risk_treatment,
     )
 
     # Update gap state

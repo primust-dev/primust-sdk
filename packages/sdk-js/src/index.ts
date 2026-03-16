@@ -7,10 +7,17 @@ export type {
   PipelineConfig,
   CheckSession,
   ReviewSession,
-  RecordResult,
   RecordOptions,
   CloseOptions,
   ResumedContext,
   PrimustLogEvent,
   LoggerOptions,
 } from './pipeline.js';
+
+export { Run } from './run.js';
+export type {
+  RecordResult,
+  VPECResult,
+  ProofLevelBreakdown,
+  GovernanceGap,
+} from './run.js';

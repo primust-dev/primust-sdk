@@ -13,6 +13,8 @@ import {
 } from '@primust/artifact-core';
 import type { CommitmentResult } from '@primust/artifact-core';
 
+import { Run } from './run.js';
+
 // Re-export constant
 export { ZK_IS_BLOCKING };
 
@@ -188,6 +190,41 @@ export class Pipeline {
     return this.runId;
   }
 
+  /**
+   * Open a new governed process run.
+   * Returns a Run. Call run.record() for each governance check.
+   * Close with run.close() to issue the VPEC.
+   */
+  async open(policyPackId?: string): Promise<Run> {
+    const body: Record<string, unknown> = {
+      workflow_id: this.workflowId,
+      environment: this.apiKey.startsWith('pk_test_') || this.apiKey.startsWith('pk_sb_') ? 'test' : 'production',
+      opened_at: new Date().toISOString(),
+    };
+    if (policyPackId) {
+      body.policy_pack_id = policyPackId;
+    }
+
+    const data = await this.api('POST', '/api/v1/runs', body);
+    const serverRunId = (data.run_id as string) ?? `run_${crypto.randomUUID().replace(/-/g, '')}`;
+    const orgId = (data.org_id as string) ?? 'unknown';
+    const policySnapshotHash = (data.policy_snapshot_hash as string) ?? '';
+    const testMode = this.apiKey.startsWith('pk_test_') || this.apiKey.startsWith('pk_sb_');
+
+    return new Run({
+      runId: serverRunId,
+      workflowId: this.workflowId,
+      orgId,
+      policySnapshotHash,
+      fetch: this._fetch,
+      baseUrl: this.baseUrl,
+      apiKey: this.apiKey,
+      testMode,
+      loggerCallback: this._loggerCallback,
+      loggerOptions: this._loggerOptions,
+    });
+  }
+
   async openCheck(
     check: string,
     manifestId: string,
@@ -195,6 +232,17 @@ export class Pipeline {
   ): Promise<CheckSession> {
     await this.ensureRun();
     const now = new Date().toISOString();
+
+    // Populate _manifestHashes: compute hash from manifest data if provided,
+    // otherwise use manifestId as the hash identity.
+    if (_options && Object.keys(_options).length > 0) {
+      const manifestBytes = new TextEncoder().encode(canonical(_options));
+      const { hash } = commit(manifestBytes);
+      this._manifestHashes[manifestId] = hash;
+    } else if (!this._manifestHashes[manifestId]) {
+      const { hash } = commit(new TextEncoder().encode(manifestId));
+      this._manifestHashes[manifestId] = hash;
+    }
 
     return {
       checkName: check,
@@ -211,6 +259,12 @@ export class Pipeline {
   ): Promise<ReviewSession> {
     await this.ensureRun();
     const now = new Date().toISOString();
+
+    // Populate _manifestHashes if not already present
+    if (!this._manifestHashes[manifestId]) {
+      const { hash } = commit(new TextEncoder().encode(manifestId));
+      this._manifestHashes[manifestId] = hash;
+    }
 
     return {
       checkName: check,
@@ -281,7 +335,7 @@ export class Pipeline {
 
       reviewerCredential = {
         reviewer_key_id: rs.reviewerKeyId,
-        key_binding: 'org_managed',
+        key_binding: 'software',
         role: 'reviewer',
         org_credential_ref: null,
         reviewer_signature: options.reviewerSignature,
@@ -299,7 +353,7 @@ export class Pipeline {
       manifest_id: checkSession.manifestId,
       commitment_hash: commitmentHash,
       commitment_algorithm: commitmentAlgorithm,
-      commitment_type: options.output === undefined ? 'input_only' : 'input_output',
+      commitment_type: 'input_commitment',
       check_result: checkResult,
       proof_level_achieved: proofLevel,
       check_open_tst: checkSession.checkOpenTst,
@@ -320,6 +374,7 @@ export class Pipeline {
       primust_workflow_id: this.workflowId,
       primust_run_id: this.runId!,
       primust_recorded_at: now,
+      gap_types_emitted: [],
     });
 
     const data = await this.api('POST', `/api/v1/runs/${this.runId}/records`, body);
