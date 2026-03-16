@@ -52,8 +52,8 @@ describe("P12-C: Coverage Report + Policy Management", () => {
 
     // They are different elements, not collapsed
     expect(policyDenom).not.toBe(surfaceDenom);
-    expect(policyDenom.textContent).toContain("Policy coverage");
-    expect(surfaceDenom.textContent).toContain("Instrumentation surface");
+    expect(policyDenom.textContent).toContain("Policy Coverage");
+    expect(surfaceDenom.textContent).toContain("Instrumentation Surface");
   });
 
   it("MUST PASS: partial_unknown scope → 'lower bound' warning", () => {
@@ -95,9 +95,9 @@ describe("P12-C: Coverage Report + Policy Management", () => {
 
     const buckets = screen.getByTestId("coverage-buckets");
     expect(buckets).toBeInTheDocument();
-    expect(buckets.textContent).toContain("Verified: 70%");
-    expect(buckets.textContent).toContain("Pending: 20%");
-    expect(buckets.textContent).toContain("Ungoverned: 10%");
+    expect(buckets.textContent).toContain("Verified 70%");
+    expect(buckets.textContent).toContain("Pending 20%");
+    expect(buckets.textContent).toContain("Ungoverned 10%");
     // Sum = 100
     expect(70 + 20 + 10).toBe(100);
   });

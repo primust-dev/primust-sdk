@@ -96,6 +96,7 @@ def _make_waiver(**overrides) -> Waiver:
         reason="This is a sufficiently long reason that explains why "
         "this waiver is needed for the gap.",
         compensating_control=None,
+        risk_treatment="accept",
         expires_at="2026-04-10T00:00:00Z",
         signature=_SIG,
         approved_at="2026-03-10T00:00:00Z",

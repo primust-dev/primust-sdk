@@ -193,7 +193,7 @@ class GuidewireClient:
 def _commit(data: Any) -> str:
     """Commit via artifact-core commitment path (SHA-256 default, poseidon2 opt-in)."""
     canonical = json.dumps(data, sort_keys=True, separators=(",", ":"))
-    hash_str, _ = _artifact_commit(canonical.encode())
+    hash_str, _ = _artifact_commit(canonical.encode(), "sha256")
     return hash_str
 
 
