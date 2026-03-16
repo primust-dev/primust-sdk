@@ -314,7 +314,7 @@ async def health() -> dict[str, Any]:
                     from google.cloud import kms as kms_mod
                     kms_client = kms_mod.KeyManagementServiceClient()
                     kms_client.get_crypto_key_version(
-                        request={"name": f"{rc.kms_key}/cryptoKeyVersions/1"}
+                        request={"name": rc.kms_key}
                     )
                     _kms_status[r] = "ok"
                 except Exception:
