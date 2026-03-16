@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primust Docs — Quickstart</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ─── TOPNAV ─── -->
+<nav class="topnav">
+  <a href="index.html" class="topnav-logo">
+    <span class="mark" style="width:26px;height:26px;border-radius:0;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none"><line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/><line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/></svg>
+    </span>
+    <span class="wordmark" style="font-size:12px;">PRIMUST</span>
+    <span class="docs-badge">Docs</span>
+  </a>
+  <div class="topnav-links">
+    <a href="quickstart.html">Quickstart</a>
+    <a href="audit.html">Audit Guide</a>
+    <a href="reference.html">API Reference</a>
+    <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
+  </div>
+</nav>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Getting Started</div>
+    <a href="index.html">Overview</a>
+    <a href="quickstart.html" class="active">Quickstart</a>
+    <a href="quickstart.html#install" class="indent">Install</a>
+    <a href="quickstart.html#first-vpec" class="indent">First VPEC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Concepts</div>
+    <a href="index.html#vpec">What is a VPEC</a>
+    <a href="index.html#proof-levels">Proof Levels</a>
+    <a href="index.html#provable-surface">Provable Surface</a>
+    <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Guides</div>
+    <a href="audit.html">Audit Guide</a>
+    <a href="quickstart.html#cross-org">Cross-Org Verification</a>
+    <a href="quickstart.html#production">Production Checklist</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Reference</div>
+    <a href="reference.html">Tech Spec</a>
+    <a href="reference.html#api">API Endpoints</a>
+    <a href="reference.html#gaps">Gap Taxonomy</a>
+    <a href="reference.html#packages">Package Inventory</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Open Source</div>
+    <a href="quickstart.html#verify">primust-verify</a>
+    <a href="quickstart.html#checks">primust-checks</a>
+  </div>
+</aside>
+
+<!-- ─── CONTENT ─── -->
+<main class="content">
+
+  <h1>Quickstart</h1>
+  <p class="page-sub">From zero to your first verifiable credential in under five minutes.</p>
+
+  <!-- Install -->
+  <h2 id="install">Install</h2>
+
+  <h3>Python (pip)</h3>
+  <pre><code>pip install primust</code></pre>
+
+  <h3>Node.js (npm)</h3>
+  <pre><code>npm install @primust/sdk</code></pre>
+
+  <h3>Java (Maven)</h3>
+  <pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;com.primust&lt;/groupId&gt;
+  &lt;artifactId&gt;primust-sdk&lt;/artifactId&gt;
+  &lt;version&gt;0.9.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+  <!-- Get a Sandbox Key -->
+  <h2>Get a Sandbox Key</h2>
+  <p>Sign up at <a href="https://primust.com" target="_blank" rel="noopener"><strong>primust.com</strong></a> and create a sandbox project. Your API key will look like <code>pk_sb_xxx</code>.</p>
+  <pre><code>export PRIMUST_API_KEY=pk_sb_xxx</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Sandbox vs Production</div>
+    <p>Sandbox keys (<code>pk_sb_</code>) are free and rate-limited. Production keys (<code>pk_prod_</code>) require a paid plan and enable archival, SLA guarantees, and cross-org verification.</p>
+  </div>
+
+  <!-- First VPEC -->
+  <h2 id="first-vpec">Your First VPEC</h2>
+  <p>Wrap your existing agent or pipeline with Primust to produce a verifiable credential. Choose your framework:</p>
+
+  <h3>LangGraph</h3>
+  <pre><span class="code-label">Python</span><code>from primust import govern
+from langgraph.graph import StateGraph
+
+graph = StateGraph(...)
+# ... define your nodes and edges ...
+
+# Wrap compilation with Primust governance
+app = govern(
+    graph.compile(),
+    bundle="ai_agent_general_v1",
+    api_key="pk_sb_xxx"
+)
+
+result = app.invoke({"input": "Summarize this contract"})
+vpec = result.vpec  # Verifiable Process Execution Credential
+print(vpec.proof_level)   # e.g. "execution"
+print(vpec.surface)       # e.g. 0.85</code></pre>
+
+  <h3>OpenAI Agents SDK</h3>
+  <pre><span class="code-label">Python</span><code>from primust import govern
+from openai import Agent
+
+agent = Agent(
+    name="contract-reviewer",
+    model="gpt-4o",
+    instructions="Review the contract for compliance issues."
+)
+
+governed_agent = govern(
+    agent,
+    bundle="ai_agent_general_v1",
+    api_key="pk_sb_xxx"
+)
+
+result = governed_agent.run("Review this NDA for GDPR issues")
+vpec = result.vpec</code></pre>
+
+  <h3>Google ADK</h3>
+  <pre><span class="code-label">Python</span><code>from primust import govern
+from google.adk import Agent
+
+agent = Agent(
+    model="gemini-2.0-flash",
+    name="doc-analyst",
+    instruction="Analyze documents for regulatory compliance."
+)
+
+governed_agent = govern(
+    agent,
+    bundle="eu_ai_act_art12_v1",
+    api_key="pk_sb_xxx"
+)
+
+result = governed_agent.run("Classify this document under EU AI Act")
+vpec = result.vpec</code></pre>
+
+  <h3>OpenTelemetry</h3>
+  <pre><span class="code-label">Python</span><code>from primust.otel import PrimustSpanProcessor
+from opentelemetry import trace
+
+provider = trace.get_tracer_provider()
+provider.add_span_processor(
+    PrimustSpanProcessor(api_key="pk_sb_xxx")
+)
+
+# Your existing OTel-instrumented code runs as normal.
+# Primust captures spans and binds them into VPECs automatically.</code></pre>
+
+  <h3>OPA (Open Policy Agent)</h3>
+  <pre><span class="code-label">Shell</span><code># Register OPA as a check source
+primust register --type opa \
+  --endpoint http://localhost:8181/v1/data/authz \
+  --policy-hash sha256:abc123...
+
+# Every OPA decision is now captured and bound into VPECs</code></pre>
+
+  <h3>Cedar / Drools / ODM</h3>
+  <pre><span class="code-label">Shell</span><code># Cedar
+primust register --type cedar \
+  --policy-store ./policies/ \
+  --schema ./cedarschema.json
+
+# Drools
+primust register --type drools \
+  --kjar com.example:rules:1.0.0
+
+# IBM ODM
+primust register --type odm \
+  --endpoint https://odm.example.com/DecisionService/rest/v1</code></pre>
+
+  <!-- Discover Your Existing Checks -->
+  <h2>Discover Your Existing Checks</h2>
+  <p>Primust can scan your codebase and infrastructure to find governance checks you already have:</p>
+  <pre><span class="code-label">Shell</span><code>primust discover --path ./src --output manifest.json</code></pre>
+  <p>The <code>discover</code> command identifies OPA policies, Cedar schemas, validation decorators, model evaluation calls, and other governance-related patterns. It produces a manifest you can review and edit before registering.</p>
+
+  <!-- Register a Custom Check -->
+  <h2 id="checks">Register a Custom Check</h2>
+
+  <h3>Using the Decorator</h3>
+  <pre><span class="code-label">Python</span><code>from primust import check
+
+@check(
+    name="pii_redaction",
+    proof_level="execution",
+    description="Verify PII is redacted before storage"
+)
+def redact_pii(text: str) -> str:
+    # Your existing redaction logic
+    redacted = your_redaction_fn(text)
+    return redacted</code></pre>
+
+  <h3>Manual Manifest Registration</h3>
+  <pre><span class="code-label">JSON</span><code>{
+  "checks": [
+    {
+      "id": "custom:pii_redaction",
+      "name": "PII Redaction",
+      "proof_level": "execution",
+      "type": "custom",
+      "entry": "src/redact.py:redact_pii"
+    }
+  ]
+}</code></pre>
+  <pre><span class="code-label">Shell</span><code>primust register --manifest checks.json</code></pre>
+
+  <!-- Verify a VPEC -->
+  <h2 id="verify">Verify a VPEC</h2>
+  <pre><span class="code-label">Shell</span><code># Verify a credential
+primust verify vpec_abc123.json
+
+# Output:
+# VPEC vpec_abc123
+#   Status:       VALID
+#   Proof Level:  execution
+#   Surface:      85%
+#   Checks:       12 passed, 0 failed, 2 gaps
+#   Issued:       2026-03-15T08:30:00Z
+#   Issuer:       org:acme-corp</code></pre>
+
+  <pre><span class="code-label">Shell</span><code># Verify with an explicit trust root (offline verification)
+primust verify vpec_abc123.json \
+  --trust-root ./acme-corp-root.pub</code></pre>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Offline Verification</div>
+    <p>With <code>--trust-root</code>, verification requires zero network access. The credential, the trust root, and the <code>primust-verify</code> binary are all you need.</p>
+  </div>
+
+  <!-- Assemble Evidence Pack -->
+  <h2>Assemble Evidence Pack</h2>
+  <p>An evidence pack bundles multiple VPECs with metadata for audit submission:</p>
+  <pre><span class="code-label">Shell</span><code># Assemble all VPECs from the last 30 days
+primust evidence assemble \
+  --from 2026-02-15 \
+  --to 2026-03-15 \
+  --bundle eu_ai_act_art12_v1 \
+  --output evidence-pack-q1.json
+
+# List contents
+primust evidence inspect evidence-pack-q1.json</code></pre>
+
+  <!-- Export Audit Report -->
+  <h2>Export Audit Report</h2>
+  <pre><span class="code-label">Shell</span><code># Generate a human-readable PDF audit report
+primust audit export \
+  --evidence evidence-pack-q1.json \
+  --format pdf \
+  --output audit-report-q1.pdf
+
+# Generate machine-readable JSON
+primust audit export \
+  --evidence evidence-pack-q1.json \
+  --format json \
+  --output audit-report-q1.json</code></pre>
+
+  <!-- Handle Gaps Honestly -->
+  <h2>Handle Gaps Honestly</h2>
+  <p>Not every governance check can be made provable today. Primust treats gaps as first-class objects&mdash;they are declared, tracked, and surfaced in every VPEC and audit report.</p>
+  <pre><span class="code-label">Python</span><code>from primust import gap
+
+# Declare a known governance gap
+gap(
+    id="manual_review_verbal",
+    description="Final approval is verbal and not captured digitally",
+    category="process",
+    severity="medium",
+    mitigation="Migrating to signed digital approval by Q3 2026"
+)
+
+# The gap appears in every VPEC that touches this process.
+# Auditors see it. Downstream verifiers see it.
+# Honesty is the policy.</code></pre>
+
+  <!-- AIUC-1 Compliance Fields -->
+  <h2>AIUC-1 Compliance Fields</h2>
+  <p>When using the <code>eu_ai_act_art12_v1</code> bundle, the following fields are required on every governed invocation:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>retention_policy</code></td>
+        <td>string</td>
+        <td>Data retention duration and policy reference (e.g. <code>"90d:GDPR-Art17"</code>)</td>
+      </tr>
+      <tr>
+        <td><code>risk_classification</code></td>
+        <td>enum</td>
+        <td>EU AI Act risk tier: <code>minimal</code>, <code>limited</code>, <code>high</code>, <code>unacceptable</code></td>
+      </tr>
+      <tr>
+        <td><code>actor_id</code></td>
+        <td>string</td>
+        <td>Pseudonymized identifier of the human or system that initiated the process</td>
+      </tr>
+      <tr>
+        <td><code>explanation_commitment</code></td>
+        <td>hash</td>
+        <td>SHA-256 of the explanation text provided to the end user</td>
+      </tr>
+      <tr>
+        <td><code>bias_audit</code></td>
+        <td>object</td>
+        <td>Reference to the most recent bias audit result, including method and date</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <pre><span class="code-label">Python</span><code>result = governed_agent.run(
+    "Classify this applicant",
+    primust_fields={
+        "retention_policy": "90d:GDPR-Art17",
+        "risk_classification": "high",
+        "actor_id": "usr:a1b2c3",
+        "explanation_commitment": "sha256:e3b0c44298fc...",
+        "bias_audit": {
+            "method": "demographic_parity",
+            "date": "2026-03-01",
+            "result": "pass"
+        }
+    }
+)</code></pre>
+
+  <!-- Receiving VPECs — The Downstream Pattern -->
+  <h2 id="cross-org">Receiving VPECs &mdash; The Downstream Pattern</h2>
+  <p>When your system receives a VPEC from another organization, you verify it and then record the verification itself as a Mathematical-level check in your own VPEC:</p>
+
+  <pre><span class="code-label">Python</span><code>from primust import verify, check
+
+# Step 1: Verify the incoming VPEC
+upstream_vpec = load_vpec("vendor-vpec.json")
+result = verify(upstream_vpec, trust_root="./vendor-root.pub")
+
+assert result.valid, f"Upstream VPEC invalid: {result.reason}"
+
+# Step 2: Record the verification as a check in your pipeline
+@check(
+    name="upstream_vpec_verification",
+    proof_level="mathematical",
+    description="Cryptographic verification of vendor VPEC"
+)
+def verify_upstream():
+    return {
+        "upstream_vpec_id": upstream_vpec.id,
+        "issuer": upstream_vpec.issuer,
+        "proof_level": upstream_vpec.proof_level,
+        "verified_at": result.timestamp,
+        "trust_root": "vendor-root.pub"
+    }</code></pre>
+
+  <p>This creates a <strong>chain of trust</strong> across organizational boundaries. Your VPEC now contains a Mathematical-level check proving that you verified the upstream credential. The downstream party can verify your VPEC without needing to contact the original vendor.</p>
+
+  <!-- Production Checklist -->
+  <h2 id="production">Production Checklist</h2>
+  <ul class="checklist">
+    <li>Swap sandbox key (<code>pk_sb_</code>) for production key (<code>pk_prod_</code>)</li>
+    <li>Enable VPEC archival with <code>primust config set archival.enabled true</code></li>
+    <li>Set proof level floor: <code>primust config set proof_level_floor execution</code></li>
+    <li>Configure trust root rotation schedule</li>
+    <li>Register all custom checks in the manifest</li>
+    <li>Run <code>primust discover</code> and resolve all flagged gaps</li>
+    <li>Enable cross-org verification if receiving external VPECs</li>
+    <li>Set retention policy on all governed endpoints</li>
+    <li>Integrate <code>primust audit export</code> into your CI/CD pipeline</li>
+    <li>Test offline verification with <code>primust verify --trust-root</code></li>
+    <li>Review provable surface target and set alerts for regression</li>
+    <li>Configure alerting for VPEC verification failures</li>
+  </ul>
+
+  <!-- Key Concepts -->
+  <h2>Key Concepts</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Term</th>
+        <th>Definition</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>GEP</strong></td>
+        <td>Governance Evidence Pack &mdash; a bundle of VPECs assembled for audit submission, covering a specific time range and compliance framework.</td>
+      </tr>
+      <tr>
+        <td><strong>VPEC</strong></td>
+        <td>Verifiable Process Execution Credential &mdash; a cryptographically signed JSON object proving what checks ran and what they produced.</td>
+      </tr>
+      <tr>
+        <td><strong>Manifest</strong></td>
+        <td>A JSON declaration of all checks in a project, including their types, proof levels, and entry points. Generated by <code>primust discover</code> or authored manually.</td>
+      </tr>
+      <tr>
+        <td><strong>Provable Surface</strong></td>
+        <td>The percentage of governance checks that produce cryptographically verifiable evidence. Higher is better; 100% means every check is provable.</td>
+      </tr>
+      <tr>
+        <td><strong>Proof Level Floor</strong></td>
+        <td>The minimum acceptable proof level for a deployment. If any check falls below the floor, the VPEC is flagged. Configured per environment.</td>
+      </tr>
+      <tr>
+        <td><strong>Archetype</strong></td>
+        <td>A reusable governance pattern for a common use case (e.g. "LLM agent with tool access", "batch data pipeline"). Archetypes map to one or more policy bundles.</td>
+      </tr>
+    </tbody>
+  </table>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Reference — Primust Docs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─── TOPNAV ─── -->
+<nav class="topnav">
+  <a href="index.html" class="topnav-logo">
+    <span class="mark" style="width:26px;height:26px;border-radius:0;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none"><line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/><line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/></svg>
+    </span>
+    <span class="wordmark">PRIMUST</span>
+    <span class="docs-badge">DOCS</span>
+  </a>
+  <div class="topnav-links">
+    <a href="quickstart.html">Quickstart</a>
+    <a href="audit.html">Audit Guide</a>
+    <a href="reference.html">API Reference</a>
+    <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
+  </div>
+</nav>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Getting Started</div>
+    <a href="index.html">Overview</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="quickstart.html#install" class="indent">Install</a>
+    <a href="quickstart.html#first-vpec" class="indent">First VPEC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Concepts</div>
+    <a href="index.html#vpec">What is a VPEC</a>
+    <a href="index.html#proof-levels">Proof Levels</a>
+    <a href="index.html#provable-surface">Provable Surface</a>
+    <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Guides</div>
+    <a href="audit.html">Audit Guide</a>
+    <a href="quickstart.html#cross-org">Cross-Org Verification</a>
+    <a href="quickstart.html#production">Production Checklist</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Reference</div>
+    <a href="reference.html" class="active">Tech Spec</a>
+    <a href="reference.html#api">API Endpoints</a>
+    <a href="reference.html#gaps">Gap Taxonomy</a>
+    <a href="reference.html#packages">Package Inventory</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Open Source</div>
+    <a href="quickstart.html#verify">primust-verify</a>
+    <a href="quickstart.html#checks">primust-checks</a>
+  </div>
+</aside>
+
+<!-- ─── CONTENT ─── -->
+<main class="content">
+
+<h1>Technical Reference</h1>
+<p class="page-sub">Complete specification for the Primust verification infrastructure — invariants, schemas, APIs, and circuits.</p>
+
+<!-- SYSTEM INVARIANTS -->
+<h2>System Invariants</h2>
+
+<p>The following invariants hold for every Primust deployment. Violation of any invariant is treated as a system failure.</p>
+
+<ol>
+  <li><strong>Append-only chain.</strong> Once a check execution record is committed to a run's chain, it cannot be modified or removed. The chain is hash-linked; altering any record invalidates all subsequent hashes.</li>
+  <li><strong>No data transit.</strong> Primust never receives, stores, or transmits the actual data being processed. Only metadata, hashes, and proofs transit the system.</li>
+  <li><strong>Deterministic check execution.</strong> Given identical inputs and configuration, a check must produce identical outputs. Non-deterministic checks are rejected at registration.</li>
+  <li><strong>Proof level monotonicity.</strong> Within a single VPEC, a stage's proof level cannot be downgraded after initial commitment. Upgrades are permitted.</li>
+  <li><strong>Gap disclosure completeness.</strong> Every known gap in the provable surface must be disclosed in the VPEC metadata using the Gap Taxonomy. Undisclosed gaps constitute a system integrity failure.</li>
+  <li><strong>Key isolation.</strong> Signing keys are scoped to a single organization. Cross-org key usage is prohibited and detected by the verification system.</li>
+  <li><strong>Temporal ordering.</strong> Records within a run are strictly ordered by timestamp. Out-of-order records are rejected at commit time.</li>
+  <li><strong>Circuit immutability.</strong> Published ZK circuits are immutable. A new circuit version receives a new identifier; the old version remains available for verification of historical proofs.</li>
+  <li><strong>Offline verifiability.</strong> Any Evidence Pack can be verified without network access, given the signing public key and the ZK verification keys.</li>
+  <li><strong>Schema forward compatibility.</strong> Newer versions of primust-verify can verify Evidence Packs generated by older versions. Backward compatibility is maintained for a minimum of 24 months.</li>
+  <li><strong>Waiver expiration.</strong> Gap waivers have a mandatory expiration date. Expired waivers are surfaced as unresolved gaps in verification output.</li>
+  <li><strong>Single-writer runs.</strong> A run is owned by exactly one pipeline instance. Concurrent writes to the same run are rejected.</li>
+  <li><strong>Evidence Pack sealing.</strong> Once an Evidence Pack is generated, no additional records can be appended. The pack is cryptographically sealed at generation time.</li>
+</ol>
+
+<!-- PACKAGE INVENTORY -->
+<h2 id="packages">Package Inventory</h2>
+
+<h3>Apps</h3>
+<table>
+  <thead>
+    <tr><th>Package</th><th>Description</th><th>Language</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>primust-policy-center</strong></td><td>Web dashboard for policy bundle management, surface reports, and org administration</td><td>TypeScript / Next.js</td><td>Proprietary</td></tr>
+    <tr><td><strong>primust-worker</strong></td><td>Background job processor for ZK proof generation, evidence pack assembly, and report generation</td><td>Rust</td><td>Proprietary</td></tr>
+    <tr><td><strong>primust-gateway</strong></td><td>API gateway handling authentication, rate limiting, and request routing</td><td>Go</td><td>Proprietary</td></tr>
+  </tbody>
+</table>
+
+<h3>Core</h3>
+<table>
+  <thead>
+    <tr><th>Package</th><th>Description</th><th>Language</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>primust-engine</strong></td><td>Core execution engine — chain management, record commitment, proof coordination</td><td>Rust</td><td>Proprietary</td></tr>
+    <tr><td><strong>primust-circuits</strong></td><td>ZK circuit library for all built-in proof types</td><td>Noir / Rust</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-schema</strong></td><td>Canonical schema definitions for VPECs, records, gaps, and policy bundles</td><td>TypeScript</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-crypto</strong></td><td>Cryptographic primitives — Ed25519 signing, hash chains, Merkle trees</td><td>Rust</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table>
+
+<h3>SDKs</h3>
+<table>
+  <thead>
+    <tr><th>Package</th><th>Description</th><th>Language</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>primust-sdk-python</strong></td><td>Python SDK for pipeline instrumentation</td><td>Python</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-sdk-node</strong></td><td>Node.js SDK for pipeline instrumentation</td><td>TypeScript</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-sdk-go</strong></td><td>Go SDK for pipeline instrumentation</td><td>Go</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-sdk-rust</strong></td><td>Rust SDK for pipeline instrumentation</td><td>Rust</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table>
+
+<h3>AI Adapters</h3>
+<table>
+  <thead>
+    <tr><th>Package</th><th>Description</th><th>Language</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>primust-adapter-openai</strong></td><td>Wraps OpenAI API calls with automatic VPEC instrumentation</td><td>Python</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-adapter-anthropic</strong></td><td>Wraps Anthropic API calls with automatic VPEC instrumentation</td><td>Python</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-adapter-langchain</strong></td><td>LangChain callback handler for chain-level VPEC tracking</td><td>Python</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-adapter-huggingface</strong></td><td>Hugging Face Transformers integration for local model inference tracking</td><td>Python</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table>
+
+<h3>Rule Engine Adapters</h3>
+<table>
+  <thead>
+    <tr><th>Package</th><th>Description</th><th>Language</th><th>License</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>primust-adapter-opa</strong></td><td>Open Policy Agent adapter — wraps OPA evaluations with VPEC records</td><td>Go</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-adapter-cedar</strong></td><td>AWS Cedar policy engine adapter</td><td>Rust</td><td>Apache-2.0</td></tr>
+    <tr><td><strong>primust-adapter-drools</strong></td><td>Drools business rules engine adapter</td><td>Java</td><td>Apache-2.0</td></tr>
+  </tbody>
+</table>
+
+<!-- DATA FLOW -->
+<h2>Data Flow — What Transits Primust</h2>
+
+<p>Primust operates on metadata, never on the data itself. The following shows what Primust receives during a pipeline check execution:</p>
+
+<pre><span class="code-label">JSON</span><code>{
+  "run_id": "run_8f3a2b1c",
+  "check_id": "secrets_scanner",
+  "stage": "data-ingest",
+  "input_hash": "sha256:a1b2c3d4...",
+  "output_hash": "sha256:e5f6g7h8...",
+  "config_hash": "sha256:i9j0k1l2...",
+  "result": "PASS",
+  "proof_level": "P3",
+  "zk_proof": "base64:...",
+  "timestamp": "2026-03-12T14:22:18.003Z",
+  "prev_record_hash": "sha256:m3n4o5p6...",
+  "metadata": {
+    "check_version": "1.2.0",
+    "circuit_id": "secrets_scanner_v3",
+    "execution_ms": 142
+  }
+}</code></pre>
+
+<p><strong>What NEVER transits Primust:</strong></p>
+<ul>
+  <li>Raw input data (documents, images, database rows, API payloads)</li>
+  <li>Model weights or parameters</li>
+  <li>Personally identifiable information (PII)</li>
+  <li>Protected health information (PHI)</li>
+  <li>Trade secrets or proprietary algorithms</li>
+  <li>Credentials, tokens, or API keys</li>
+  <li>Plaintext outputs or intermediate computation results</li>
+</ul>
+
+<!-- API ENDPOINTS -->
+<h2 id="api">API Endpoints</h2>
+
+<h3>Policy Center API</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/bundles</code></td><td>List all policy bundles for the organization</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/bundles</code></td><td>Create a new policy bundle</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/bundles/:id</code></td><td>Retrieve a specific policy bundle by ID</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/bundles/:id/manifests</code></td><td>List manifests for a bundle (versioned check configurations)</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/bundles/:id/manifests</code></td><td>Create a new manifest version for a bundle</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/bundles/:id/generate-code</code></td><td>Generate SDK instrumentation code for a bundle</td></tr>
+  </tbody>
+</table>
+
+<h3>Run Lifecycle</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/runs</code></td><td>Start a new run (returns <code>run_id</code>)</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/runs/:id</code></td><td>Get run status and summary</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/runs/:id/records</code></td><td>Commit a check execution record to the run chain</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/runs/:id/close</code></td><td>Close and seal a run — no further records accepted</td></tr>
+  </tbody>
+</table>
+
+<h3>Evidence Packs &amp; Reports</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/evidence-packs</code></td><td>Generate an Evidence Pack from one or more closed runs</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/evidence-packs/:id</code></td><td>Download an Evidence Pack</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/reports</code></td><td>Generate a signed audit report from an Evidence Pack</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/reports/:id</code></td><td>Download a signed audit report</td></tr>
+  </tbody>
+</table>
+
+<h3>Signing Keys</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/keys</code></td><td>List all signing keys for the organization</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/keys</code></td><td>Register a new signing key (BYOK)</td></tr>
+    <tr><td><strong>DELETE</strong></td><td><code>/api/v1/keys/:id</code></td><td>Revoke a signing key</td></tr>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/keys/:id/verify</code></td><td>Verify a key is valid and not revoked</td></tr>
+  </tbody>
+</table>
+
+<h3>Webhooks</h3>
+<table>
+  <thead>
+    <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>GET</strong></td><td><code>/api/v1/webhooks</code></td><td>List registered webhooks</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/webhooks</code></td><td>Register a new webhook (events: <code>run.closed</code>, <code>pack.generated</code>, <code>gap.detected</code>, <code>key.rotated</code>)</td></tr>
+    <tr><td><strong>DELETE</strong></td><td><code>/api/v1/webhooks/:id</code></td><td>Remove a webhook</td></tr>
+  </tbody>
+</table>
+
+<!-- VPEC SCHEMA -->
+<h2>VPEC Schema</h2>
+
+<p>The Verified Pipeline Execution Certificate is the core data structure. All fields are required unless marked optional.</p>
+
+<pre><span class="code-label">JSON</span><code>{
+  "vpec_id": "vpec_a1b2c3d4",
+  "version": "1.0",
+  "organization_id": "org_x9y8z7",
+  "pipeline_id": "loan-underwriting-v3",
+  "environment": "production",
+  "created_at": "2026-03-12T14:22:18Z",
+  "sealed_at": "2026-03-12T14:23:01Z",
+  "signing_key_id": "key_m3n4o5",
+  "signature": "ed25519:base64...",
+  "proof_summary": {
+    "total_stages": 7,
+    "p3_plus": 5,
+    "p2": 1,
+    "p1": 1,
+    "uncovered": 0
+  },
+  "chain_root_hash": "sha256:root...",
+  "chain_length": 47,
+  "records": [ "..." ],
+  "gaps": [
+    {
+      "gap_id": "G-17",
+      "severity": "low",
+      "stage": "logging-pipeline",
+      "waiver": { "approved_by": "ciso@acme.corp", "expires": "2026-06-01" }
+    }
+  ],
+  "policy_bundle_id": "bundle_q1w2e3",
+  "manifest_version": 12,
+  "metadata": {
+    "sdk_version": "1.4.0",
+    "engine_version": "2.1.0"
+  }
+}</code></pre>
+
+<!-- CHECK EXECUTION RECORD SCHEMA -->
+<h2>Check Execution Record Schema</h2>
+
+<pre><span class="code-label">JSON</span><code>{
+  "record_id": "rec_f1g2h3i4",
+  "run_id": "run_8f3a2b1c",
+  "sequence": 12,
+  "check_id": "secrets_scanner",
+  "check_version": "1.2.0",
+  "stage": "data-ingest",
+  "proof_level": "P3",
+  "input_hash": "sha256:a1b2c3d4...",
+  "output_hash": "sha256:e5f6g7h8...",
+  "config_hash": "sha256:i9j0k1l2...",
+  "result": "PASS",
+  "result_detail": {
+    "findings": 0,
+    "scanned_bytes": 245120
+  },
+  "zk_proof": "base64:...",
+  "circuit_id": "secrets_scanner_v3",
+  "timestamp": "2026-03-12T14:22:18.003Z",
+  "prev_record_hash": "sha256:m3n4o5p6...",
+  "record_hash": "sha256:q7r8s9t0...",
+  "execution_ms": 142,
+  "executor": {
+    "host_hash": "sha256:u1v2w3x4...",
+    "runtime": "python-3.11",
+    "sdk_version": "1.4.0"
+  }
+}</code></pre>
+
+<!-- BUILT-IN CHECKS -->
+<h2>Built-in Checks</h2>
+
+<table>
+  <thead>
+    <tr><th>Check ID</th><th>Description</th><th>Proof Level</th><th>Circuit</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>secrets_scanner</strong></td><td>Scans input/output for leaked credentials, API keys, tokens, and secrets patterns</td><td>P3</td><td>secrets_scanner_v3</td></tr>
+    <tr><td><strong>pii_regex</strong></td><td>Regex-based PII detection for SSNs, emails, phone numbers, credit cards, and configurable patterns</td><td>P3</td><td>pii_regex_v2</td></tr>
+    <tr><td><strong>cost_bounds</strong></td><td>Validates that API call costs, token counts, or resource usage fall within declared bounds</td><td>P2</td><td>—</td></tr>
+    <tr><td><strong>command_patterns</strong></td><td>Ensures shell commands or subprocess calls match an allowlist of permitted patterns</td><td>P3</td><td>command_patterns_v1</td></tr>
+    <tr><td><strong>upstream_vpec_verify</strong></td><td>Verifies that an upstream cross-org VPEC is valid and its chain is intact</td><td>P3</td><td>upstream_verify_v2</td></tr>
+    <tr><td><strong>schema_validation</strong></td><td>Validates input/output data against declared JSON schemas</td><td>P2</td><td>—</td></tr>
+    <tr><td><strong>reconciliation_check</strong></td><td>Compares record counts, sums, or hashes between pipeline stages to detect data loss or duplication</td><td>P3</td><td>reconciliation_v1</td></tr>
+    <tr><td><strong>dependency_hash_check</strong></td><td>Verifies that runtime dependencies (packages, models, configs) match declared hashes</td><td>P2</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<!-- BYOK SIGNING SPEC -->
+<h2>BYOK Signing Spec</h2>
+
+<h3>Database Schema</h3>
+<pre><span class="code-label">SQL</span><code>CREATE TABLE signing_keys (
+  key_id        TEXT PRIMARY KEY,
+  org_id        TEXT NOT NULL REFERENCES organizations(org_id),
+  public_key    BYTEA NOT NULL,
+  key_type      TEXT NOT NULL DEFAULT 'Ed25519',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at    TIMESTAMPTZ,
+  trust_anchor  TEXT,
+  fingerprint   TEXT NOT NULL UNIQUE,
+  metadata      JSONB DEFAULT '{}'
+);</code></pre>
+
+<h3>Registration Flow</h3>
+<ol>
+  <li><strong>Generate key pair.</strong> Organization generates an Ed25519 key pair locally. The private key never leaves the organization's infrastructure.</li>
+  <li><strong>Register public key.</strong> <code>POST /api/v1/keys</code> with the public key, optional trust anchor URL, and key metadata.</li>
+  <li><strong>Challenge-response.</strong> Primust issues a random nonce. The organization signs the nonce with the private key and returns the signature. Primust verifies it against the registered public key.</li>
+  <li><strong>Activation.</strong> Key is marked active and available for Evidence Pack signing.</li>
+  <li><strong>Rotation.</strong> When rotation policy triggers, repeat steps 1-4 with a new key pair. The old key remains valid for verification of historical packs but cannot sign new ones.</li>
+</ol>
+
+<!-- VERIFICATION SPEC -->
+<h2>Verification Spec</h2>
+
+<h3>Four Verification Paths</h3>
+<table>
+  <thead>
+    <tr><th>Path</th><th>Use Case</th><th>Requirements</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Online (default)</strong></td><td>Standard verification with key registry lookup</td><td>Network access to Primust key registry</td></tr>
+    <tr><td><strong>Offline</strong></td><td>Air-gapped or restricted environments</td><td>Local copy of org public key + ZK verification keys</td></tr>
+    <tr><td><strong>BYOK Trust Root</strong></td><td>Enterprise customers with their own PKI</td><td>Network access to org's trust anchor URL</td></tr>
+    <tr><td><strong>Cross-Org</strong></td><td>Verifying upstream VPECs from other organizations</td><td>Network access to Primust registry for upstream key lookup</td></tr>
+  </tbody>
+</table>
+
+<h3>Eight Verification Steps</h3>
+<ol>
+  <li><strong>Parse Evidence Pack.</strong> Validate JSON structure against VPEC schema.</li>
+  <li><strong>Resolve signing key.</strong> Fetch org public key from registry, trust root, or local file.</li>
+  <li><strong>Verify signature.</strong> Validate Ed25519 signature over the sealed pack contents.</li>
+  <li><strong>Walk the chain.</strong> Starting from the first record, verify each <code>prev_record_hash</code> link. Confirm <code>chain_root_hash</code> matches.</li>
+  <li><strong>Verify ZK proofs.</strong> For each P3+ record, load the circuit verification key and verify the proof.</li>
+  <li><strong>Check timestamps.</strong> Confirm monotonic ordering and that all timestamps fall within the declared execution window.</li>
+  <li><strong>Validate gaps.</strong> Confirm all gaps are from the Gap Taxonomy, check waiver expiration, count critical gaps.</li>
+  <li><strong>Produce result.</strong> Emit PASS/FAIL with detailed findings for each step.</li>
+</ol>
+
+<h3>Exit Codes</h3>
+<table>
+  <thead>
+    <tr><th>Code</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>0</strong></td><td>PASS — all checks passed</td></tr>
+    <tr><td><strong>1</strong></td><td>FAIL — one or more verification checks failed</td></tr>
+    <tr><td><strong>2</strong></td><td>ERROR — could not complete verification (missing key, corrupt file, network error)</td></tr>
+    <tr><td><strong>3</strong></td><td>WARN — passed with warnings (expired waivers, low proof coverage)</td></tr>
+  </tbody>
+</table>
+
+<h3>Offline Operation</h3>
+<pre><code># Download verification keys for offline use
+primust keys export --org=org_x9y8z7 --output=org-keys.json
+
+# Download ZK verification keys
+primust circuits export --output=circuit-keys.json
+
+# Verify offline
+primust verify evidence-pack.json \
+  --offline \
+  --keys=org-keys.json \
+  --circuits=circuit-keys.json</code></pre>
+
+<h3>Audit Report Verification</h3>
+<pre><code># Verify a signed PDF audit report
+primust verify-report audit-report-2026-03-12.pdf
+
+# Output:
+# ✓ PDF signature valid
+# ✓ Embedded evidence hash matches source pack
+# ✓ Report signing key is authorized
+# RESULT: PASS</code></pre>
+
+<!-- ZK CIRCUIT INVENTORY -->
+<h2>ZK Circuit Inventory</h2>
+
+<p>All built-in ZK circuits are published under Apache-2.0 in the <code>primust-circuits</code> package.</p>
+
+<table>
+  <thead>
+    <tr><th>Circuit ID</th><th>Purpose</th><th>Proving System</th><th>Constraint Count</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>secrets_scanner_v3</strong></td><td>Proves no secret patterns found in input without revealing input</td><td>Noir / UltraPlonk</td><td>~48K</td></tr>
+    <tr><td><strong>pii_regex_v2</strong></td><td>Proves PII regex scan result without revealing scanned data</td><td>Noir / UltraPlonk</td><td>~62K</td></tr>
+    <tr><td><strong>command_patterns_v1</strong></td><td>Proves command matches allowlist without revealing full command</td><td>Noir / UltraPlonk</td><td>~18K</td></tr>
+    <tr><td><strong>upstream_verify_v2</strong></td><td>Proves upstream VPEC chain hash is valid</td><td>Noir / UltraPlonk</td><td>~34K</td></tr>
+    <tr><td><strong>reconciliation_v1</strong></td><td>Proves record counts/sums match across stages without revealing values</td><td>Noir / UltraPlonk</td><td>~26K</td></tr>
+    <tr><td><strong>hash_chain_v2</strong></td><td>Proves chain integrity for a batch of records</td><td>Noir / UltraPlonk</td><td>~72K</td></tr>
+    <tr><td><strong>timestamp_anchor_v1</strong></td><td>Proves timestamp was anchored to external source</td><td>Noir / UltraPlonk</td><td>~14K</td></tr>
+    <tr><td><strong>merkle_inclusion_v1</strong></td><td>Proves a record is included in a Merkle tree without revealing other records</td><td>Noir / UltraPlonk</td><td>~22K</td></tr>
+  </tbody>
+</table>
+
+<!-- GAP TAXONOMY -->
+<h2 id="gaps">Gap Taxonomy</h2>
+
+<p>The Gap Taxonomy defines every recognized category of coverage gap. Gaps are classified into three groups: Core (pipeline-level), Unstructured (data-level), and Cross-Org (multi-party).</p>
+
+<h3>Core Gaps (22)</h3>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Severity</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>G-01</strong></td><td>Undeclared Stage</td><td>Critical</td><td>A pipeline stage exists but is not included in the VPEC definition</td></tr>
+    <tr><td><strong>G-02</strong></td><td>Missing Check</td><td>High</td><td>A declared stage has no check assigned to it</td></tr>
+    <tr><td><strong>G-03</strong></td><td>Stale Manifest</td><td>Medium</td><td>The policy bundle manifest has not been updated in over 90 days</td></tr>
+    <tr><td><strong>G-04</strong></td><td>Proof Downgrade</td><td>High</td><td>A stage was previously at a higher proof level and has been downgraded</td></tr>
+    <tr><td><strong>G-05</strong></td><td>Missing ZK Circuit</td><td>Critical</td><td>A stage declares P3 but no ZK circuit is assigned or available</td></tr>
+    <tr><td><strong>G-06</strong></td><td>Unsigned Records</td><td>Critical</td><td>One or more records in the chain lack a valid signature</td></tr>
+    <tr><td><strong>G-07</strong></td><td>Clock Skew</td><td>Medium</td><td>Timestamps show skew exceeding the configured tolerance</td></tr>
+    <tr><td><strong>G-08</strong></td><td>Config Drift</td><td>Medium</td><td>Check configuration hash differs from the manifest-declared hash</td></tr>
+    <tr><td><strong>G-09</strong></td><td>Dependency Mismatch</td><td>High</td><td>Runtime dependency hashes do not match declared values</td></tr>
+    <tr><td><strong>G-10</strong></td><td>Partial Coverage</td><td>Medium</td><td>A stage check covers only a subset of the stage's inputs</td></tr>
+    <tr><td><strong>G-11</strong></td><td>Stale Circuit</td><td>Low</td><td>Circuit version is more than two major versions behind current</td></tr>
+    <tr><td><strong>G-12</strong></td><td>Missing Error Handler</td><td>Medium</td><td>Pipeline error paths are not instrumented</td></tr>
+    <tr><td><strong>G-13</strong></td><td>Orphan Records</td><td>High</td><td>Records exist that do not belong to any declared stage</td></tr>
+    <tr><td><strong>G-14</strong></td><td>Duplicate Sequence</td><td>Critical</td><td>Two records share the same sequence number within a run</td></tr>
+    <tr><td><strong>G-15</strong></td><td>Key Expiring</td><td>Low</td><td>Signing key will expire within 30 days</td></tr>
+    <tr><td><strong>G-16</strong></td><td>Waiver Pending</td><td>Medium</td><td>A gap waiver request has been submitted but not yet approved</td></tr>
+    <tr><td><strong>G-17</strong></td><td>Logging Gap</td><td>Low</td><td>Observability or logging pipeline stages are not instrumented</td></tr>
+    <tr><td><strong>G-18</strong></td><td>Retry Uncovered</td><td>Medium</td><td>Retry/fallback paths in the pipeline are not instrumented</td></tr>
+    <tr><td><strong>G-19</strong></td><td>Batch Boundary</td><td>Medium</td><td>Batch processing boundaries are not individually tracked</td></tr>
+    <tr><td><strong>G-20</strong></td><td>Cache Hit Path</td><td>Medium</td><td>Cached results bypass the normal check execution path</td></tr>
+    <tr><td><strong>G-21</strong></td><td>Feature Flag Path</td><td>Medium</td><td>Feature-flagged code paths may execute different logic without separate checks</td></tr>
+    <tr><td><strong>G-22</strong></td><td>SDK Version Mismatch</td><td>Low</td><td>SDK version does not match the recommended version for the engine</td></tr>
+  </tbody>
+</table>
+
+<h3>Unstructured Gaps (1)</h3>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Severity</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>G-U1</strong></td><td>Unstructured Data</td><td>Medium</td><td>Pipeline processes unstructured data (free text, images, audio) where content-level checks are limited to regex/pattern matching rather than semantic analysis</td></tr>
+  </tbody>
+</table>
+
+<h3>Cross-Org Gaps (7)</h3>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Name</th><th>Severity</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>G-X1</strong></td><td>Upstream Unverified</td><td>Critical</td><td>Pipeline depends on upstream data from another org, but no upstream VPEC is linked</td></tr>
+    <tr><td><strong>G-X2</strong></td><td>Upstream Stale</td><td>High</td><td>Upstream VPEC exists but was generated more than 24 hours before the downstream run</td></tr>
+    <tr><td><strong>G-X3</strong></td><td>Upstream Partial</td><td>High</td><td>Upstream VPEC covers only a subset of the data consumed by the downstream pipeline</td></tr>
+    <tr><td><strong>G-X4</strong></td><td>Key Trust Gap</td><td>High</td><td>Upstream org's signing key cannot be independently verified (no trust anchor or registry entry)</td></tr>
+    <tr><td><strong>G-X5</strong></td><td>Schema Mismatch</td><td>Medium</td><td>Upstream VPEC schema version differs from downstream expectations</td></tr>
+    <tr><td><strong>G-X6</strong></td><td>Cross-Org Timing</td><td>Medium</td><td>Timestamp window between upstream VPEC seal and downstream run start exceeds tolerance</td></tr>
+    <tr><td><strong>G-X7</strong></td><td>Upstream Gap Inheritance</td><td>High</td><td>Upstream VPEC contains gaps that propagate to the downstream pipeline's coverage</td></tr>
+  </tbody>
+</table>
+
+<!-- AIUC-1 SCHEMA -->
+<h2 id="aiuc1">AIUC-1 Schema</h2>
+
+<p>Primust natively supports the AIUC-1 (AI Use Case Compliance) specification. The following fields are captured in AIUC-1 mode.</p>
+
+<h3>Pipeline Init Fields</h3>
+<pre><span class="code-label">JSON</span><code>{
+  "aiuc1_version": "1.0",
+  "use_case_id": "uc-loan-underwriting",
+  "risk_classification": "high",
+  "deploying_org": "org_x9y8z7",
+  "operating_org": "org_x9y8z7",
+  "ai_system_id": "sys-underwriting-v3",
+  "intended_purpose": "Automated loan underwriting with human-in-the-loop review",
+  "affected_persons_categories": ["loan_applicants"],
+  "deployment_region": "EU",
+  "regulatory_frameworks": ["eu_ai_act", "gdpr"]
+}</code></pre>
+
+<h3>Check Record Fields</h3>
+<pre><span class="code-label">JSON</span><code>{
+  "aiuc1_check_type": "bias_assessment",
+  "aiuc1_requirement_ref": "Article 10(2)(f)",
+  "aiuc1_finding": "PASS",
+  "aiuc1_finding_detail": {
+    "protected_attributes_tested": ["gender", "ethnicity", "age"],
+    "disparate_impact_ratio": 0.87,
+    "threshold": 0.80
+  }
+}</code></pre>
+
+<h3>Compliance Requirements</h3>
+<pre><span class="code-label">JSON</span><code>{
+  "compliance_requirements": [
+    {
+      "framework": "eu_ai_act",
+      "articles": ["9", "10", "11", "12", "13", "17"],
+      "evidence_mapping": {
+        "article_9": ["risk_management_vpec"],
+        "article_10": ["data_governance_vpec", "bias_check_records"],
+        "article_11": ["provable_surface_report"],
+        "article_12": ["execution_chain_records"],
+        "article_13": ["transparency_vpec"],
+        "article_17": ["policy_bundle_history"]
+      }
+    }
+  ]
+}</code></pre>
+
+<h3>SLA Policy</h3>
+<pre><span class="code-label">JSON</span><code>{
+  "sla_policy": {
+    "max_proof_generation_ms": 5000,
+    "max_chain_depth": 1000,
+    "evidence_pack_retention_days": 2555,
+    "gap_waiver_max_duration_days": 180,
+    "key_rotation_max_days": 90,
+    "minimum_proof_level": "P2",
+    "critical_gap_max_unresolved": 0
+  }
+}</code></pre>
+
+<!-- INFRASTRUCTURE TOPOLOGY -->
+<h2>Infrastructure Topology</h2>
+
+<pre><code>                         ┌─────────────────────┐
+                         │   primust-gateway    │
+                         │   (Go / API edge)    │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+           ┌────────┴──────┐ ┌─────┴──────┐ ┌──────┴────────┐
+           │ Policy Center │ │   Engine   │ │    Worker     │
+           │  (Next.js)    │ │   (Rust)   │ │    (Rust)     │
+           │  Dashboard,   │ │  Chain mgmt│ │  ZK proofs,   │
+           │  bundle mgmt  │ │  Records   │ │  Evidence     │
+           └────────┬──────┘ └─────┬──────┘ │  packs,       │
+                    │               │        │  Reports      │
+                    │               │        └──────┬────────┘
+                    │               │               │
+                    └───────────────┼───────────────┘
+                                    │
+                         ┌──────────┴───────────┐
+                         │     PostgreSQL        │
+                         │  Chains, records,     │
+                         │  keys, bundles,       │
+                         │  gap waivers          │
+                         └──────────┬───────────┘
+                                    │
+                         ┌──────────┴───────────┐
+                         │    Object Store      │
+                         │  Evidence packs,      │
+                         │  ZK proofs,           │
+                         │  Signed reports       │
+                         └──────────────────────┘
+
+  SDK clients ──────────► primust-gateway ──────► Engine ──────► Chain
+       │                                                          │
+       │                                    Worker ◄──── Queue ◄──┘
+       │                                      │
+       └── Offline: primust-verify ◄── Evidence Pack ◄──┘</code></pre>
+
+</main>
+</body>
+</html>

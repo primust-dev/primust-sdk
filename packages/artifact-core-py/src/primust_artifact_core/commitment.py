@@ -335,15 +335,13 @@ def _parse_hash_to_field(hash_str: str) -> int:
 
 def _resolve_algorithm() -> str:
     """Resolve commitment algorithm from env var or default.
-    Default is 'sha256'. Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2
-    until an audited implementation (e.g. Barretenberg) is validated.
+    Default is 'poseidon2' (ZK-friendly, matches Noir circuit).
+    Override with PRIMUST_COMMITMENT_ALGORITHM=sha256 if needed.
     """
-    # TODO: Wire Poseidon2 commitment to Noir circuit output. Currently falls back to
-    # SHA256. See poseidon2 test failures in sdk-python, langgraph, openai-agents, google-adk.
     alg = os.environ.get("PRIMUST_COMMITMENT_ALGORITHM")
-    if alg == "poseidon2":
-        return "poseidon2"
-    return "sha256"
+    if alg == "sha256":
+        return "sha256"
+    return "poseidon2"
 
 
 def _parse_hash_to_raw_bytes(hash_str: str) -> bytes:

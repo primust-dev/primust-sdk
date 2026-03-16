@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primust Docs — Developer Documentation</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ─── TOPNAV ─── -->
+<nav class="topnav">
+  <a href="index.html" class="topnav-logo">
+    <span class="mark" style="width:26px;height:26px;border-radius:0;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none"><line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/><line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/></svg>
+    </span>
+    <span class="wordmark" style="font-size:12px;">PRIMUST</span>
+    <span class="docs-badge">Docs</span>
+  </a>
+  <div class="topnav-links">
+    <a href="quickstart.html">Quickstart</a>
+    <a href="audit.html">Audit Guide</a>
+    <a href="reference.html">API Reference</a>
+    <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
+  </div>
+</nav>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Getting Started</div>
+    <a href="index.html" class="active">Overview</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="quickstart.html#install" class="indent">Install</a>
+    <a href="quickstart.html#first-vpec" class="indent">First VPEC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Concepts</div>
+    <a href="index.html#vpec">What is a VPEC</a>
+    <a href="index.html#proof-levels">Proof Levels</a>
+    <a href="index.html#provable-surface">Provable Surface</a>
+    <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Guides</div>
+    <a href="audit.html">Audit Guide</a>
+    <a href="quickstart.html#cross-org">Cross-Org Verification</a>
+    <a href="quickstart.html#production">Production Checklist</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Reference</div>
+    <a href="reference.html">Tech Spec</a>
+    <a href="reference.html#api">API Endpoints</a>
+    <a href="reference.html#gaps">Gap Taxonomy</a>
+    <a href="reference.html#packages">Package Inventory</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Open Source</div>
+    <a href="quickstart.html#verify">primust-verify</a>
+    <a href="quickstart.html#checks">primust-checks</a>
+  </div>
+</aside>
+
+<!-- ─── CONTENT ─── -->
+<main class="content">
+
+  <h1>Primust Developer Documentation</h1>
+  <p class="page-sub">Prove what your system did. Mathematically.</p>
+
+  <!-- What is Primust -->
+  <h2>What is Primust</h2>
+  <p>You already have checks&mdash;access control, schema validation, model evaluation, bias audits, policy enforcement. Primust does not replace them. <strong>Primust makes them provable.</strong></p>
+  <p>The flow is simple:</p>
+  <ol>
+    <li><strong>Input</strong> &mdash; your system receives a request, data, or event.</li>
+    <li><strong>Checks</strong> &mdash; your existing governance logic executes: OPA policies, Cedar rules, model evaluations, schema validators, anything.</li>
+    <li><strong>Output</strong> &mdash; Primust captures the execution trace, binds it cryptographically, and produces a credential.</li>
+    <li><strong>Verify</strong> &mdash; anyone with the credential can verify it independently. No phone calls. No network access. No trust required.</li>
+  </ol>
+  <p>The credential is called a <strong>VPEC</strong>&mdash;a Verifiable Process Execution Credential. It is portable JSON. It is verifiable offline. It contains commitment hashes, never raw content. It is the mathematical receipt for what your system actually did.</p>
+
+  <!-- VPEC -->
+  <h2 id="vpec">What is a VPEC</h2>
+  <p><strong>Verifiable Process Execution Credential.</strong></p>
+  <ul>
+    <li><strong>V</strong>erifiable &mdash; any party can independently confirm the credential is valid, without contacting the issuer.</li>
+    <li><strong>P</strong>rocess &mdash; it binds to a specific execution: the checks that ran, the inputs they consumed, the outputs they produced.</li>
+    <li><strong>E</strong>xecution &mdash; it captures what actually happened at runtime, not what was supposed to happen.</li>
+    <li><strong>C</strong>redential &mdash; it is a portable, self-contained JSON object that travels with the artifact it describes.</li>
+  </ul>
+  <p>A VPEC is <strong>cryptographically signed JSON</strong>. It contains commitment hashes&mdash;SHA-256 digests of inputs, outputs, and check results&mdash;never the raw content itself. This makes VPECs <strong>content-blind</strong>: a verifier can confirm that a bias audit passed without ever seeing the model weights or training data.</p>
+  <p>VPECs are <strong>portable</strong>. Send them across organizations, store them in object storage, embed them in API responses. They are <strong>offline-verifiable</strong>&mdash;verification requires only the credential and a trust root, no network calls.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-label">Key Property</div>
+    <p>A VPEC proves <em>what happened</em>, not <em>what should have happened</em>. It is a receipt, not a policy.</p>
+  </div>
+
+  <!-- Proof Levels -->
+  <h2 id="proof-levels">Proof Levels</h2>
+  <p>Not all evidence is equal. Primust assigns every check a <strong>proof level</strong> based on the cryptographic strength of its binding. Five levels, from strongest to weakest:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Level</th>
+        <th>Mechanism</th>
+        <th>Trust Assumption</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Mathematical</td>
+        <td>Zero-knowledge proof (ZK circuit)</td>
+        <td>None &mdash; no trust required</td>
+      </tr>
+      <tr>
+        <td>Verifiable Inference</td>
+        <td>ONNX-to-circuit compilation</td>
+        <td>Trust the model weights</td>
+      </tr>
+      <tr>
+        <td>Execution</td>
+        <td>Model-hash-binding (deterministic replay)</td>
+        <td>Trust the model</td>
+      </tr>
+      <tr>
+        <td>Witnessed</td>
+        <td>Dual timestamp + Ed25519 signature</td>
+        <td>Trust the reviewer</td>
+      </tr>
+      <tr>
+        <td>Attestation</td>
+        <td>Invocation-binding (call graph capture)</td>
+        <td>Trust the process owner</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <div class="callout-label">Weakest-Link Rule</div>
+    <p>A VPEC's effective proof level is the <strong>lowest</strong> proof level among all checks it contains. If nine checks are Mathematical and one is Attestation, the VPEC is Attestation-level. This is by design&mdash;a chain is only as strong as its weakest link.</p>
+  </div>
+
+  <!-- Provable Surface -->
+  <h2 id="provable-surface">Provable Surface</h2>
+  <p>The <strong>provable surface</strong> is the percentage of your governance that is cryptographically provable. It answers a simple question: of all the governance checks in this process, how many produce verifiable evidence?</p>
+  <p>A sample breakdown for a typical AI agent pipeline:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Check</th>
+        <th>Proof Level</th>
+        <th>Provable</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Input schema validation</td>
+        <td>Mathematical</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>OPA policy evaluation</td>
+        <td>Execution</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>Bias audit (ONNX model)</td>
+        <td>Verifiable Inference</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>Human review sign-off</td>
+        <td>Witnessed</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>LLM output toxicity scan</td>
+        <td>Attestation</td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td>Manual spreadsheet check</td>
+        <td>&mdash;</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>Verbal approval</td>
+        <td>&mdash;</td>
+        <td>No</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Provable surface: 71%</strong> (5 of 7 checks produce verifiable evidence). The two non-provable checks represent governance gaps&mdash;Primust flags these explicitly so you can decide whether to instrument them or accept the gap.</p>
+
+  <!-- Policy Bundles -->
+  <h2 id="bundles">Policy Bundles</h2>
+  <p>Policy bundles are pre-built collections of checks mapped to specific compliance frameworks or use cases. Each bundle defines which checks are required, their minimum proof levels, and the expected provable surface.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Bundle ID</th>
+        <th>Description</th>
+        <th>Checks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ai_agent_general_v1</code></td>
+        <td>General-purpose AI agent governance</td>
+        <td>Input validation, output filtering, tool-call authorization, execution trace</td>
+      </tr>
+      <tr>
+        <td><code>eu_ai_act_art12_v1</code></td>
+        <td>EU AI Act Article 12 transparency &amp; logging</td>
+        <td>Logging completeness, explanation commitment, bias audit, risk classification</td>
+      </tr>
+      <tr>
+        <td><code>hipaa_safeguards_v1</code></td>
+        <td>HIPAA technical safeguards for AI systems</td>
+        <td>PHI detection, access control, audit log integrity, encryption verification</td>
+      </tr>
+      <tr>
+        <td><code>soc2_cc_v1</code></td>
+        <td>SOC 2 common criteria controls</td>
+        <td>Access control, change management, risk assessment, monitoring</td>
+      </tr>
+      <tr>
+        <td><code>coding_agent_v1</code></td>
+        <td>Code-generating agent governance</td>
+        <td>SAST binding, dependency audit, license check, secrets scan</td>
+      </tr>
+      <tr>
+        <td><code>supply_chain_governance_v1</code></td>
+        <td>Software supply chain integrity</td>
+        <td>SBOM verification, provenance attestation, signature validation</td>
+      </tr>
+      <tr>
+        <td><code>financial_data_governance_v1</code></td>
+        <td>Financial data processing controls</td>
+        <td>PII detection, regulatory hold, audit trail, reconciliation check</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Bundles are composable. Apply multiple bundles to a single process to cover overlapping regulatory requirements. Use <code>primust bundle list</code> to see all available bundles and <code>primust bundle inspect &lt;id&gt;</code> to view the full check manifest.</p>
+
+</main>
+
+</body>
+</html>

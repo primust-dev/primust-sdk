@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Guide — Primust Docs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─── TOPNAV ─── -->
+<nav class="topnav">
+  <a href="index.html" class="topnav-logo">
+    <span class="mark" style="width:26px;height:26px;border-radius:0;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none"><line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/><line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/></svg>
+    </span>
+    <span class="wordmark">PRIMUST</span>
+    <span class="docs-badge">DOCS</span>
+  </a>
+  <div class="topnav-links">
+    <a href="quickstart.html">Quickstart</a>
+    <a href="audit.html">Audit Guide</a>
+    <a href="reference.html">API Reference</a>
+    <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
+  </div>
+</nav>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Getting Started</div>
+    <a href="index.html">Overview</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="quickstart.html#install" class="indent">Install</a>
+    <a href="quickstart.html#first-vpec" class="indent">First VPEC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Concepts</div>
+    <a href="index.html#vpec">What is a VPEC</a>
+    <a href="index.html#proof-levels">Proof Levels</a>
+    <a href="index.html#provable-surface">Provable Surface</a>
+    <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Guides</div>
+    <a href="audit.html" class="active">Audit Guide</a>
+    <a href="quickstart.html#cross-org">Cross-Org Verification</a>
+    <a href="quickstart.html#production">Production Checklist</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Reference</div>
+    <a href="reference.html">Tech Spec</a>
+    <a href="reference.html#api">API Endpoints</a>
+    <a href="reference.html#gaps">Gap Taxonomy</a>
+    <a href="reference.html#packages">Package Inventory</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Open Source</div>
+    <a href="quickstart.html#verify">primust-verify</a>
+    <a href="quickstart.html#checks">primust-checks</a>
+  </div>
+</aside>
+
+<!-- ─── CONTENT ─── -->
+<main class="content">
+
+<h1>Audit Guide</h1>
+<p class="page-sub">For auditors, compliance officers, and GRC teams evaluating Primust Evidence Packs.</p>
+
+<!-- THE FUNDAMENTAL CLAIM -->
+<h2>The Fundamental Claim</h2>
+
+<p>When an organization presents a Primust Evidence Pack, they are making a specific, bounded claim:</p>
+
+<div class="callout">
+  <div class="callout-label">The Claim</div>
+  <p><strong>"For every declared operation in this pipeline, we can prove — via cryptographic signature, zero-knowledge proof, or attested record — that the code which was supposed to run did run, on the data it was supposed to process, producing the output that was recorded."</strong></p>
+</div>
+
+<div class="callout callout-warn">
+  <div class="callout-label">Critical Disclosure</div>
+  <p><strong>Primust proves what was declared should run, not that everything was declared.</strong> An organization could omit pipeline stages from their VPEC definition. Primust's Gap Taxonomy identifies and labels known omission categories, but the declaration boundary is set by the organization. Auditors must independently assess declaration completeness.</p>
+</div>
+
+<p>This distinction is fundamental. Primust can guarantee execution integrity within the declared surface — it cannot guarantee the declared surface is exhaustive. The Provable Surface Report and Gap Taxonomy exist specifically to make this boundary visible to auditors.</p>
+
+<!-- FIVE-MINUTE VERIFICATION -->
+<h2>Five-Minute Verification</h2>
+
+<p>Every claim in an Evidence Pack can be independently verified using the open-source <code>primust-verify</code> tool. No Primust account is required.</p>
+
+<h3>Install</h3>
+<pre><code>pip install primust-verify</code></pre>
+
+<h3>Verify an Evidence Pack</h3>
+<pre><code>primust verify evidence-pack-2026-03-12.json</code></pre>
+
+<h3>Expected Output</h3>
+<pre><code>Primust Verify v1.4.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Evidence Pack: evidence-pack-2026-03-12.json
+Organization:  Acme Corp
+Pipeline:      loan-underwriting-v3
+Generated:     2026-03-12T14:22:18Z
+
+✓ Signature valid           Ed25519 / org-key-abc123
+✓ Chain intact              47 records, 0 breaks
+✓ ZK proofs verified        12/12 circuits passed
+✓ Timestamps consistent     All within declared window
+✓ Gaps disclosed            3 gaps (0 critical)
+
+RESULT: PASS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</code></pre>
+
+<!-- WHAT THE FIVE VERIFICATION CHECKS PROVE -->
+<h2>What the Five Verification Checks Prove</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Check</th>
+      <th>What It Proves</th>
+      <th>Failure Means</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Signature</strong></td>
+      <td>The Evidence Pack was signed by the declared organization key and has not been modified since signing</td>
+      <td>Pack has been tampered with or key is not recognized</td>
+    </tr>
+    <tr>
+      <td><strong>Chain</strong></td>
+      <td>Every execution record links to the previous one via cryptographic hash — no records have been inserted, removed, or reordered</td>
+      <td>Records have been altered after the fact</td>
+    </tr>
+    <tr>
+      <td><strong>ZK Proofs</strong></td>
+      <td>For operations at Proof Level 3+, the declared computation was actually performed on the declared inputs, without revealing the inputs themselves</td>
+      <td>The claimed computation did not occur as described</td>
+    </tr>
+    <tr>
+      <td><strong>Timestamps</strong></td>
+      <td>All records fall within the declared execution window and are monotonically ordered</td>
+      <td>Timeline has been manipulated or records are out of sequence</td>
+    </tr>
+    <tr>
+      <td><strong>Gaps</strong></td>
+      <td>The organization has disclosed known coverage gaps per the Gap Taxonomy; gap count and severity are reported</td>
+      <td>Undisclosed gaps or critical gaps present</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- PROOF LEVELS -->
+<h2 id="proof-levels-audit">Proof Levels — What Each Means for Audit</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Level</th>
+      <th>Name</th>
+      <th>Mechanism</th>
+      <th>Audit Guidance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>P1</strong></td>
+      <td>Attestation</td>
+      <td>Organization asserts a fact; Primust records the assertion with a timestamp and signature</td>
+      <td>Treat as a signed declaration. No independent proof of execution. Suitable for low-risk metadata. Auditors should flag if P1 is used for high-risk operations.</td>
+    </tr>
+    <tr>
+      <td><strong>P2</strong></td>
+      <td>Hash Lock</td>
+      <td>Input/output hashes are recorded. If you have the original data, you can confirm it matches.</td>
+      <td>Proves data was not altered after recording. Does not prove the computation itself. Request original data to verify hashes.</td>
+    </tr>
+    <tr>
+      <td><strong>P3</strong></td>
+      <td>ZK Proven</td>
+      <td>A zero-knowledge proof confirms the declared computation ran on the declared inputs, producing the declared output — without revealing the data.</td>
+      <td>Strongest practical proof. The verifier confirms execution integrity without needing to see underlying data. Suitable for regulated and high-risk operations.</td>
+    </tr>
+    <tr>
+      <td><strong>P4</strong></td>
+      <td>ZK + Timestamp Anchor</td>
+      <td>ZK proof plus an external timestamp anchor (e.g., blockchain or RFC 3161 TSA).</td>
+      <td>Adds non-repudiation on timing. Useful when "when it happened" matters as much as "what happened." Verify the external anchor independently.</td>
+    </tr>
+    <tr>
+      <td><strong>P5</strong></td>
+      <td>Full Reproducible</td>
+      <td>ZK proof, timestamp anchor, and a reproducibility manifest that allows a third party to re-execute the pipeline and compare results.</td>
+      <td>Maximum assurance. Auditor can independently re-run the pipeline. Requires access to the reproducibility environment. Rare in production; typically used for critical regulatory submissions.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- READING A PROVABLE SURFACE REPORT -->
+<h2>Reading a Provable Surface Report</h2>
+
+<p>The Provable Surface Report shows exactly what percentage of a pipeline is covered at each proof level, and where the gaps are.</p>
+
+<pre><code>primust surface loan-underwriting-v3 --format=report</code></pre>
+
+<h3>Example Output</h3>
+
+<pre><code>Provable Surface Report
+Pipeline: loan-underwriting-v3
+Date:     2026-03-12
+
+COVERAGE SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  P3+ (ZK proven)       68.2%
+  P2  (Hash lock)       22.4%
+  P1  (Attestation)      7.1%
+  Uncovered              2.3%
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STAGE DETAIL
+┌─────────────────────┬───────┬──────────────┐
+│ Stage               │ Basis │ Coverage     │
+├─────────────────────┼───────┼──────────────┤
+│ data-ingest         │ P3    │ ZK proven    │
+│ pii-redaction       │ P3    │ ZK proven    │
+│ model-inference     │ P2    │ Hash lock    │
+│ score-calibration   │ P3    │ ZK proven    │
+│ human-review        │ P1    │ Attestation  │
+│ output-delivery     │ P2    │ Hash lock    │
+│ logging-pipeline    │ —     │ Gap: G-17    │
+└─────────────────────┴───────┴──────────────┘</code></pre>
+
+<p><strong>Coverage basis labels:</strong> <code>P1</code> = attestation only, <code>P2</code> = hash-locked, <code>P3</code> = zero-knowledge proven. Stages marked with a gap reference indicate known uncovered areas — consult the Gap Taxonomy for details on each gap code.</p>
+
+<!-- VERIFYING AN EVIDENCE PACK -->
+<h2>Verifying an Evidence Pack</h2>
+
+<pre><code># Full verification with verbose output
+primust verify evidence-pack-2026-03-12.json --verbose
+
+# Verify and output machine-readable JSON
+primust verify evidence-pack-2026-03-12.json --format=json
+
+# Verify against a specific org public key
+primust verify evidence-pack-2026-03-12.json --pubkey=org-key-abc123.pem
+
+# Offline verification (no network calls)
+primust verify evidence-pack-2026-03-12.json --offline</code></pre>
+
+<!-- FRAMEWORK ALIGNMENT -->
+<h2>Framework Alignment</h2>
+
+<p>Primust Evidence Packs can serve as supporting evidence for multiple compliance frameworks. Below is guidance on how Primust artifacts map to specific requirements.</p>
+
+<h3>EU AI Act</h3>
+<p>Articles 9, 12, and 17 require risk management documentation, logging of automatic decisions, and quality management systems. Primust VPECs provide cryptographically verifiable execution logs for AI pipeline stages. The Provable Surface Report maps directly to the "technical documentation" requirement under Article 11. <strong>Note:</strong> Primust does not assess risk classification — that remains the provider's responsibility.</p>
+
+<h3>HIPAA</h3>
+<p>The Security Rule (§164.312) requires audit controls and integrity controls. Evidence Packs provide tamper-evident execution records. Hash-locked and ZK-proven stages satisfy integrity verification requirements. <strong>Note:</strong> Primust never transits PHI. The ZK proofs confirm computation integrity without exposing underlying health data.</p>
+
+<h3>SOC 2</h3>
+<p>Trust Services Criteria CC7.1 (system monitoring) and CC8.1 (change management) align with VPEC execution records and policy bundle versioning. Evidence Packs can serve as artifacts for SOC 2 Type II evidence requests. Auditors can verify artifacts independently using <code>primust-verify</code>.</p>
+
+<h3>AIUC-1</h3>
+<p>Primust implements the AIUC-1 (AI Use Case Compliance) schema natively. Pipeline init records, check records, and compliance requirement fields follow the AIUC-1 specification. See the <a href="reference.html#aiuc1">Tech Spec</a> for full schema details.</p>
+
+<div class="callout callout-warn">
+  <div class="callout-label">Critical Limitation</div>
+  <p><strong>Primust is an evidence infrastructure, not a compliance assessment tool.</strong> It proves execution integrity for declared operations. It does not determine whether your operations are compliant with any specific framework. Compliance determination remains the responsibility of qualified assessors evaluating Primust artifacts alongside other evidence.</p>
+</div>
+
+<!-- RED FLAGS -->
+<h2>Red Flags</h2>
+
+<p>When reviewing Evidence Packs, the following conditions warrant further investigation:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>What It Indicates</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>All stages at P1 basis</strong></td>
+      <td>No cryptographic proof of execution — only signed attestations. Acceptable for low-risk workflows only. For regulated pipelines, request justification for why ZK proofs are not used.</td>
+    </tr>
+    <tr>
+      <td><strong>All coverage is attestation</strong></td>
+      <td>The organization may be using Primust as a logging tool rather than a proof system. The value proposition of provable execution is absent.</td>
+    </tr>
+    <tr>
+      <td><strong>Unresolved critical gaps</strong></td>
+      <td>The Gap Taxonomy classifies some gaps as critical (e.g., G-01 undeclared stage, G-05 missing ZK circuit). Critical gaps should have waivers or remediation plans.</td>
+    </tr>
+    <tr>
+      <td><strong>Expired waivers</strong></td>
+      <td>Gap waivers have expiration dates. An expired waiver means a known gap has exceeded its accepted remediation timeline. Treat as an unresolved gap.</td>
+    </tr>
+    <tr>
+      <td><strong>Sandbox VPECs in production evidence</strong></td>
+      <td>VPECs generated in sandbox mode are not suitable for production audit. The VPEC metadata includes an <code>environment</code> field — verify it reads <code>production</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Large timestamp gaps</strong></td>
+      <td>Significant time gaps between sequential records may indicate removed or suppressed records. Compare against expected pipeline execution duration.</td>
+    </tr>
+    <tr>
+      <td><strong>Signature key mismatch</strong></td>
+      <td>The signing key does not match the organization's registered key. May indicate unauthorized Evidence Pack generation or key compromise.</td>
+    </tr>
+    <tr>
+      <td><strong>Missing cross-org evidence</strong></td>
+      <td>If the pipeline depends on upstream VPECs from other organizations, verify those VPECs are present and their chains are independently valid.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- TIER 2 AUDIT -->
+<h2>Tier 2 Audit — Activity Verification</h2>
+
+<p>Beyond Evidence Pack verification, auditors can request activity-level data for a deeper review.</p>
+
+<h3>Export Activity</h3>
+<pre><code># Export all activity for a pipeline within a date range
+primust export-activity \
+  --pipeline=loan-underwriting-v3 \
+  --from=2026-03-01 \
+  --to=2026-03-12 \
+  --format=csv \
+  --output=activity-export.csv</code></pre>
+
+<h3>Verify Activity</h3>
+<pre><code># Verify chain integrity across all runs in the export
+primust verify-activity activity-export.csv
+
+# Expected output
+Activity Verification
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Runs verified:    142
+  Records checked:  6,834
+  Chain breaks:     0
+  Missing records:  0
+  RESULT: PASS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</code></pre>
+
+<!-- ENTERPRISE BYOK -->
+<h2>Enterprise BYOK — Bring Your Own Key</h2>
+
+<p>Enterprise customers can use their own signing keys, anchored to an internal trust root. This means the organization's PKI — not Primust's — is the root of trust for Evidence Packs.</p>
+
+<h3>Trust Anchor Configuration</h3>
+<pre><code># In the organization's Primust config
+{
+  "trust_anchor_url": "https://pki.acme.corp/.well-known/primust-trust-anchor",
+  "key_type": "Ed25519",
+  "rotation_policy": "90d"
+}</code></pre>
+
+<h3>Verify with Custom Trust Root</h3>
+<pre><code># Auditor verifies against the org's trust root
+primust verify evidence-pack-2026-03-12.json \
+  --trust-root=https://pki.acme.corp/.well-known/primust-trust-anchor</code></pre>
+
+<p>When <code>--trust-root</code> is specified, <code>primust-verify</code> fetches the organization's public key from the specified URL and validates the signature chain against it, bypassing Primust's default key registry entirely.</p>
+
+<!-- STANDARD AUDIT PROCEDURE -->
+<h2>Standard Audit Procedure</h2>
+
+<p>The following Python script implements a standard audit workflow: verify the Evidence Pack, extract the surface report, check for red flags, and generate a summary.</p>
+
+<pre><span class="code-label">Python</span><code>import subprocess
+import json
+import sys
+
+def audit_evidence_pack(pack_path, trust_root=None):
+    """Standard audit procedure for a Primust Evidence Pack."""
+
+    # Step 1: Verify the Evidence Pack
+    cmd = ["primust", "verify", pack_path, "--format=json"]
+    if trust_root:
+        cmd.extend(["--trust-root", trust_root])
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    verification = json.loads(result.stdout)
+
+    if verification["result"] != "PASS":
+        print(f"FAIL: Verification failed — {verification['failures']}")
+        sys.exit(1)
+
+    # Step 2: Extract surface report
+    pipeline = verification["pipeline"]
+    surface_cmd = ["primust", "surface", pipeline, "--format=json"]
+    surface_result = subprocess.run(surface_cmd, capture_output=True, text=True)
+    surface = json.loads(surface_result.stdout)
+
+    # Step 3: Check for red flags
+    flags = []
+    if surface["coverage"]["p3_plus"] < 50:
+        flags.append("LOW_ZK_COVERAGE: Less than 50% of stages are ZK-proven")
+    if verification["gaps"]["critical"] > 0:
+        flags.append(f"CRITICAL_GAPS: {verification['gaps']['critical']} critical gaps")
+    if any(w["expired"] for w in verification.get("waivers", [])):
+        flags.append("EXPIRED_WAIVERS: One or more gap waivers have expired")
+    if verification["environment"] == "sandbox":
+        flags.append("SANDBOX_VPEC: Evidence Pack generated in sandbox mode")
+
+    # Step 4: Output summary
+    summary = {
+        "pack": pack_path,
+        "pipeline": pipeline,
+        "verification": "PASS",
+        "proof_coverage": surface["coverage"],
+        "gaps": verification["gaps"],
+        "red_flags": flags,
+        "recommendation": "CLEAR" if not flags else "REVIEW_REQUIRED"
+    }
+
+    print(json.dumps(summary, indent=2))
+    return summary
+
+if __name__ == "__main__":
+    audit_evidence_pack(sys.argv[1])</code></pre>
+
+<!-- CROSS-ORG VERIFICATION -->
+<h2>Cross-Org Verification in Audit</h2>
+
+<p>When a pipeline depends on upstream data or computations from another organization, cross-org VPECs link the two chains of evidence. During audit, look for the following in the evidence field:</p>
+
+<ul>
+  <li><strong><code>upstream_vpec_id</code></strong> — The VPEC identifier from the upstream organization</li>
+  <li><strong><code>upstream_org_id</code></strong> — The upstream organization's identifier</li>
+  <li><strong><code>upstream_signature</code></strong> — The upstream organization's signature over their VPEC</li>
+  <li><strong><code>upstream_chain_hash</code></strong> — The final chain hash from the upstream VPEC, proving the upstream execution chain was intact at the time of linkage</li>
+  <li><strong><code>verification_timestamp</code></strong> — When the downstream organization verified the upstream VPEC</li>
+</ul>
+
+<p>To verify cross-org evidence independently:</p>
+
+<pre><code># Verify the upstream VPEC referenced in the evidence
+primust verify --cross-org evidence-pack-2026-03-12.json
+
+# This will:
+# 1. Extract all upstream_vpec_id references
+# 2. Fetch each upstream VPEC from the Primust registry
+# 3. Verify each upstream chain independently
+# 4. Confirm the upstream_chain_hash matches</code></pre>
+
+<!-- AUDIT REPORTS -->
+<h2>Audit Reports</h2>
+
+<p>Primust can generate signed PDF audit reports that bundle verification results, surface coverage, gap analysis, and framework alignment into a single document.</p>
+
+<h3>Generate a Signed Report</h3>
+<pre><code>primust report evidence-pack-2026-03-12.json \
+  --format=pdf \
+  --sign \
+  --output=audit-report-2026-03-12.pdf</code></pre>
+
+<h3>Verify a Report</h3>
+<pre><code># Verify the PDF signature and embedded evidence hashes
+primust verify-report audit-report-2026-03-12.pdf</code></pre>
+
+<h3>Report Contents</h3>
+<ul>
+  <li><strong>Executive Summary</strong> — Pass/fail status, pipeline identification, date range, proof coverage percentage</li>
+  <li><strong>Verification Results</strong> — All five checks with detailed output</li>
+  <li><strong>Provable Surface Report</strong> — Full stage-by-stage coverage with proof levels</li>
+  <li><strong>Gap Analysis</strong> — All gaps listed with taxonomy codes, severity, and waiver status</li>
+  <li><strong>Framework Alignment</strong> — Mapping of Evidence Pack artifacts to applicable framework requirements</li>
+  <li><strong>Red Flag Assessment</strong> — Automated red flag check results</li>
+  <li><strong>Coverage Basis</strong> — P1/P2/P3 breakdown with per-stage classification</li>
+  <li><strong>Cryptographic Signatures</strong> — Report signing key, Evidence Pack signing key, chain of trust</li>
+</ul>
+
+</main>
+</body>
+</html>

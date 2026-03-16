@@ -1,7 +1,7 @@
 /**
  * Primust Artifact Core — Commitment Layer (P6-A)
  *
- * SHA-256 (default) and Poseidon2 (opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2) commitments.
+ * Poseidon2 (default, ZK-friendly) and SHA-256 (opt-in via PRIMUST_COMMITMENT_ALGORITHM=sha256) commitments.
  * Poseidon2 uses a pure implementation — opt-in only until an audited reference
  * (e.g. Barretenberg) is validated.
  *
@@ -111,8 +111,8 @@ function parseHashToField(hash: string): bigint {
  * Compute a commitment hash over input bytes.
  *
  * @param input - Raw content bytes (NEVER transmitted — only the hash leaves the environment)
- * @param algorithm - 'sha256' (default) or 'poseidon2' (opt-in). If not specified, uses
- *                    PRIMUST_COMMITMENT_ALGORITHM env var or defaults to 'sha256'.
+ * @param algorithm - 'poseidon2' (default) or 'sha256'. If not specified, uses
+ *                    PRIMUST_COMMITMENT_ALGORITHM env var or defaults to 'poseidon2'.
  */
 export function commit(
   input: Uint8Array,
@@ -138,16 +138,14 @@ export function commitOutput(output: Uint8Array): CommitmentResult {
 
 /**
  * Resolve the commitment algorithm.
- * Default is "sha256". Poseidon2 is opt-in via PRIMUST_COMMITMENT_ALGORITHM=poseidon2
- * until an audited implementation (e.g. Barretenberg) is validated.
+ * Default is "poseidon2" (ZK-friendly, matches Noir circuit).
+ * Override with PRIMUST_COMMITMENT_ALGORITHM=sha256 if needed.
  */
 function resolveAlgorithm(): CommitmentAlgorithm {
-  // TODO: Wire Poseidon2 commitment to Noir circuit output. Currently falls back to
-  // SHA256. See poseidon2 test failures in sdk-python, langgraph, openai-agents, google-adk.
-  if (typeof process !== 'undefined' && process.env?.PRIMUST_COMMITMENT_ALGORITHM === 'poseidon2') {
-    return 'poseidon2';
+  if (typeof process !== 'undefined' && process.env?.PRIMUST_COMMITMENT_ALGORITHM === 'sha256') {
+    return 'sha256';
   }
-  return 'sha256';
+  return 'poseidon2';
 }
 
 /**

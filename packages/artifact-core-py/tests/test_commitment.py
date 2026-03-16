@@ -45,14 +45,14 @@ class TestCommitment:
         assert h1 == h2
         assert h1.startswith("sha256:")
 
-    def test_default_algorithm_is_sha256(self):
-        """Default algorithm is SHA-256 (no env var set)."""
+    def test_default_algorithm_is_poseidon2(self):
+        """Default algorithm is Poseidon2 (no env var set)."""
         # Ensure env var is not set
         old = os.environ.pop("PRIMUST_COMMITMENT_ALGORITHM", None)
         try:
             h, alg = commit(b"test data")
-            assert alg == "sha256"
-            assert h.startswith("sha256:")
+            assert alg == "poseidon2"
+            assert h.startswith("poseidon2:")
         finally:
             if old is not None:
                 os.environ["PRIMUST_COMMITMENT_ALGORITHM"] = old
@@ -93,13 +93,13 @@ class TestCommitment:
             result = build_commitment_root(v["input_hashes"], algorithm="poseidon2")
             assert result == v["expected_root"], f"Vector {v['id']} failed: got {result}"
 
-    def test_commit_output_default_sha256(self):
-        """commit_output defaults to SHA-256."""
+    def test_commit_output_default_poseidon2(self):
+        """commit_output defaults to Poseidon2."""
         old = os.environ.pop("PRIMUST_COMMITMENT_ALGORITHM", None)
         try:
             h, alg = commit_output(b"any output data")
-            assert alg == "sha256"
-            assert h.startswith("sha256:")
+            assert alg == "poseidon2"
+            assert h.startswith("poseidon2:")
         finally:
             if old is not None:
                 os.environ["PRIMUST_COMMITMENT_ALGORITHM"] = old
