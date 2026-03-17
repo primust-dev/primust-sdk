@@ -1,0 +1,39 @@
+{
+  "name": "@primust/sdk",
+  "version": "1.0.0",
+  "description": "Prove your governance checks ran. Portable, offline-verifiable cryptographic credentials.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Primust, Inc. <oss@primust.com>",
+  "homepage": "https://primust.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/primust-dev/primust.git",
+    "directory": "packages/sdk-js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@primust/artifact-core": "workspace:*"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./verify": {
+      "import": "./dist/verify.js",
+      "types": "./dist/verify.d.ts"
+    }
+  }
+}
