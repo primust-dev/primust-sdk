@@ -207,8 +207,6 @@ public class Run {
 
         List<Map<String, Object>> gapsRaw = data.containsKey("gaps")
                 ? (List<Map<String, Object>>) data.get("gaps")
-                : data.containsKey("governance_gaps")
-                ? (List<Map<String, Object>>) data.get("governance_gaps")
                 : List.of();
         List<GovernanceGap> gaps = new ArrayList<>();
         for (Map<String, Object> g : gapsRaw) {

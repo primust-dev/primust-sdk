@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/artifact/v4.0.0",
+  "$id": "https://primust.com/schemas/artifact/v5.0.0",
   "title": "Primust VPEC Artifact",
   "description": "Verified Process Execution Credential — provisional-frozen at schema_version 3.0.0",
   "type": "object",
@@ -15,8 +15,8 @@
     "policy_basis",
     "partial",
     "surface_summary",
-    "proof_level",
-    "proof_distribution",
+    "proof_level_floor",
+    "provable_surface_breakdown",
     "state",
     "coverage",
     "gaps",
@@ -30,7 +30,7 @@
     "transparency_log",
     "issued_at",
     "pending_flags",
-    "test_mode"
+    "environment"
   ],
   "not": {
     "required": ["reliance_mode"]
@@ -43,7 +43,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "4.0.0"
+      "const": "5.0.0"
     },
     "org_id": {
       "type": "string",
@@ -90,11 +90,11 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/SurfaceEntry" }
     },
-    "proof_level": {
+    "proof_level_floor": {
       "$ref": "#/$defs/ProofLevel",
-      "description": "MUST equal proof_distribution.weakest_link. Computed — never set manually."
+      "description": "Weakest-link scalar. MUST equal provable_surface_breakdown.weakest_link. Computed — never set manually."
     },
-    "proof_distribution": { "$ref": "#/$defs/ProofDistribution" },
+    "provable_surface_breakdown": { "$ref": "#/$defs/ProofDistribution" },
     "state": {
       "type": "string",
       "enum": ["provisional", "signed", "final"]
@@ -142,9 +142,10 @@
       "format": "date-time"
     },
     "pending_flags": { "$ref": "#/$defs/PendingFlags" },
-    "test_mode": {
-      "type": "boolean",
-      "description": "true when issued with pk_test_xxx key. primust-verify rejects test_mode: true in --production mode."
+    "environment": {
+      "type": "string",
+      "enum": ["sandbox", "production"],
+      "description": "sandbox when issued with pk_sb_xxx key. primust-verify rejects environment: sandbox in --production mode."
     }
   },
   "additionalProperties": false,
@@ -231,11 +232,11 @@
         "weakest_link_explanation"
       ],
       "properties": {
-        "mathematical": { "type": "integer", "minimum": 0 },
-        "verifiable_inference": { "type": "integer", "minimum": 0 },
-        "execution": { "type": "integer", "minimum": 0 },
-        "witnessed": { "type": "integer", "minimum": 0 },
-        "attestation": { "type": "integer", "minimum": 0 },
+        "mathematical": { "type": "number", "minimum": 0 },
+        "verifiable_inference": { "type": "number", "minimum": 0 },
+        "execution": { "type": "number", "minimum": 0 },
+        "witnessed": { "type": "number", "minimum": 0 },
+        "attestation": { "type": "number", "minimum": 0 },
         "weakest_link": { "$ref": "#/$defs/ProofLevel" },
         "weakest_link_explanation": { "type": "string" }
       },
@@ -304,7 +305,34 @@
             "zkml_proof_pending_timeout",
             "zkml_proof_failed",
             "explanation_missing",
-            "bias_audit_missing"
+            "bias_audit_missing",
+            "system_error",
+            "sla_breach",
+            "archetype_unmapped",
+            "proof_level_floor_breach",
+            "witnessed_timestamp_invalid",
+            "system_unavailable",
+            "upstream_vpec_invalid_signature",
+            "upstream_vpec_sandbox",
+            "upstream_vpec_key_revoked",
+            "upstream_vpec_insufficient_proof_level",
+            "upstream_vpec_missing_claim",
+            "upstream_vpec_issuer_mismatch",
+            "upstream_vpec_missing",
+            "complyadvantage_api_error",
+            "complyadvantage_auth_failure",
+            "actimize_api_error",
+            "actimize_auth_failure",
+            "blaze_api_error",
+            "blaze_auth_failure",
+            "odm_api_error",
+            "odm_auth_failure",
+            "falcon_api_error",
+            "falcon_auth_failure",
+            "pega_api_error",
+            "pega_auth_failure",
+            "wolters_kluwer_api_error",
+            "wolters_kluwer_auth_failure"
           ]
         },
         "severity": {

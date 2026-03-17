@@ -173,9 +173,9 @@ public sealed class Run
                 WorkflowId = _workflowId,
                 OrgId = _orgId,
                 IssuedAt = closedAt,
-                ProofLevel = overallProofLevel,
+                ProofLevelFloor = overallProofLevel,
                 TotalChecksRun = _recordIds.Count,
-                GovernanceGaps = new List<GovernanceGap>
+                Gaps = new List<GovernanceGap>
                 {
                     new()
                     {
@@ -186,7 +186,7 @@ public sealed class Run
                     }
                 },
                 ChainIntact = true,
-                TestMode = _testMode,
+                Environment = _testMode ? "sandbox" : "production",
             };
         }
 
@@ -212,16 +212,16 @@ public sealed class Run
             WorkflowId = _workflowId,
             OrgId = data.GetValueOrDefault("org_id")?.ToString() ?? _orgId,
             IssuedAt = data.GetValueOrDefault("issued_at")?.ToString() ?? closedAt,
-            ProofLevel = data.GetValueOrDefault("proof_level")?.ToString() ?? localProofLevel,
+            ProofLevelFloor = data.GetValueOrDefault("proof_level_floor")?.ToString() ?? localProofLevel,
             TotalChecksRun = _recordIds.Count,
             ChainIntact = true,
-            TestMode = _testMode,
+            Environment = _testMode ? "sandbox" : "production",
         };
     }
 
     private static string Sha256Hex(byte[] data)
     {
         var hash = SHA256.HashData(data);
-        return $"sha256:{Convert.ToHexStringLower(hash)}";
+        return $"sha256:{Convert.ToHexString(hash).ToLowerInvariant()}";
     }
 }

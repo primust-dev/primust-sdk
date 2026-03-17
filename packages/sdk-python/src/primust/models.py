@@ -102,11 +102,11 @@ class LoggerOptions:
 
 @dataclass
 class ProofLevelBreakdown:
-    mathematical: int = 0
-    verifiable_inference: int = 0
-    execution: int = 0
-    witnessed: int = 0
-    attestation: int = 0
+    mathematical: float = 0.0
+    verifiable_inference: float = 0.0
+    execution: float = 0.0
+    witnessed: float = 0.0
+    attestation: float = 0.0
 
 
 @dataclass
@@ -132,25 +132,29 @@ class VPEC:
     workflow_id: str
     org_id: str
     issued_at: str
-    proof_level: str              # weakest-link across all checks
-    proof_level_breakdown: ProofLevelBreakdown
-    coverage_verified_pct: float
+    proof_level_floor: str                      # weakest-link scalar. DERIVED.
+    provable_surface: float                     # float 0.0–1.0
+    provable_surface_breakdown: ProofLevelBreakdown
     total_checks_run: int
     checks_passed: int
     checks_failed: int
-    governance_gaps: list[GovernanceGap]
+    gaps: list[GovernanceGap]
     chain_intact: bool
     merkle_root: str
-    signature: str                # Ed25519 over credential body
-    timestamp_rfc3161: str        # RFC 3161 anchor
-    test_mode: bool = False       # True when api_key starts with pk_test_ or pk_sb_
-    raw: dict = field(default_factory=dict)  # full JSON for offline verification
+    signature: str                              # Ed25519 over credential body
+    timestamp_rfc3161: str                      # RFC 3161 anchor
+    environment: str = "production"             # "sandbox" | "production"
+    provable_surface_pending: float = 0.0       # share where proof_pending: true
+    provable_surface_ungoverned: float = 0.0    # share of manifest checks with no record
+    provable_surface_basis: str = "executed_records"  # "executed_records" | "manifest_checks"
+    provable_surface_suppressed: bool = False   # True if org suppressed disclosure
+    raw: dict = field(default_factory=dict)     # full JSON for offline verification
 
     def to_dict(self) -> dict:
         return self.raw
 
     def gaps_count(self) -> int:
-        return len(self.governance_gaps)
+        return len(self.gaps)
 
     def is_clean(self) -> bool:
         return self.chain_intact and self.gaps_count() == 0

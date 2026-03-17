@@ -20,6 +20,7 @@
   </a>
   <div class="topnav-links">
     <a href="quickstart.html">Quickstart</a>
+    <a href="sdks.html">SDKs</a>
     <a href="audit.html">Audit Guide</a>
     <a href="reference.html">API Reference</a>
     <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
@@ -41,6 +42,18 @@
     <a href="index.html#proof-levels">Proof Levels</a>
     <a href="index.html#provable-surface">Provable Surface</a>
     <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">SDK Reference</div>
+    <a href="sdks.html">Overview</a>
+    <a href="sdks.html#install" class="indent">Installation</a>
+    <a href="sdks.html#lifecycle" class="indent">Run Lifecycle</a>
+    <a href="sdks.html#pipeline" class="indent">Pipeline</a>
+    <a href="sdks.html#run" class="indent">Run</a>
+    <a href="sdks.html#check-result" class="indent">CheckResult</a>
+    <a href="sdks.html#privacy" class="indent">Privacy Model</a>
+    <a href="sdks.html#errors" class="indent">Error Handling</a>
+    <a href="sdks.html#logger" class="indent">Logger / SIEM</a>
   </div>
   <div class="sidebar-group">
     <div class="sidebar-group-label">Guides</div>
@@ -96,12 +109,12 @@ npm install @primust/verifier</code></pre>
 
   <!-- Get an API Key -->
   <h2>Get an API Key</h2>
-  <p>Sign up at <a href="https://primust.com" target="_blank" rel="noopener"><strong>primust.com</strong></a> and create a project. Your test API key will look like <code>pk_test_xxx</code>.</p>
-  <pre><code>export PRIMUST_API_KEY=pk_test_xxx</code></pre>
+  <p>Sign up at <a href="https://primust.com" target="_blank" rel="noopener"><strong>primust.com</strong></a> and create a project. Your test API key will look like <code>pk_sb_xxx</code>.</p>
+  <pre><code>export PRIMUST_API_KEY=pk_sb_xxx</code></pre>
 
   <div class="callout callout-info">
-    <div class="callout-label">Test vs Live Keys</div>
-    <p>Test keys (<code>pk_test_</code>) are free and rate-limited. Live keys (<code>pk_live_</code>) require a paid plan and enable archival, SLA guarantees, and cross-org verification.</p>
+    <div class="callout-label">Sandbox vs Live Keys</div>
+    <p>Sandbox keys (<code>pk_sb_</code>) are free and rate-limited. Live keys (<code>pk_live_</code>) require a paid plan and enable archival, SLA guarantees, and cross-org verification.</p>
   </div>
 
   <!-- First VPEC -->
@@ -111,7 +124,7 @@ npm install @primust/verifier</code></pre>
   <h3>Core SDK &mdash; Python</h3>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_onboard")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_onboard")
 
 # Open a check, record a result, close the pipeline
 session = p.open_check("pii_check", "manifest_001")
@@ -123,7 +136,7 @@ print(vpec)</code></pre>
   <h3>Core SDK &mdash; JavaScript</h3>
   <pre><span class="code-label">JavaScript</span><code>import { Pipeline } from '@primust/sdk';
 
-const p = new Pipeline({ apiKey: 'pk_test_xxx', workflowId: 'wf_onboard' });
+const p = new Pipeline({ apiKey: 'pk_sb_xxx', workflowId: 'wf_onboard' });
 
 const session = await p.openCheck('pii_check', 'manifest_001');
 const result = await p.record(session, input, 'pass', { output: resultData });
@@ -135,7 +148,7 @@ console.log(vpec);</code></pre>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 from primust_langgraph import PrimustLangGraph
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_contract_review")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_contract_review")
 adapter = PrimustLangGraph(
     pipeline=p,
     manifest_map={"review_node": "manifest_review_v1"}
@@ -149,7 +162,7 @@ vpec = p.close()</code></pre>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 from primust_openai_agents import PrimustOpenAIAgents
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_contract_review")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_contract_review")
 adapter = PrimustOpenAIAgents(
     pipeline=p,
     manifest_map={"search": "manifest_search_v1"}
@@ -163,7 +176,7 @@ vpec = p.close()</code></pre>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 from primust_google_adk import PrimustGoogleADK
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_doc_analysis")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_doc_analysis")
 adapter = PrimustGoogleADK(
     pipeline=p,
     manifest_map={"analyze": "manifest_analyze_v1"}
@@ -178,7 +191,7 @@ vpec = p.close()</code></pre>
 from primust_otel import PrimustSpanProcessor
 from opentelemetry import trace
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_agent")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_agent")
 processor = PrimustSpanProcessor(
     pipeline=p,
     manifest_map={"llm_call": "manifest_llm_v1"}
@@ -196,7 +209,7 @@ vpec = p.close()</code></pre>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 from primust.adapters.crewai import PrimustCrewAICallback
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_research")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_research")
 callback = PrimustCrewAICallback(
     pipeline=p,
     manifest_map={"Research Analyst": "manifest_research_v1"}
@@ -210,7 +223,7 @@ vpec = p.close()</code></pre>
   <pre><span class="code-label">Python</span><code>from primust import Pipeline
 from primust.adapters.pydantic_ai import PrimustPydanticAIDep, instrument_agent
 
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_analysis")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_analysis")
 dep = PrimustPydanticAIDep(
     pipeline=p,
     manifest_map={"search_web": "manifest_search_v2"}
@@ -308,7 +321,7 @@ primust-verify vendor-vpec.json --trust-root ./vendor-root.pub --json > verifica
 from primust import Pipeline
 
 # Step 2: Record the verification as a check in your pipeline
-p = Pipeline(api_key="pk_test_xxx", workflow_id="wf_ingest")
+p = Pipeline(api_key="pk_sb_xxx", workflow_id="wf_ingest")
 
 with open("verification.json") as f:
     upstream = json.load(f)
@@ -330,7 +343,7 @@ vpec = p.close()</code></pre>
   <!-- Production Checklist -->
   <h2 id="production">Production Checklist</h2>
   <ul class="checklist">
-    <li>Swap test key (<code>pk_test_</code>) for live key (<code>pk_live_</code>)</li>
+    <li>Swap sandbox key (<code>pk_sb_</code>) for live key (<code>pk_live_</code>)</li>
     <li>Set <code>base_url</code> in Pipeline constructor if using a dedicated endpoint</li>
     <li>Use <code>open_review</code> for any human-in-the-loop checks (enforces minimum review duration)</li>
     <li>Pass <code>request_zk=True</code> to <code>p.close()</code> for checks that need zero-knowledge proofs</li>

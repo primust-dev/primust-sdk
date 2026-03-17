@@ -7,14 +7,14 @@ Only commitment hashes (poseidon2/sha256) transit to the Primust API.
 Usage (new Run-based API):
     from primust import Pipeline
 
-    p = Pipeline(api_key="pk_live_org001_us_secret", workflow_id="wf_onboard")
+    p = Pipeline(api_key="pk_sb_placeholder_123", workflow_id="wf_onboard")
     run = p.open()
     result = run.record(check="pii_check", manifest_id="...",
                         input=my_data, check_result="pass")
     vpec = run.close()
 
 Usage (legacy session-based API):
-    p = Pipeline(api_key="pk_live_org001_us_secret", workflow_id="wf_onboard")
+    p = Pipeline(api_key="pk_sb_placeholder_123", workflow_id="wf_onboard")
     session = p.open_check("pii_check", "manifest_001")
     result = p.record(session, input=my_data, check_result="pass")
     vpec = p.close()

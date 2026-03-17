@@ -8,7 +8,7 @@ MUST PASS:
   4. API unavailable → local queue, no exception thrown to caller
   5. run.close() works after queue flush
   6. commitment is deterministic
-  7. test_mode flag from pk_test_ prefix
+  7. environment from pk_sb_ prefix
 
 Run: pytest tests/test_run_api.py -v
 """
@@ -34,7 +34,7 @@ from primust_artifact_core import commit
 
 RAW_INPUT = "John Smith SSN 123-45-6789 account balance $50,000"
 SENSITIVE_DICT = {"patient_id": "pt_abc123", "medication": "warfarin", "dose_mg": 5.0}
-TEST_API_KEY = "pk_test_abc123"
+TEST_API_KEY = "pk_sb_abc123"
 MANIFEST_ID = "sha256:deadbeef00000000000000000000000000000000000000000000000000000000"
 
 MOCK_OPEN_RESPONSE = {
@@ -57,13 +57,17 @@ MOCK_CLOSE_RESPONSE = {
         "org_id": "org_test",
         "workflow_id": "test-workflow",
         "issued_at": "2026-03-11T00:00:00Z",
-        "proof_level": "attestation",
-        "proof_level_breakdown": {"attestation": 1},
-        "coverage_verified_pct": 100.0,
+        "proof_level_floor": "attestation",
+        "provable_surface_breakdown": {"attestation": 1.0},
+        "provable_surface": 1.0,
+        "provable_surface_pending": 0.0,
+        "provable_surface_ungoverned": 0.0,
+        "provable_surface_basis": "executed_records",
+        "provable_surface_suppressed": False,
         "total_checks_run": 1,
         "checks_passed": 1,
         "checks_failed": 0,
-        "governance_gaps": [],
+        "gaps": [],
         "chain_intact": True,
         "merkle_root": "sha256:merkle",
         "signature": "ed25519:sig",
@@ -269,7 +273,7 @@ def test_api_unavailable_queues_locally_no_exception(tmp_path, respx_mock):
     assert p.pending_queue_count() > 0
 
     # VPEC has system_unavailable gap
-    gap_types = [g.gap_type for g in vpec.governance_gaps]
+    gap_types = [g.gap_type for g in vpec.gaps]
     assert "system_unavailable" in gap_types
 
 
@@ -339,11 +343,11 @@ def test_commitment_is_deterministic():
 
 
 # ---------------------------------------------------------------------------
-# TEST 7: test_mode flag from pk_test_ prefix
+# TEST 7: environment from pk_sb_ prefix
 # ---------------------------------------------------------------------------
 
-def test_test_mode_from_key_prefix(tmp_path, respx_mock):
-    """pk_test_ prefix → test_mode=True on VPEC."""
+def test_environment_from_key_prefix(tmp_path, respx_mock):
+    """pk_sb_ prefix → environment="sandbox" on VPEC."""
     respx_mock.post("https://api.primust.com/api/v1/runs").mock(
         return_value=httpx.Response(200, json=MOCK_OPEN_RESPONSE)
     )
@@ -355,7 +359,7 @@ def test_test_mode_from_key_prefix(tmp_path, respx_mock):
     )
 
     p = Pipeline(
-        api_key="pk_test_xyz",
+        api_key="pk_sb_xyz",
         workflow_id="test-workflow",
         queue_path=tmp_path / "queue.db",
         _base_url="https://api.primust.com/api/v1",
@@ -364,4 +368,4 @@ def test_test_mode_from_key_prefix(tmp_path, respx_mock):
     run = p.open()
     run.record(check="c", manifest_id=MANIFEST_ID, input="x", check_result="pass")
     vpec = run.close()
-    assert vpec.test_mode is True
+    assert vpec.environment == "sandbox"

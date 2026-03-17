@@ -22,7 +22,10 @@ public sealed class VpecResult
     public string IssuedAt { get; init; } = "";
 
     /// <summary>Weakest-link proof level across all checks.</summary>
-    public string ProofLevel { get; init; } = "attestation";
+    public string ProofLevelFloor { get; init; } = "attestation";
+
+    /// <summary>Provable surface as float 0.0–1.0.</summary>
+    public double ProvableSurface { get; init; }
 
     /// <summary>Total governance checks executed.</summary>
     public int TotalChecksRun { get; init; }
@@ -34,16 +37,16 @@ public sealed class VpecResult
     public int ChecksFailed { get; init; }
 
     /// <summary>Governance gaps detected.</summary>
-    public List<GovernanceGap> GovernanceGaps { get; init; } = new();
+    public List<GovernanceGap> Gaps { get; init; } = new();
 
     /// <summary>True if commitment chain is unbroken.</summary>
     public bool ChainIntact { get; init; }
 
-    /// <summary>True if pk_test_ or pk_sb_ key was used.</summary>
-    public bool TestMode { get; init; }
+    /// <summary>"sandbox" or "production".</summary>
+    public string Environment { get; init; } = "production";
 
-    /// <summary>True if chain is intact AND zero governance gaps.</summary>
-    public bool IsClean => ChainIntact && GovernanceGaps.Count == 0;
+    /// <summary>True if chain is intact AND zero gaps.</summary>
+    public bool IsClean => ChainIntact && Gaps.Count == 0;
 }
 
 /// <summary>

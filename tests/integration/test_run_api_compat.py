@@ -88,19 +88,13 @@ class TestRunRecordCompat:
 class TestRunCloseCompat:
     def test_close_response_field_mapping(self, api_server, api_key):
         """
-        Document the field mapping gap between API response and SDK expectations.
+        Verify canonical field names in API close response (post migration 012).
 
         API close response returns at top level:
-          proof_distribution (not proof_level_breakdown)
-          coverage.records_total (not total_checks_run)
-          coverage.policy_coverage_pct (not coverage_verified_pct)
-
-        SDK _parse_vpec expects:
-          proof_level_breakdown, total_checks_run, coverage_verified_pct,
-          governance_gaps, chain_intact, merkle_root
-
-        Most of these have defaults in _parse_vpec.get(), so the SDK
-        doesn't crash — it just returns zeros/empty values.
+          provable_surface_breakdown (canonical, was proof_distribution)
+          proof_level_floor (canonical, was proof_level)
+          coverage.provable_surface (canonical, was policy_coverage_pct)
+          gaps (canonical)
         """
         # Use raw HTTP to create a run, record, and close
         client = httpx.Client(
@@ -139,14 +133,15 @@ class TestRunCloseCompat:
         assert resp.status_code == 200
         vpec = resp.json()
 
-        # Document what the API returns vs what SDK expects
-        assert "proof_distribution" in vpec, "API returns proof_distribution"
-        assert "proof_level_breakdown" not in vpec, "API does NOT return proof_level_breakdown"
+        # Verify canonical field names (migration 012)
+        assert "provable_surface_breakdown" in vpec, "API returns provable_surface_breakdown"
+        assert "proof_distribution" not in vpec, "proof_distribution is banned"
+        assert "proof_level_breakdown" not in vpec, "proof_level_breakdown is banned"
+        assert "proof_level_floor" in vpec, "API returns proof_level_floor"
         assert "coverage" in vpec, "API returns coverage"
-        assert "coverage_verified_pct" not in vpec, "API does NOT return coverage_verified_pct at top level"
-        assert "total_checks_run" not in vpec, "API does NOT return total_checks_run"
-        assert "governance_gaps" not in vpec, "API returns 'gaps' not 'governance_gaps'"
-        assert "gaps" in vpec, "API returns 'gaps'"
+        assert "coverage_verified_pct" not in vpec, "coverage_verified_pct is banned"
+        assert "governance_gaps" not in vpec, "governance_gaps is banned"
+        assert "gaps" in vpec, "API returns gaps"
 
         client.close()
 
@@ -165,8 +160,8 @@ class TestProtocolGapSummary:
           - proof_level_achieved: SDK now derives from _estimate_proof_level()
           - idempotency_key: SDK now generates UUID per call
           - commitment_type: SDK now sends "input_only" or "input_output"
-          - proof_distribution vs proof_level_breakdown: _parse_vpec handles both
-          - gaps vs governance_gaps: _parse_vpec handles both
+          - provable_surface_breakdown is the canonical name (was proof_distribution / proof_level_breakdown)
+          - gaps is the canonical name (was governance_gaps)
           - coverage nesting: _parse_vpec extracts from coverage dict
           - vpec_id at top level: _poll_for_vpec checks for vpec_id key
 

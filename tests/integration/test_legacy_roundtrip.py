@@ -57,7 +57,7 @@ class TestAuth:
                 "surface_id": "default",
                 "policy_pack_id": "default",
             },
-            headers={"X-API-Key": "pk_test_testorg_us_badhmacsecret00000000"},
+            headers={"X-API-Key": "pk_sb_testorg_us_badhmacsecret00000000"},
             timeout=5.0,
         )
         assert resp.status_code == 401
@@ -124,7 +124,7 @@ class TestLegacyRoundTrip:
         assert vpec["schema_version"] == "4.0.0"
         assert vpec["org_id"] == "testorg"
         assert vpec["test_mode"] is True
-        assert vpec["proof_level"] in (
+        assert vpec["proof_level_floor"] in (
             "mathematical", "verifiable_inference", "execution", "witnessed", "attestation"
         )
 
@@ -164,13 +164,13 @@ class TestLegacyRoundTrip:
         assert cov["records_pass"] == 2
         assert cov["records_fail"] == 1
 
-    def test_proof_distribution(self, legacy_pipeline):
-        """VPEC proof_distribution counts records by proof level."""
+    def test_provable_surface_breakdown(self, legacy_pipeline):
+        """VPEC provable_surface_breakdown counts records by proof level."""
         s = legacy_pipeline.open_check("proof_check", "manifest_001")
         legacy_pipeline.record(s, input="proof data", check_result="pass")
         vpec = legacy_pipeline.close()
 
-        dist = vpec["proof_distribution"]
+        dist = vpec["provable_surface_breakdown"]
         assert "weakest_link" in dist
         total = sum(
             dist.get(level, 0)
@@ -337,5 +337,5 @@ class TestWitnessedRecord:
             reviewer_signature="sig", display_content="d", rationale="r",
         )
         vpec = legacy_pipeline.close()
-        assert vpec["proof_level"] == "witnessed"
-        assert vpec["proof_distribution"]["witnessed"] >= 1
+        assert vpec["proof_level_floor"] == "witnessed"
+        assert vpec["provable_surface_breakdown"]["witnessed"] >= 1

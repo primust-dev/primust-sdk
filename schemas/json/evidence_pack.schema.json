@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://primust.com/schemas/evidence_pack/v4.0.0",
+  "$id": "https://primust.com/schemas/evidence_pack/v5.0.0",
   "title": "Primust EvidencePack",
   "description": "Evidence pack — provisional-frozen at schema_version 3.0.0. coverage_verified + coverage_pending + coverage_ungoverned = 100.",
   "type": "object",
@@ -11,7 +11,7 @@
     "period_end",
     "artifact_ids",
     "merkle_root",
-    "proof_distribution",
+    "provable_surface_breakdown",
     "coverage_verified_pct",
     "coverage_pending_pct",
     "coverage_ungoverned_pct",
@@ -32,7 +32,7 @@
       "items": { "type": "string" }
     },
     "merkle_root": { "type": "string" },
-    "proof_distribution": {
+    "provable_surface_breakdown": {
       "type": "object",
       "required": ["mathematical", "verifiable_inference", "execution", "witnessed", "attestation"],
       "properties": {

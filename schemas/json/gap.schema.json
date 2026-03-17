@@ -49,7 +49,24 @@
         "upstream_vpec_insufficient_proof_level",
         "upstream_vpec_missing_claim",
         "upstream_vpec_issuer_mismatch",
-        "upstream_vpec_missing"
+        "upstream_vpec_missing",
+        "system_unavailable",
+        "complyadvantage_api_error",
+        "complyadvantage_auth_failure",
+        "actimize_api_error",
+        "actimize_auth_failure",
+        "blaze_api_error",
+        "blaze_auth_failure",
+        "odm_api_error",
+        "odm_auth_failure",
+        "falcon_api_error",
+        "falcon_auth_failure",
+        "pega_api_error",
+        "pega_auth_failure",
+        "wolters_kluwer_api_error",
+        "wolters_kluwer_auth_failure",
+        "guidewire_api_error",
+        "guidewire_auth_failure"
       ]
     },
     "severity": {

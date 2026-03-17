@@ -2,7 +2,7 @@
  * Primust Policy Engine — Gap Detection at Run Close (P7-B)
  *
  * detectGaps() scans all CheckExecutionRecords for a run and detects
- * all 18 canonical gap types. Pass-through gaps (already stored) are
+ * all 33 canonical gap types. Pass-through gaps (already stored) are
  * loaded from the store; per-record gaps are detected inline.
  *
  * GAP SEVERITY RULES:
@@ -43,6 +43,23 @@ const GAP_SEVERITY: Record<string, GapSeverity> = {
   zkml_proof_failed: 'Critical',
   explanation_missing: 'Medium',
   bias_audit_missing: 'High',
+  system_unavailable: 'High',
+  complyadvantage_api_error: 'High',
+  complyadvantage_auth_failure: 'Critical',
+  actimize_api_error: 'High',
+  actimize_auth_failure: 'Critical',
+  blaze_api_error: 'High',
+  blaze_auth_failure: 'Critical',
+  odm_api_error: 'High',
+  odm_auth_failure: 'Critical',
+  falcon_api_error: 'High',
+  falcon_auth_failure: 'Critical',
+  pega_api_error: 'High',
+  pega_auth_failure: 'Critical',
+  wolters_kluwer_api_error: 'High',
+  wolters_kluwer_auth_failure: 'Critical',
+  guidewire_api_error: 'High',
+  guidewire_auth_failure: 'Critical',
 };
 
 // ── Helpers ──
@@ -306,7 +323,7 @@ export function getGapSeverity(gapType: string): GapSeverity {
   return GAP_SEVERITY[gapType] ?? 'Medium';
 }
 
-/** All 18 canonical gap types. */
+/** All 33 canonical gap types. */
 export const CANONICAL_GAP_TYPES: GapType[] = [
   'check_not_executed',
   'enforcement_override',
@@ -326,4 +343,21 @@ export const CANONICAL_GAP_TYPES: GapType[] = [
   'zkml_proof_failed',
   'explanation_missing',
   'bias_audit_missing',
+  'system_unavailable',
+  'complyadvantage_api_error',
+  'complyadvantage_auth_failure',
+  'actimize_api_error',
+  'actimize_auth_failure',
+  'blaze_api_error',
+  'blaze_auth_failure',
+  'odm_api_error',
+  'odm_auth_failure',
+  'falcon_api_error',
+  'falcon_auth_failure',
+  'pega_api_error',
+  'pega_auth_failure',
+  'wolters_kluwer_api_error',
+  'wolters_kluwer_auth_failure',
+  'guidewire_api_error',
+  'guidewire_auth_failure',
 ];

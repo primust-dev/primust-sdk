@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Reference — Primust Docs</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@500&family=IBM+Plex+Mono:wght@300;400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ─── TOPNAV ─── -->
+<nav class="topnav">
+  <a href="index.html" class="topnav-logo">
+    <span class="mark" style="width:26px;height:26px;border-radius:0;">
+      <svg width="14" height="19" viewBox="0 0 14 19" fill="none"><line x1="3.5" y1="0" x2="3.5" y2="19" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/><line x1="3.5" y1="9.5" x2="14" y2="9.5" stroke="#0E0E0E" stroke-width="3.5" stroke-linecap="square"/></svg>
+    </span>
+    <span class="wordmark" style="font-size:12px;">PRIMUST</span>
+    <span class="docs-badge">Docs</span>
+  </a>
+  <div class="topnav-links">
+    <a href="quickstart.html">Quickstart</a>
+    <a href="sdks.html">SDKs</a>
+    <a href="audit.html">Audit Guide</a>
+    <a href="reference.html">API Reference</a>
+    <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
+  </div>
+</nav>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Getting Started</div>
+    <a href="index.html">Overview</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="quickstart.html#install" class="indent">Install</a>
+    <a href="quickstart.html#first-vpec" class="indent">First VPEC</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Concepts</div>
+    <a href="index.html#vpec">What is a VPEC</a>
+    <a href="index.html#proof-levels">Proof Levels</a>
+    <a href="index.html#provable-surface">Provable Surface</a>
+    <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">SDK Reference</div>
+    <a href="sdks.html" class="active">Overview</a>
+    <a href="sdks.html#install" class="indent">Installation</a>
+    <a href="sdks.html#lifecycle" class="indent">Run Lifecycle</a>
+    <a href="sdks.html#pipeline" class="indent">Pipeline</a>
+    <a href="sdks.html#run" class="indent">Run</a>
+    <a href="sdks.html#record-input" class="indent">RecordInput</a>
+    <a href="sdks.html#record-result" class="indent">RecordResult</a>
+    <a href="sdks.html#vpec-result" class="indent">VpecResult</a>
+    <a href="sdks.html#check-result" class="indent">CheckResult</a>
+    <a href="sdks.html#privacy" class="indent">Privacy Model</a>
+    <a href="sdks.html#errors" class="indent">Error Handling</a>
+    <a href="sdks.html#logger" class="indent">Logger / SIEM</a>
+    <a href="sdks.html#advanced" class="indent">Advanced</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Guides</div>
+    <a href="audit.html">Audit Guide</a>
+    <a href="quickstart.html#cross-org">Cross-Org Verification</a>
+    <a href="quickstart.html#production">Production Checklist</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Reference</div>
+    <a href="reference.html">Tech Spec</a>
+    <a href="reference.html#api">API Endpoints</a>
+    <a href="reference.html#gaps">Gap Taxonomy</a>
+    <a href="reference.html#packages">Package Inventory</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">Open Source</div>
+    <a href="quickstart.html#verify">primust-verify</a>
+    <a href="quickstart.html#checks">primust-checks</a>
+  </div>
+</aside>
+
+<!-- ─── CONTENT ─── -->
+<main class="content">
+
+<h1>SDK Reference</h1>
+<p class="page-sub">Complete guide to the Primust SDKs &mdash; Python, JavaScript, Java, and C#. Everything you need to instrument governance and produce VPECs.</p>
+
+<table>
+  <thead>
+    <tr><th>SDK</th><th>Package</th><th>Registry</th><th>Min Runtime</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Python</strong></td><td><code>primust</code></td><td>PyPI</td><td>Python 3.10+</td></tr>
+    <tr><td><strong>JavaScript</strong></td><td><code>@primust/sdk</code></td><td>npm</td><td>Node 18+ / Edge</td></tr>
+    <tr><td><strong>Java</strong></td><td><code>com.primust:primust-sdk</code></td><td>Maven Central</td><td>Java 17+</td></tr>
+    <tr><td><strong>C#</strong></td><td><code>Primust.SDK</code></td><td>NuGet</td><td>.NET 8+</td></tr>
+  </tbody>
+</table>
+
+<!-- ─── INSTALLATION ─── -->
+<h2 id="install">Installation</h2>
+
+<h3>Python</h3>
+<pre><span class="code-label">Shell</span><code>pip install primust</code></pre>
+
+<h3>JavaScript / TypeScript</h3>
+<pre><span class="code-label">Shell</span><code>npm install @primust/sdk</code></pre>
+
+<h3>Java (Maven)</h3>
+<pre><span class="code-label">XML</span><code>&lt;dependency&gt;
+  &lt;groupId&gt;com.primust&lt;/groupId&gt;
+  &lt;artifactId&gt;primust-sdk&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+<h3>Java (Gradle)</h3>
+<pre><span class="code-label">Gradle</span><code>implementation 'com.primust:primust-sdk:1.0.0'</code></pre>
+
+<h3>C# (NuGet)</h3>
+<pre><span class="code-label">Shell</span><code>dotnet add package Primust.SDK --version 0.1.0</code></pre>
+
+<h3>Environment Variable</h3>
+<p>All SDKs read <code>PRIMUST_API_KEY</code> from the environment if no key is passed to the constructor.</p>
+<pre><span class="code-label">Shell</span><code>export PRIMUST_API_KEY=pk_sb_xxx</code></pre>
+
+<div class="callout callout-info">
+  <div class="callout-label">API Key Prefixes</div>
+  <p><code>pk_sb_</code> &mdash; sandbox, free, rate-limited. <code>pk_live_</code> &mdash; production, requires paid plan. The SDK auto-detects environment from the key prefix.</p>
+</div>
+
+<!-- ─── RUN LIFECYCLE ─── -->
+<h2 id="lifecycle">Run Lifecycle</h2>
+
+<p>Every SDK follows the same three-step pattern:</p>
+<ol>
+  <li><strong>Open</strong> &mdash; create a Pipeline and open a Run</li>
+  <li><strong>Record</strong> &mdash; record one or more check executions against the Run</li>
+  <li><strong>Close</strong> &mdash; close the Run to produce a VPEC</li>
+</ol>
+
+<pre><span class="code-label">Python</span><code>from primust import Pipeline
+
+pipeline = Pipeline(api_key="pk_sb_xxx", workflow_id="loan_review")
+run = pipeline.open()
+
+result = run.record(
+    check="pii_scan",
+    manifest_id="manifest_pii_v2",
+    check_result="pass",
+    input=document_bytes,              # raw bytes &mdash; committed locally, never transmitted
+    output=scan_result_bytes,          # optional output commitment
+    visibility="opaque",               # default for all regulated data
+)
+
+vpec = run.close()                     # VPEC issued &mdash; run sealed
+print(vpec.vpec_id)                    # vpec_a1b2c3...
+print(vpec.is_clean())                 # True if chain intact and no gaps</code></pre>
+
+<pre><span class="code-label">JavaScript</span><code>import { Pipeline } from '@primust/sdk';
+
+const pipeline = new Pipeline({ apiKey: 'pk_sb_xxx', workflowId: 'loan_review' });
+const run = await pipeline.open();
+
+const result = await run.record('pii_scan', 'manifest_pii_v2', 'pass', documentBytes, {
+  output: scanResultBytes,
+  visibility: 'opaque',
+});
+
+const vpec = await run.close();
+console.log(vpec.vpecId);             // vpec_a1b2c3...
+console.log(vpec.gaps);     // []</code></pre>
+
+<pre><span class="code-label">Java</span><code>import com.primust.sdk.*;
+
+Pipeline pipeline = Primust.builder()
+    .apiKey("pk_sb_xxx")
+    .workflowId("loan_review")
+    .build();
+
+Run run = pipeline.open();
+
+RecordResult result = run.record(RecordInput.builder()
+    .check("pii_scan")
+    .manifestId("manifest_pii_v2")
+    .checkResult(CheckResult.PASS)
+    .input(documentBytes)
+    .output(scanResultBytes)
+    .visibility(VisibilityMode.OPAQUE)
+    .build());
+
+VPEC vpec = run.close();
+System.out.println(vpec.vpecId());     // vpec_a1b2c3...
+System.out.println(vpec.isClean());    // true</code></pre>
+
+<pre><span class="code-label">C#</span><code>using Primust;
+
+var pipeline = new Pipeline("pk_sb_xxx", "loan_review");
+var run = pipeline.Open();
+
+var result = await run.RecordAsync(new RecordInput
+{
+    Check = "pii_scan",
+    ManifestId = "manifest_pii_v2",
+    CheckResult = CheckResult.Pass,
+    Input = documentBytes,
+    Output = scanResultBytes,
+    Visibility = "opaque",
+});
+
+var vpec = await run.CloseAsync();
+Console.WriteLine(vpec.VpecId);        // vpec_a1b2c3...
+Console.WriteLine(vpec.IsClean);       // True</code></pre>
+
+<div class="callout callout-warn">
+  <div class="callout-label">Immutable After Close</div>
+  <p>Once <code>close()</code> is called, the Run is sealed. Calling <code>record()</code> after close throws an <code>InvalidOperationException</code> (C#), <code>IllegalStateException</code> (Java), or <code>Error</code> (Python/JS). Calling <code>close()</code> twice also throws.</p>
+</div>
+
+<!-- ─── PIPELINE ─── -->
+<h2 id="pipeline">Pipeline</h2>
+
+<p>The Pipeline is the entry point. It holds your API key, workflow identity, and opens Runs.</p>
+
+<h3>Constructor</h3>
+
+<table>
+  <thead>
+    <tr><th>Language</th><th>Signature</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Python</strong></td>
+      <td><code>Pipeline(api_key=None, workflow_id="default", *, surface_id=None, policy=None, process_context_hash=None, base_url="https://api.primust.com")</code></td>
+    </tr>
+    <tr>
+      <td><strong>JavaScript</strong></td>
+      <td><code>new Pipeline({ apiKey, workflowId, policy?, processContextHash?, baseUrl?, fetch? })</code></td>
+    </tr>
+    <tr>
+      <td><strong>Java</strong></td>
+      <td><code>Primust.builder().apiKey(key).workflowId(wf).baseUrl(url).surfaceId(sid).build()</code></td>
+    </tr>
+    <tr>
+      <td><strong>C#</strong></td>
+      <td><code>new Pipeline(apiKey?, workflowId = "default", baseUrl = "https://api.primust.com")</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Parameters</h4>
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>apiKey</code></td><td>string</td><td>Yes*</td><td>Your Primust API key. Falls back to <code>PRIMUST_API_KEY</code> env var. Throws if neither is set.</td></tr>
+    <tr><td><code>workflowId</code></td><td>string</td><td>No</td><td>Identifies the workflow/process being governed. Default: <code>"default"</code>.</td></tr>
+    <tr><td><code>policy</code></td><td>string | string[]</td><td>No</td><td>Bind this pipeline to specific policy bundle(s). E.g. <code>"eu_ai_act_art12_v1"</code>.</td></tr>
+    <tr><td><code>processContextHash</code></td><td>string</td><td>No</td><td>External process correlation hash for cross-system linkage.</td></tr>
+    <tr><td><code>surfaceId</code></td><td>string</td><td>No</td><td>Identifies the provable surface this pipeline instruments.</td></tr>
+    <tr><td><code>baseUrl</code></td><td>string</td><td>No</td><td>API endpoint. Default: <code>https://api.primust.com</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3>Pipeline Methods</h3>
+
+<table>
+  <thead>
+    <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>open(policyPackId?)</code></td><td><code>Run</code></td><td>Start a new Run. Calls <code>POST /api/v1/runs</code>. Returns a <code>Run</code> you can record against.</td></tr>
+    <tr><td><code>registerCheck(manifest)</code></td><td><code>ManifestRegistration</code></td><td>Register a check manifest (content-addressed, idempotent). Python/Java only.</td></tr>
+    <tr><td><code>setLogger(callback, options?)</code></td><td>void</td><td>Attach a SIEM logger callback. Python/JS only. See <a href="#logger">Logger / SIEM</a>.</td></tr>
+    <tr><td><code>testMode</code></td><td>bool</td><td>Read-only property. <code>true</code> when API key starts with <code>pk_sb_</code>. The VPEC output uses the <code>environment</code> field (<code>"sandbox"</code> or <code>"production"</code>) instead.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-info">
+  <div class="callout-label">Legacy Pipeline API</div>
+  <p>Python and JS also expose <code>open_check()</code>, <code>open_review()</code>, <code>record()</code>, and <code>close()</code> directly on Pipeline for backward compatibility. For new code, use the Run API: <code>pipeline.open()</code> &rarr; <code>run.record()</code> &rarr; <code>run.close()</code>.</p>
+</div>
+
+<!-- ─── RUN ─── -->
+<h2 id="run">Run</h2>
+
+<p>A Run represents a single governed execution. Created by <code>pipeline.open()</code>. You record check results against it, then close it to produce a VPEC.</p>
+
+<h3>Properties</h3>
+<table>
+  <thead>
+    <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>runId</code></td><td>string</td><td>Unique run identifier (server-assigned).</td></tr>
+    <tr><td><code>workflowId</code></td><td>string</td><td>Workflow this run belongs to.</td></tr>
+    <tr><td><code>orgId</code></td><td>string</td><td>Organization that owns this run.</td></tr>
+    <tr><td><code>policySnapshotHash</code></td><td>string</td><td>Hash of the policy snapshot at run open time. Python/JS only.</td></tr>
+    <tr><td><code>lastCommitmentHash</code></td><td>string?</td><td>Most recent commitment hash from <code>record()</code>. C# only.</td></tr>
+  </tbody>
+</table>
+
+<h3>run.record()</h3>
+
+<p>Record a governance check execution. The raw input is committed locally via SHA-256 &mdash; only the hash transits to <code>api.primust.com</code>.</p>
+
+<table>
+  <thead>
+    <tr><th>Language</th><th>Signature</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Python</strong></td>
+      <td><code>run.record(check, manifest_id, check_result, input, *, details=None, output=None, visibility="opaque", check_session=None, reviewer_signature=None, display_content=None, rationale=None)</code></td>
+    </tr>
+    <tr>
+      <td><strong>JavaScript</strong></td>
+      <td><code>run.record(check, manifestId, checkResult, input, options?)</code></td>
+    </tr>
+    <tr>
+      <td><strong>Java</strong></td>
+      <td><code>run.record(RecordInput)</code> &mdash; see <a href="#record-input">RecordInput</a></td>
+    </tr>
+    <tr>
+      <td><strong>C#</strong></td>
+      <td><code>await run.RecordAsync(RecordInput)</code> &mdash; see <a href="#record-input">RecordInput</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Parameters</h4>
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>check</code></td><td>string</td><td>Yes</td><td>Check name. E.g. <code>"pii_scan"</code>, <code>"bias_audit"</code>.</td></tr>
+    <tr><td><code>manifestId</code></td><td>string</td><td>Yes</td><td>Manifest identifier for this check definition.</td></tr>
+    <tr><td><code>checkResult</code></td><td>string | CheckResult</td><td>Yes</td><td>Outcome of the check. See <a href="#check-result">CheckResult</a> enum.</td></tr>
+    <tr><td><code>input</code></td><td>bytes</td><td>Yes</td><td>Raw input bytes. Committed locally via SHA-256. <strong>Never transmitted.</strong></td></tr>
+    <tr><td><code>output</code></td><td>bytes</td><td>No</td><td>Raw output bytes. If provided, an output commitment hash is computed.</td></tr>
+    <tr><td><code>visibility</code></td><td>string</td><td>No</td><td>Default: <code>"opaque"</code>. Options: <code>"opaque"</code>, <code>"selective"</code>, <code>"transparent"</code>.</td></tr>
+    <tr><td><code>details</code></td><td>dict/map</td><td>No</td><td>Arbitrary metadata (key-value). Transmitted as-is &mdash; do NOT put PII here.</td></tr>
+    <tr><td><code>checkSession</code></td><td>CheckSession</td><td>No</td><td>If provided, links record to a pre-opened check session (for timestamps).</td></tr>
+    <tr><td><code>reviewerSignature</code></td><td>string</td><td>No</td><td>Ed25519 signature from a human reviewer (Witnessed proof level).</td></tr>
+    <tr><td><code>displayContent</code></td><td>any</td><td>No</td><td>What the reviewer saw. Hashed &mdash; raw content never transits.</td></tr>
+    <tr><td><code>rationale</code></td><td>string</td><td>No</td><td>Reviewer's written rationale. Hashed &mdash; raw text never transits.</td></tr>
+  </tbody>
+</table>
+
+<p>Returns a <a href="#record-result">RecordResult</a>.</p>
+
+<h3>run.close()</h3>
+
+<p>Close the Run, triggering VPEC issuance. The run is sealed &mdash; no further records can be added.</p>
+
+<table>
+  <thead>
+    <tr><th>Language</th><th>Signature</th><th>Returns</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Python</strong></td><td><code>run.close()</code></td><td><code>VPEC</code></td></tr>
+    <tr><td><strong>JavaScript</strong></td><td><code>await run.close()</code></td><td><code>VPECResult</code></td></tr>
+    <tr><td><strong>Java</strong></td><td><code>run.close()</code></td><td><code>VPEC</code></td></tr>
+    <tr><td><strong>C#</strong></td><td><code>await run.CloseAsync()</code></td><td><code>VpecResult</code></td></tr>
+  </tbody>
+</table>
+
+<h3>run.openCheck() / run.openReview()</h3>
+
+<p>For precise timestamp capture, open a check session before recording. The <code>check_open_tst</code> is captured at open time; <code>check_close_tst</code> at record time.</p>
+
+<pre><span class="code-label">Python</span><code># Standard check with timestamps
+session = run.open_check("bias_audit", "manifest_bias_v1")
+# ... run your check logic ...
+result = run.record("bias_audit", "manifest_bias_v1", "pass", input_bytes,
+                     check_session=session)
+
+# Human review with minimum duration enforcement
+review = run.open_review("legal_review", "manifest_legal_v1",
+                          reviewer_key_id="rev_key_001",
+                          min_duration_seconds=1800)  # 30 minutes minimum
+# ... reviewer examines content ...
+result = run.record("legal_review", "manifest_legal_v1", "pass", input_bytes,
+                     check_session=review,
+                     reviewer_signature=sig,
+                     display_content=what_reviewer_saw,
+                     rationale="Approved per policy 4.2.1")</code></pre>
+
+<pre><span class="code-label">JavaScript</span><code>const session = run.openCheck('bias_audit', 'manifest_bias_v1');
+const result = await run.record('bias_audit', 'manifest_bias_v1', 'pass', inputBytes, {
+  checkSession: session,
+});
+
+const review = run.openReview('legal_review', 'manifest_legal_v1', 'rev_key_001', 1800);
+const reviewResult = await run.record('legal_review', 'manifest_legal_v1', 'pass', inputBytes, {
+  checkSession: review,
+  reviewerSignature: sig,
+  displayContent: whatReviewerSaw,
+  rationale: 'Approved per policy 4.2.1',
+});</code></pre>
+
+<div class="callout callout-info">
+  <div class="callout-label">Witnessed Proof Level</div>
+  <p>Using <code>openReview()</code> with a <code>reviewer_signature</code> produces a <strong>Witnessed</strong> proof level record. This requires two RFC 3161 timestamps (<code>check_open_tst</code> and <code>check_close_tst</code>) and an Ed25519 reviewer signature. The review duration is enforced server-side.</p>
+</div>
+
+<!-- ─── RECORD INPUT ─── -->
+<h2 id="record-input">RecordInput</h2>
+
+<p>Java and C# use a structured <code>RecordInput</code> object. Python and JS pass parameters directly to <code>run.record()</code>.</p>
+
+<h3>Java</h3>
+<pre><span class="code-label">Java</span><code>RecordInput input = RecordInput.builder()
+    .check("pii_scan")
+    .manifestId("manifest_pii_v2")
+    .checkResult(CheckResult.PASS)
+    .input(documentBytes)                   // byte[]
+    .output(scanResultBytes)                // byte[] (optional)
+    .visibility(VisibilityMode.OPAQUE)      // default
+    .details(Map.of("scanner_version", "3.1.0"))
+    .build();</code></pre>
+
+<h3>C#</h3>
+<pre><span class="code-label">C#</span><code>var input = new RecordInput
+{
+    Check = "pii_scan",
+    ManifestId = "manifest_pii_v2",
+    CheckResult = CheckResult.Pass,
+    Input = documentBytes,                  // byte[]
+    Output = scanResultBytes,               // byte[]? (optional)
+    Visibility = "opaque",                  // default
+    Details = new Dictionary&lt;string, object&gt;
+    {
+        ["scanner_version"] = "3.1.0"
+    },
+};</code></pre>
+
+<h4>RecordInput Fields</h4>
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>Check</code></td><td>string</td><td>Yes</td><td>&mdash;</td><td>Check name identifier.</td></tr>
+    <tr><td><code>ManifestId</code></td><td>string</td><td>Yes</td><td>&mdash;</td><td>Manifest this check is declared in.</td></tr>
+    <tr><td><code>Input</code></td><td>byte[]</td><td>Yes</td><td>&mdash;</td><td>Raw input bytes. SHA-256 committed locally.</td></tr>
+    <tr><td><code>Output</code></td><td>byte[]?</td><td>No</td><td>null</td><td>Raw output bytes. Committed if provided.</td></tr>
+    <tr><td><code>CheckResult</code></td><td>CheckResult</td><td>Yes</td><td>&mdash;</td><td>Enum value. See <a href="#check-result">CheckResult</a>.</td></tr>
+    <tr><td><code>Details</code></td><td>dict/map</td><td>No</td><td>null</td><td>Arbitrary metadata. Do NOT put PII here.</td></tr>
+    <tr><td><code>Visibility</code></td><td>string</td><td>No</td><td><code>"opaque"</code></td><td><code>"opaque"</code>, <code>"selective"</code>, or <code>"transparent"</code>.</td></tr>
+  </tbody>
+</table>
+
+<!-- ─── RECORD RESULT ─── -->
+<h2 id="record-result">RecordResult</h2>
+
+<p>Returned by <code>record()</code>. Contains the commitment hash (your SIEM linkage anchor), chain hash, and proof level.</p>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>recordId</code></td><td>string</td><td>Unique record ID. Format: <code>rec_&lt;uuid&gt;</code>.</td></tr>
+    <tr><td><code>commitmentHash</code></td><td>string</td><td>SHA-256 of the input. Format: <code>sha256:&lt;64 hex chars&gt;</code>. Use this as your SIEM linkage anchor.</td></tr>
+    <tr><td><code>outputCommitment</code></td><td>string?</td><td>SHA-256 of the output, if output was provided.</td></tr>
+    <tr><td><code>commitmentAlgorithm</code></td><td>string</td><td><code>"sha256"</code> or <code>"poseidon2"</code>.</td></tr>
+    <tr><td><code>proofLevel</code></td><td>string</td><td>Proof level achieved for this record.</td></tr>
+    <tr><td><code>recordedAt</code></td><td>string</td><td>ISO 8601 timestamp.</td></tr>
+    <tr><td><code>chainHash</code></td><td>string</td><td>Rolling hash linking this record to all prior records in the run.</td></tr>
+    <tr><td><code>queued</code></td><td>bool</td><td><code>true</code> if the API was unreachable and the record was queued locally.</td></tr>
+  </tbody>
+</table>
+
+<pre><span class="code-label">Python</span><code>result = run.record("pii_scan", "manifest_pii_v2", "pass", data)
+
+print(result.record_id)            # rec_a1b2c3d4e5f6...
+print(result.commitment_hash)      # sha256:9f86d0818...
+print(result.chain_hash)           # sha256:e3b0c4429...
+print(result.queued)               # False (API was reachable)</code></pre>
+
+<!-- ─── VPEC RESULT ─── -->
+<h2 id="vpec-result">VpecResult / VPEC</h2>
+
+<p>Returned by <code>close()</code>. The Verifiable Process Execution Credential.</p>
+
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>vpecId</code></td><td>string</td><td>Unique VPEC identifier.</td></tr>
+    <tr><td><code>runId</code></td><td>string</td><td>The run this VPEC was issued for.</td></tr>
+    <tr><td><code>workflowId</code></td><td>string</td><td>Workflow identity.</td></tr>
+    <tr><td><code>orgId</code></td><td>string</td><td>Organization that owns this VPEC.</td></tr>
+    <tr><td><code>issuedAt</code></td><td>string</td><td>ISO 8601 issuance timestamp.</td></tr>
+    <tr><td><code>proofLevelFloor</code></td><td>string</td><td>Overall proof level floor (weakest-link across all records).</td></tr>
+    <tr><td><code>totalChecksRun</code></td><td>int</td><td>Number of check records in this run.</td></tr>
+    <tr><td><code>checksPassed</code></td><td>int</td><td>Records with <code>pass</code> result.</td></tr>
+    <tr><td><code>checksFailed</code></td><td>int</td><td>Records with <code>fail</code> result.</td></tr>
+    <tr><td><code>gaps</code></td><td>GovernanceGap[]</td><td>List of gaps detected. Empty if clean.</td></tr>
+    <tr><td><code>chainIntact</code></td><td>bool</td><td><code>true</code> if the hash chain verified end-to-end.</td></tr>
+    <tr><td><code>environment</code></td><td>string</td><td><code>"sandbox"</code> or <code>"production"</code>. Determined by the API key prefix.</td></tr>
+    <tr><td><code>isClean</code></td><td>bool</td><td><code>true</code> when <code>chainIntact == true</code> AND <code>gaps</code> is empty.</td></tr>
+  </tbody>
+</table>
+
+<p>Python and Java VPECs also include:</p>
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>proofLevelBreakdown</code></td><td>ProofLevelBreakdown</td><td>Count of records at each proof level.</td></tr>
+    <tr><td><code>provableSurface</code></td><td>float</td><td>Float 0.0&ndash;1.0 representing the fraction of the policy surface provably covered by this run.</td></tr>
+    <tr><td><code>merkleRoot</code></td><td>string</td><td>Merkle root of all commitment hashes.</td></tr>
+    <tr><td><code>signature</code></td><td>string</td><td>Ed25519 signature over the sealed VPEC.</td></tr>
+    <tr><td><code>timestampRfc3161</code></td><td>string</td><td>RFC 3161 timestamp anchor.</td></tr>
+    <tr><td><code>raw</code></td><td>dict</td><td>Full server response for advanced use.</td></tr>
+  </tbody>
+</table>
+
+<h3>GovernanceGap</h3>
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>gapId</code></td><td>string</td><td>Unique gap identifier.</td></tr>
+    <tr><td><code>gapType</code></td><td>string</td><td>Canonical gap type. See <a href="reference.html#gaps">Gap Taxonomy</a>.</td></tr>
+    <tr><td><code>severity</code></td><td>string</td><td><code>Critical</code>, <code>High</code>, <code>Medium</code>, <code>Low</code>, or <code>Informational</code>.</td></tr>
+    <tr><td><code>check</code></td><td>string?</td><td>Check name that produced this gap.</td></tr>
+    <tr><td><code>sequence</code></td><td>int?</td><td>Record sequence number.</td></tr>
+    <tr><td><code>timestamp</code></td><td>string</td><td>When the gap was recorded.</td></tr>
+  </tbody>
+</table>
+
+<!-- ─── CHECK RESULT ─── -->
+<h2 id="check-result">CheckResult Enum</h2>
+
+<p>Every record requires a <code>check_result</code> value. The SDK provides an enum in typed languages; Python and JS accept strings directly.</p>
+
+<table>
+  <thead>
+    <tr><th>Value</th><th>Python</th><th>Java</th><th>C#</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>pass</code></td><td><code>CheckResult.PASS</code></td><td><code>CheckResult.PASS</code></td><td><code>CheckResult.Pass</code></td><td>Check passed.</td></tr>
+    <tr><td><code>fail</code></td><td><code>CheckResult.FAIL</code></td><td><code>CheckResult.FAIL</code></td><td><code>CheckResult.Fail</code></td><td>Check failed.</td></tr>
+    <tr><td><code>error</code></td><td><code>CheckResult.ERROR</code></td><td><code>CheckResult.ERROR</code></td><td><code>CheckResult.Error</code></td><td>Check encountered an error during execution.</td></tr>
+    <tr><td><code>skipped</code></td><td><code>CheckResult.SKIPPED</code></td><td><code>CheckResult.SKIPPED</code></td><td><code>CheckResult.Skipped</code></td><td>Check was skipped (provide <code>skip_rationale</code>).</td></tr>
+    <tr><td><code>degraded</code></td><td><code>CheckResult.DEGRADED</code></td><td><code>CheckResult.DEGRADED</code></td><td><code>CheckResult.Degraded</code></td><td>Check ran in degraded mode (partial coverage).</td></tr>
+    <tr><td><code>override</code></td><td><code>CheckResult.OVERRIDE</code></td><td><code>CheckResult.OVERRIDE</code></td><td><code>CheckResult.Override</code></td><td>Check result was overridden by an operator.</td></tr>
+    <tr><td><code>not_applicable</code></td><td><code>CheckResult.NOT_APPLICABLE</code></td><td><code>CheckResult.NOT_APPLICABLE</code></td><td><code>CheckResult.NotApplicable</code></td><td>Check does not apply to this input.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-info">
+  <div class="callout-label">Wire Format</div>
+  <p>All enums serialize to lowercase snake_case strings on the wire. Java: <code>CheckResult.PASS.value()</code> &rarr; <code>"pass"</code>. C#: <code>CheckResult.Pass.ToWireValue()</code> &rarr; <code>"pass"</code>. Python/JS: pass the string directly.</p>
+</div>
+
+<h3>ProofLevel Enum</h3>
+
+<p>Available in Python and Java. Ordered strongest to weakest.</p>
+
+<table>
+  <thead>
+    <tr><th>Value</th><th>Python</th><th>Java</th><th>Meaning</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>mathematical</code></td><td><code>ProofLevel.MATHEMATICAL</code></td><td><code>ProofLevel.MATHEMATICAL</code></td><td>ZK proof &mdash; no trust required.</td></tr>
+    <tr><td><code>verifiable_inference</code></td><td><code>ProofLevel.VERIFIABLE_INFERENCE</code></td><td><code>ProofLevel.VERIFIABLE_INFERENCE</code></td><td>ZKML proof of model inference.</td></tr>
+    <tr><td><code>execution</code></td><td><code>ProofLevel.EXECUTION</code></td><td><code>ProofLevel.EXECUTION</code></td><td>Instrumented execution with commitment hashing.</td></tr>
+    <tr><td><code>witnessed</code></td><td><code>ProofLevel.WITNESSED</code></td><td><code>ProofLevel.WITNESSED</code></td><td>Human reviewer signed with Ed25519.</td></tr>
+    <tr><td><code>attestation</code></td><td><code>ProofLevel.ATTESTATION</code></td><td><code>ProofLevel.ATTESTATION</code></td><td>Organization self-declares &mdash; weakest level.</td></tr>
+  </tbody>
+</table>
+
+<p>Java provides <code>ProofLevel.EXECUTION.isWeakerThan(ProofLevel.MATHEMATICAL)</code> for comparison.</p>
+
+<h3>VisibilityMode Enum</h3>
+
+<p>Controls what information is disclosed in the VPEC about this record.</p>
+
+<table>
+  <thead>
+    <tr><th>Value</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>opaque</code></td><td>Only the commitment hash is visible. <strong>Default. Use for all regulated data.</strong></td></tr>
+    <tr><td><code>selective</code></td><td>Specific fields are disclosed as declared in the manifest.</td></tr>
+    <tr><td><code>transparent</code></td><td>Full input/output visible in the VPEC. Use only for non-sensitive data.</td></tr>
+  </tbody>
+</table>
+
+<!-- ─── PRIVACY MODEL ─── -->
+<h2 id="privacy">Privacy Model</h2>
+
+<p>The core invariant: <strong>raw content never leaves your environment.</strong></p>
+
+<p>When you call <code>record()</code> with input bytes, the SDK computes a SHA-256 hash locally before anything is transmitted. The hash is a one-way function &mdash; the original content cannot be recovered from the hash. This is what makes VPECs <strong>content-blind</strong>.</p>
+
+<pre><span class="code-label">Conceptual</span><code>Your System                              api.primust.com
+──────────                              ─────────────────
+input_bytes ──┐
+              ├─ SHA-256 ─→ "sha256:9f86d08..." ──→ stored in VPEC
+              │
+              └─ stays local (never transmitted)</code></pre>
+
+<h3>What Transits Primust</h3>
+<ul>
+  <li>Commitment hashes (<code>sha256:...</code> or <code>poseidon2:...</code>)</li>
+  <li>Check metadata (check name, manifest ID, check result, sequence number)</li>
+  <li>Timestamps (open/close)</li>
+  <li>Chain hashes</li>
+  <li>The <code>details</code> dict (if provided &mdash; do NOT put PII here)</li>
+</ul>
+
+<h3>What NEVER Transits Primust</h3>
+<ul>
+  <li>Raw input data (documents, images, database rows, API payloads)</li>
+  <li>Raw output data (model responses, computation results)</li>
+  <li>Model weights or parameters</li>
+  <li>PII (names, addresses, SSNs, dates of birth)</li>
+  <li>PHI (medical records, diagnoses, prescriptions)</li>
+  <li>Financial data (account numbers, card numbers, balances)</li>
+  <li>Credentials, tokens, or API keys</li>
+  <li>Display content or rationale text (only their hashes transit)</li>
+</ul>
+
+<div class="callout callout-warn">
+  <div class="callout-label">Commitment Format</div>
+  <p>All commitment hashes are prefixed with the algorithm: <code>sha256:&lt;64 hex chars&gt;</code> (71 characters total) or <code>poseidon2:&lt;hex&gt;</code>. The same input always produces the same hash. Different inputs always produce different hashes.</p>
+</div>
+
+<h3>Verifying a Commitment Locally</h3>
+<p>You can verify that a commitment hash matches a known input using any SHA-256 implementation:</p>
+
+<pre><span class="code-label">Python</span><code>import hashlib
+raw_input = b"my_document_content"
+expected = "sha256:" + hashlib.sha256(raw_input).hexdigest()
+assert result.commitment_hash == expected</code></pre>
+
+<pre><span class="code-label">JavaScript</span><code>import { createHash } from 'crypto';
+const hash = createHash('sha256').update(rawInput).digest('hex');
+const expected = `sha256:${hash}`;
+console.assert(result.commitmentHash === expected);</code></pre>
+
+<pre><span class="code-label">Shell</span><code># Verify from the command line
+echo -n "my_document_content" | sha256sum
+# Compare with commitment_hash (strip the "sha256:" prefix)</code></pre>
+
+<!-- ─── ERROR HANDLING ─── -->
+<h2 id="errors">Error Handling</h2>
+
+<h3>Fail-Open Design</h3>
+
+<p>The SDK is designed to <strong>never block your business logic</strong>. If the Primust API is unreachable:</p>
+<ul>
+  <li><code>record()</code> succeeds locally and returns <code>queued: true</code></li>
+  <li><code>close()</code> returns a VPEC with a <code>system_unavailable</code> governance gap</li>
+  <li>Your application continues running normally</li>
+</ul>
+
+<pre><span class="code-label">Python</span><code># API unreachable? Record still succeeds.
+result = run.record("pii_scan", "manifest_pii_v2", "pass", data)
+if result.queued:
+    print("Record queued locally - will sync when API is available")
+
+# Close returns a pending VPEC with a gap
+vpec = run.close()
+print(vpec.is_clean())    # False - has system_unavailable gap
+for gap in vpec.gaps:
+    print(f"{gap.gap_type}: {gap.severity}")  # system_unavailable: High</code></pre>
+
+<h3>Exceptions</h3>
+
+<table>
+  <thead>
+    <tr><th>Error</th><th>When</th><th>Recovery</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>ArgumentError</code></td><td>Missing API key (no env var, no constructor arg)</td><td>Set <code>PRIMUST_API_KEY</code> or pass <code>api_key</code> to constructor.</td></tr>
+    <tr><td><code>InvalidOperationException</code></td><td><code>record()</code> called after <code>close()</code></td><td>Open a new Run.</td></tr>
+    <tr><td><code>InvalidOperationException</code></td><td><code>close()</code> called twice</td><td>A Run can only be closed once.</td></tr>
+  </tbody>
+</table>
+
+<h3>RecordSystemError (C#)</h3>
+<p>The C# SDK provides <code>run.RecordSystemError(message)</code> for logging internal errors without producing a check record. The run remains open.</p>
+
+<pre><span class="code-label">C#</span><code>try
+{
+    var scanResult = await RunPiiScan(document);
+    await run.RecordAsync(new RecordInput { /* ... */ });
+}
+catch (Exception ex)
+{
+    run.RecordSystemError($"PII scan failed: {ex.Message}");
+    // Run stays open - continue with other checks
+}</code></pre>
+
+<!-- ─── LOGGER / SIEM ─── -->
+<h2 id="logger">Logger / SIEM Integration</h2>
+
+<p>Attach a callback to emit structured log events for every record. This creates an auditable linkage between your application logs and the VPEC &mdash; your SIEM becomes a second source of truth.</p>
+
+<pre><span class="code-label">Python</span><code>import logging
+logger = logging.getLogger("myapp")
+
+def on_primust_record(event):
+    logger.info("primust_governance_record", extra={
+        "primust_record_id": event.primust_record_id,
+        "primust_commitment_hash": event.primust_commitment_hash,
+        "primust_check_result": event.primust_check_result,
+        "primust_proof_level": event.primust_proof_level,
+        "primust_workflow_id": event.primust_workflow_id,
+        "primust_run_id": event.primust_run_id,
+        "primust_recorded_at": event.primust_recorded_at,
+    })
+
+pipeline.set_logger(on_primust_record)
+# Optionally include gap types:
+# pipeline.set_logger(on_primust_record, LoggerOptions(include_gap_types=True))</code></pre>
+
+<pre><span class="code-label">JavaScript</span><code>pipeline.setLogger((event) => {
+  console.log('primust_governance_record', {
+    primust_record_id: event.primust_record_id,
+    primust_commitment_hash: event.primust_commitment_hash,
+    primust_check_result: event.primust_check_result,
+    primust_proof_level: event.primust_proof_level,
+    primust_workflow_id: event.primust_workflow_id,
+    primust_run_id: event.primust_run_id,
+    primust_recorded_at: event.primust_recorded_at,
+  });
+});
+
+// With gap types:
+pipeline.setLogger(callback, { includeGapTypes: true });</code></pre>
+
+<h3>PrimustLogEvent Fields</h3>
+<table>
+  <thead>
+    <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>primust_record_id</code></td><td>string</td><td>Record ID (<code>rec_...</code>)</td></tr>
+    <tr><td><code>primust_commitment_hash</code></td><td>string</td><td>SHA-256 commitment &mdash; the SIEM linkage anchor</td></tr>
+    <tr><td><code>primust_check_result</code></td><td>string</td><td>Check result (<code>pass</code>, <code>fail</code>, etc.)</td></tr>
+    <tr><td><code>primust_proof_level</code></td><td>string</td><td>Proof level achieved</td></tr>
+    <tr><td><code>primust_workflow_id</code></td><td>string</td><td>Workflow identity</td></tr>
+    <tr><td><code>primust_run_id</code></td><td>string</td><td>Run identity</td></tr>
+    <tr><td><code>primust_recorded_at</code></td><td>string</td><td>ISO 8601 timestamp</td></tr>
+    <tr><td><code>gap_types_emitted</code></td><td>string[]?</td><td>Gap types (only if <code>includeGapTypes: true</code>)</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-info">
+  <div class="callout-label">Auditor Verification via SIEM</div>
+  <p>An auditor can search your SIEM for <code>primust_commitment_hash = &lt;value&gt;</code>, then run <code>primust-verify hash &lt;plaintext_input&gt;</code> to confirm the hash matches. The VPEC proves chain integrity, timestamp independence, and proof level. Two independent sources &mdash; SIEM logs and VPEC &mdash; that must agree.</p>
+</div>
+
+<!-- ─── ADVANCED ─── -->
+<h2 id="advanced">Advanced Patterns</h2>
+
+<h3>Multiple Records per Run</h3>
+<p>A run can contain any number of records. Each record gets a unique <code>record_id</code>, its own commitment hash, and a chain hash linking it to all prior records.</p>
+
+<pre><span class="code-label">Python</span><code>run = pipeline.open()
+
+# Record multiple governance checks in sequence
+run.record("schema_validation", "manifest_schema_v1", "pass", schema_input)
+run.record("pii_scan", "manifest_pii_v2", "pass", document_bytes)
+run.record("bias_audit", "manifest_bias_v1", "pass", model_output)
+run.record("cost_check", "manifest_cost_v1", "pass", cost_data)
+
+vpec = run.close()
+print(vpec.total_checks_run)  # 4</code></pre>
+
+<h3>Delegation &mdash; Cross-System Lineage</h3>
+<p>When your process delegates to another system, pass a lineage token so the downstream system can continue the governance chain.</p>
+
+<pre><span class="code-label">Python</span><code># System A: delegate to System B
+token = pipeline.record_delegation({"target": "system_b", "reason": "sub-process"})
+
+# System B: resume from lineage token
+resumed = pipeline_b.resume_from_lineage(token)
+print(resumed.run_id)          # same run, continued chain</code></pre>
+
+<h3>Local Queue (Python)</h3>
+<p>The Python SDK includes a durable local queue backed by SQLite. If the API is unreachable, records are queued and flushed automatically on next successful connection.</p>
+
+<pre><span class="code-label">Python</span><code>from pathlib import Path
+
+pipeline = Pipeline(
+    api_key="pk_sb_xxx",
+    workflow_id="batch_job",
+    queue_path=Path("/tmp/primust-queue.db"),
+)
+
+# Check pending records
+print(pipeline.pending_queue_count())  # 0
+
+# Force flush (usually not needed - auto-flushes on record)
+flushed = pipeline.flush_queue()
+print(f"Flushed {flushed} queued records")</code></pre>
+
+<h3>Manifest Registration</h3>
+<p>Register check manifests before use. Registration is content-addressed and idempotent &mdash; registering the same manifest twice returns the same ID.</p>
+
+<pre><span class="code-label">Python</span><code>reg = pipeline.register_check({
+    "name": "pii_scan",
+    "version": "2.0.0",
+    "stages": [
+        {
+            "stage_name": "detect_pii",
+            "proof_ceiling": "execution",
+            "regulatory_references": ["gdpr_art5", "ccpa_1798"],
+        }
+    ],
+})
+print(reg.manifest_id)   # sha256:content_addressed_hash
+print(reg.name)          # pii_scan</code></pre>
+
+<pre><span class="code-label">Java</span><code>ManifestRegistration reg = pipeline.registerCheck(Map.of(
+    "name", "pii_scan",
+    "version", "2.0.0",
+    "stages", List.of(Map.of(
+        "stage_name", "detect_pii",
+        "proof_ceiling", "execution",
+        "regulatory_references", List.of("gdpr_art5", "ccpa_1798")
+    ))
+));
+System.out.println(reg.manifestId());  // sha256:...</code></pre>
+
+<h3>Complete End-to-End Example</h3>
+
+<pre><span class="code-label">Python</span><code>from primust import Pipeline, CheckResult
+import json
+
+# 1. Create pipeline
+pipeline = Pipeline(workflow_id="loan_underwriting_v3")
+pipeline.set_logger(lambda e: print(f"[PRIMUST] {e.primust_check_result}: {e.primust_commitment_hash[:30]}..."))
+
+# 2. Open a run
+run = pipeline.open(policy_pack_id="financial_data_governance_v1")
+
+# 3. Record checks
+# --- Schema validation (deterministic = Mathematical ceiling) ---
+schema_input = json.dumps({"applicant_id": "hash_only", "amount": 50000}, sort_keys=True).encode()
+run.record("schema_validation", "manifest_schema_v1", CheckResult.PASS, schema_input)
+
+# --- Credit score check (vendor API = Attestation ceiling) ---
+credit_input = json.dumps({"bureau": "experian", "pull_type": "soft"}, sort_keys=True).encode()
+credit_output = json.dumps({"score_band": "good", "factors": 3}, sort_keys=True).encode()
+run.record("credit_check", "manifest_credit_v1", CheckResult.PASS, credit_input,
+           output=credit_output)
+
+# --- Human underwriter review (Witnessed ceiling) ---
+session = run.open_review("underwriter_review", "manifest_review_v1",
+                           reviewer_key_id="rev_key_jane",
+                           min_duration_seconds=300)
+# ... underwriter reviews for 5+ minutes ...
+run.record("underwriter_review", "manifest_review_v1", CheckResult.PASS,
+           json.dumps({"decision": "approved"}).encode(),
+           check_session=session,
+           reviewer_signature=jane_signature,
+           display_content=what_jane_saw,
+           rationale="Debt-to-income ratio within policy limits")
+
+# 4. Close and get VPEC
+vpec = run.close()
+
+print(f"VPEC: {vpec.vpec_id}")
+print(f"Proof level floor: {vpec.proof_level_floor}")  # "witnessed" (weakest-link)
+print(f"Checks: {vpec.total_checks_run}")        # 3
+print(f"Clean: {vpec.is_clean()}")               # True
+print(f"Coverage: {vpec.provable_surface:.1%}")    # provable surface (0.0–1.0)</code></pre>
+
+<pre><span class="code-label">JavaScript</span><code>import { Pipeline } from '@primust/sdk';
+
+const pipeline = new Pipeline({ workflowId: 'loan_underwriting_v3' });
+pipeline.setLogger((e) => console.log(`[PRIMUST] ${e.primust_check_result}: ${e.primust_commitment_hash.slice(0, 30)}...`));
+
+const run = await pipeline.open('financial_data_governance_v1');
+
+await run.record('schema_validation', 'manifest_schema_v1', 'pass',
+  Buffer.from(JSON.stringify({ applicant_id: 'hash_only', amount: 50000 })));
+
+await run.record('credit_check', 'manifest_credit_v1', 'pass',
+  Buffer.from(JSON.stringify({ bureau: 'experian', pull_type: 'soft' })),
+  { output: Buffer.from(JSON.stringify({ score_band: 'good', factors: 3 })) });
+
+const session = run.openReview('underwriter_review', 'manifest_review_v1', 'rev_key_jane', 300);
+await run.record('underwriter_review', 'manifest_review_v1', 'pass',
+  Buffer.from(JSON.stringify({ decision: 'approved' })),
+  {
+    checkSession: session,
+    reviewerSignature: janeSignature,
+    displayContent: whatJaneSaw,
+    rationale: 'Debt-to-income ratio within policy limits',
+  });
+
+const vpec = await run.close();
+console.log(`VPEC: ${vpec.vpecId}`);
+console.log(`Proof level floor: ${vpec.proofLevelFloor}`);
+console.log(`Clean: ${vpec.gaps.length === 0}`);</code></pre>
+
+<pre><span class="code-label">Java</span><code>import com.primust.sdk.*;
+import java.nio.charset.StandardCharsets;
+
+Pipeline pipeline = Primust.builder()
+    .workflowId("loan_underwriting_v3")
+    .build();
+
+Run run = pipeline.open("financial_data_governance_v1");
+
+run.record(RecordInput.builder()
+    .check("schema_validation")
+    .manifestId("manifest_schema_v1")
+    .checkResult(CheckResult.PASS)
+    .input("{\"applicant_id\":\"hash_only\",\"amount\":50000}".getBytes(StandardCharsets.UTF_8))
+    .build());
+
+run.record(RecordInput.builder()
+    .check("credit_check")
+    .manifestId("manifest_credit_v1")
+    .checkResult(CheckResult.PASS)
+    .input("{\"bureau\":\"experian\",\"pull_type\":\"soft\"}".getBytes(StandardCharsets.UTF_8))
+    .output("{\"score_band\":\"good\",\"factors\":3}".getBytes(StandardCharsets.UTF_8))
+    .build());
+
+VPEC vpec = run.close();
+System.out.println("VPEC: " + vpec.vpecId());
+System.out.println("Proof level floor: " + vpec.proofLevelFloor());
+System.out.println("Clean: " + vpec.isClean());</code></pre>
+
+<pre><span class="code-label">C#</span><code>using Primust;
+using System.Text;
+
+var pipeline = new Pipeline(workflowId: "loan_underwriting_v3");
+var run = pipeline.Open();
+
+await run.RecordAsync(new RecordInput
+{
+    Check = "schema_validation",
+    ManifestId = "manifest_schema_v1",
+    CheckResult = CheckResult.Pass,
+    Input = Encoding.UTF8.GetBytes("{\"applicant_id\":\"hash_only\",\"amount\":50000}"),
+});
+
+await run.RecordAsync(new RecordInput
+{
+    Check = "credit_check",
+    ManifestId = "manifest_credit_v1",
+    CheckResult = CheckResult.Pass,
+    Input = Encoding.UTF8.GetBytes("{\"bureau\":\"experian\",\"pull_type\":\"soft\"}"),
+    Output = Encoding.UTF8.GetBytes("{\"score_band\":\"good\",\"factors\":3}"),
+});
+
+var vpec = await run.CloseAsync();
+Console.WriteLine($"VPEC: {vpec.VpecId}");
+Console.WriteLine($"Proof level floor: {vpec.ProofLevelFloor}");
+Console.WriteLine($"Clean: {vpec.IsClean}");</code></pre>
+
+</main>
+
+</body>
+</html>

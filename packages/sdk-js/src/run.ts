@@ -44,7 +44,7 @@ export interface RecordOptions {
   rationale?: string;
 }
 
-export interface ProofLevelBreakdown {
+export interface ProvableSurfaceBreakdown {
   mathematical: number;
   verifiable_inference: number;
   execution: number;
@@ -67,18 +67,18 @@ export interface VPECResult {
   workflowId: string;
   orgId: string;
   issuedAt: string;
-  proofLevel: string;
-  proofLevelBreakdown: ProofLevelBreakdown;
-  coverageVerifiedPct: number;
+  proofLevelFloor: string;
+  provableSurfaceBreakdown: ProvableSurfaceBreakdown;
+  provableSurface: number;
   totalChecksRun: number;
   checksPassed: number;
   checksFailed: number;
-  governanceGaps: GovernanceGap[];
+  gaps: GovernanceGap[];
   chainIntact: boolean;
   merkleRoot: string;
   signature: string;
   timestampRfc3161: string;
-  testMode: boolean;
+  environment: string;
   raw: Record<string, unknown>;
 }
 
@@ -457,19 +457,19 @@ export class Run {
       workflowId: this.workflowId,
       orgId: this.orgId,
       issuedAt: closedAt,
-      proofLevel,
-      proofLevelBreakdown: {
+      proofLevelFloor: proofLevel,
+      provableSurfaceBreakdown: {
         mathematical: 0,
         verifiable_inference: 0,
         execution: 0,
         witnessed: 0,
         attestation: 0,
       },
-      coverageVerifiedPct: 0.0,
+      provableSurface: 0.0,
       totalChecksRun: this._recordIds.length,
       checksPassed: 0,
       checksFailed: 0,
-      governanceGaps: [{
+      gaps: [{
         gapId: `gap_${crypto.randomUUID().replace(/-/g, '')}`,
         gapType: 'system_unavailable',
         severity: 'high',
@@ -479,15 +479,14 @@ export class Run {
       merkleRoot: '',
       signature: '',
       timestampRfc3161: '',
-      testMode: this._testMode,
+      environment: this._testMode ? 'sandbox' : 'production',
       raw: { status: 'pending', run_id: this.runId },
     };
   }
 
   private _parseVpec(data: Record<string, unknown>, localProofLevel: string): VPECResult {
-    // API returns "proof_distribution", SDK model uses "proofLevelBreakdown"
-    const breakdownRaw = (data.proof_distribution ?? data.proof_level_breakdown ?? {}) as Record<string, number>;
-    const breakdown: ProofLevelBreakdown = {
+    const breakdownRaw = (data.provable_surface_breakdown ?? {}) as Record<string, number>;
+    const breakdown: ProvableSurfaceBreakdown = {
       mathematical: breakdownRaw.mathematical ?? 0,
       verifiable_inference: breakdownRaw.verifiable_inference ?? 0,
       execution: breakdownRaw.execution ?? 0,
@@ -495,8 +494,7 @@ export class Run {
       attestation: breakdownRaw.attestation ?? 0,
     };
 
-    // API returns "gaps", SDK model uses "governanceGaps"
-    const gapsRaw = (data.gaps ?? data.governance_gaps ?? []) as Record<string, unknown>[];
+    const gapsRaw = (data.gaps ?? []) as Record<string, unknown>[];
     const gaps: GovernanceGap[] = gapsRaw.map(g => ({
       gapId: (g.gap_id as string) ?? '',
       gapType: (g.gap_type as string) ?? '',
@@ -511,7 +509,7 @@ export class Run {
     const totalChecks = coverage.records_total ?? (data.total_checks_run as number) ?? this._recordIds.length;
     const checksPassed = coverage.records_pass ?? (data.checks_passed as number) ?? 0;
     const checksFailed = coverage.records_fail ?? (data.checks_failed as number) ?? 0;
-    const coveragePct = coverage.policy_coverage_pct ?? (data.coverage_verified_pct as number) ?? 0.0;
+    const coveragePct = coverage.provable_surface ?? (data.provable_surface as number) ?? 0.0;
 
     return {
       vpecId: (data.vpec_id as string) ?? `vpec_${this.runId}`,
@@ -519,18 +517,18 @@ export class Run {
       workflowId: this.workflowId,
       orgId: (data.org_id as string) ?? this.orgId,
       issuedAt: (data.issued_at as string) ?? '',
-      proofLevel: (data.proof_level as string) ?? localProofLevel,
-      proofLevelBreakdown: breakdown,
-      coverageVerifiedPct: coveragePct,
+      proofLevelFloor: (data.proof_level_floor as string) ?? localProofLevel,
+      provableSurfaceBreakdown: breakdown,
+      provableSurface: coveragePct,
       totalChecksRun: totalChecks,
       checksPassed,
       checksFailed,
-      governanceGaps: gaps,
+      gaps,
       chainIntact: (data.chain_intact as boolean) ?? true,
       merkleRoot: (data.merkle_root as string) ?? '',
       signature: (data.signature as string) ?? '',
       timestampRfc3161: (data.timestamp_rfc3161 as string) ?? '',
-      testMode: this._testMode,
+      environment: this._testMode ? 'sandbox' : 'production',
       raw: data,
     };
   }

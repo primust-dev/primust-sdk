@@ -1,183 +1,126 @@
-# Primust Python SDK
+# Primust SDK
 
-Prove governance ran. Disclose nothing.
+Prove your governance checks ran. Portable, offline-verifiable cryptographic credentials.
 
-```bash
-pip install primust
-```
-
-## What this is
-
-Primust issues **Verifiable Process Execution Credentials (VPECs)** — portable, offline-verifiable proofs that a defined governance process executed correctly on specific data, without disclosing the data.
-
-A VPEC answers: *"Did your AML screening actually run on this entity?"* — without your watchlist matching criteria, velocity thresholds, or customer data leaving your environment.
-
-## Quickstart
-
-```python
-import primust
-
-p = primust.Pipeline(
-    api_key="pk_live_...",
-    workflow_id="aml-screening-v2"
-)
-
-run = p.open()
-
-result = run.record(
-    check="aml_entity_screen",
-    manifest_id="sha256:abc123...",   # from p.register_check()
-    input=entity_data,                # committed locally — never sent to Primust
-    check_result="pass",
-    visibility="opaque",
-)
-
-# Write result.commitment_hash to your own logs
-# This is your log linkage anchor — connects your logs to the VPEC
-print(result.commitment_hash)  # sha256:...
-
-vpec = run.close()
-# vpec is the signed, portable credential
-# Provide to your regulator. They verify at verify.primust.com
-# without receiving your data.
-```
-
-## Privacy guarantee
-
-Raw input values are committed locally via SHA-256 (Poseidon2 when the native extension is available) before any network call. Only the commitment hash and bounded normalized metadata transit to `api.primust.com`.
-
-**Your data never leaves your environment.**
-
-This is enforced in the SDK — not advisory. The transport layer never receives raw values. Tests verify this by intercepting every outbound HTTP request and asserting sensitive input strings are absent.
-
-## Proof levels
-
-| Level | When | Verifier confidence |
-|---|---|---|
-| `mathematical` | Deterministic rule, arithmetic verifiable | Cryptographic — can replay |
-| `execution` | In-process instrumentation | Strong — execution binding |
-| `witnessed` | Human review with RFC 3161 timing | Regulatory — signed review |
-| `attestation` | API-level observation | Audit — process ran |
-
-The VPEC applies weakest-link: the overall credential level is the lowest level across all checks in the run.
-
-## API reference
-
-### `Pipeline(api_key, workflow_id, ...)`
-
-```python
-p = primust.Pipeline(
-    api_key="pk_live_...",        # or set PRIMUST_API_KEY env var
-    workflow_id="my-workflow",    # identifies the governed process
-    surface_id=None,              # optional: instrumentation surface
-    environment="production",     # inferred from key prefix
-)
-```
-
-### `p.open(policy_pack_id?) → Run`
-
-Opens a governed process run. Returns a `Run`. All `.record()` calls belong to this run. Close with `.close()` to issue the VPEC.
-
-### `run.record(check, manifest_id, check_result, input, ...) → RecordResult`
-
-```python
-result = run.record(
-    check="pii_scan",
-    manifest_id="sha256:...",
-    check_result="pass",          # pass | fail | error | skipped | degraded | override
-    input=content,                # committed locally — never sent
-    details={"score": 0.04},      # bounded metadata — will transit, must not be sensitive
-    output=None,                  # optional output commitment
-    visibility="opaque",          # transparent | selective | opaque
-)
-
-result.commitment_hash   # sha256:... — write this to your logs
-result.record_id         # rec_...
-result.proof_level       # attestation | execution | witnessed | mathematical
-result.queued            # True if API was unreachable — will flush on reconnect
-```
-
-### `run.open_check(check, manifest_id) → CheckSession`
-
-Opens a timed check session. Returns an RFC 3161 timestamp at open time. Pass to `run.record(check_session=...)`. Sub-100ms ML inference emits `check_timing_suspect` gap.
-
-### `run.open_review(check, manifest_id, reviewer_key_id, ...) → ReviewSession`
-
-Opens a Witnessed level human review session. Pass to `run.record(check_session=..., reviewer_signature=..., rationale=...)`.
-
-### `run.close() → VPEC`
-
-Closes the run and issues the VPEC. After close, no further records can be added.
-
-```python
-vpec = run.close()
-
-vpec.vpec_id                  # vpec_...
-vpec.proof_level              # weakest-link across all checks
-vpec.chain_intact             # True if commitment chain is unbroken
-vpec.governance_gaps          # list of GovernanceGap — missing checks, timing anomalies
-vpec.is_clean()               # True if chain intact and zero gaps
-vpec.to_dict()                # full JSON for offline verification
-```
-
-### `p.register_check(manifest) → ManifestRegistration`
-
-Register a check manifest. Call once per manifest version. Returns `manifest_id` — content-addressed SHA-256, idempotent.
-
-## Offline durability
-
-If `api.primust.com` is unreachable, records queue locally in SQLite. The SDK never throws to the caller due to API unavailability. When connectivity recovers, the queue flushes automatically on the next successful call.
-
-If the queue is permanently lost, a `system_unavailable` gap is recorded in the VPEC — the SDK never silently drops governance evidence.
-
-```python
-p.pending_queue_count()   # items waiting in local queue
-p.flush_queue()           # manually trigger flush attempt
-```
-
-## Governance gaps
-
-The VPEC records gaps automatically:
-
-| Gap type | Meaning |
-|---|---|
-| `check_missing` | Expected check in manifest not executed |
-| `check_failed` | Check ran and returned fail |
-| `check_timing_suspect` | Execution time implausibly fast (< 100ms for ML check) |
-| `sequence_gap` | Record sequence broken — possible tampering |
-| `system_unavailable` | Primust API unreachable during run |
-| `policy_config_drift` | Policy changed between run open and close |
-
-## Log linkage
-
-Every `RecordResult` contains a `commitment_hash`. Write this to your operational logs alongside the transaction or decision ID it corresponds to. This creates a verifiable link between your logs and the VPEC — a verifier can confirm your log entry corresponds to a specific record in the credential.
-
-```python
-result = run.record(...)
-logger.info("aml_screen completed",
-    commitment_hash=result.commitment_hash,
-    transaction_id=txn_id,
-)
-```
-
-## Verify a VPEC
-
-```bash
-pip install primust-verify
-primust-verify vpec.json
-```
-
-Or online at [verify.primust.com](https://verify.primust.com) — no account required.
-
-## Requirements
-
-- Python 3.11+
-- `httpx>=0.27.0`
-
-## License
-
-Proprietary — see LICENSE file.
+**Input → Checks → Output → Verify**
 
 ---
 
-[Docs](https://docs.primust.com) · [Verify](https://verify.primust.com) · [Connectors](https://github.com/primust-dev/connectors)
+## Install
+
+```bash
+# Python SDK (proprietary)
+pip install primust primust-ai
+
+# Python verifier (Apache-2.0, free forever)
+pip install primust-verify
+
+# Open source checks harness (Apache-2.0)
+pip install primust-checks
+
+# JavaScript/TypeScript SDK
+npm install @primust/sdk
+```
+
+---
+
+## Quick Start — Two Lines
+
+```python
+import primust
+import primust_ai
+
+p = primust.Pipeline(api_key="pk_sb_xxx")
+primust_ai.autoinstrument(pipeline=p)
+
+# Your existing agent code — unchanged
+result = your_agent.run(user_input)
+
+vpec = p.close()   # VPEC issued
+print(vpec.proof_level_floor)    # mathematical | execution | witnessed | attestation
+print(vpec.provable_surface)     # float 0.0–1.0 — "73% of governance mathematically proven"
+```
+
+Three lines to instrument. Content never leaves your environment — only commitment hashes reach Primust.
+
+**API keys:** `pk_sb_xxx` = sandbox (real proof, not audit-acceptable). `pk_live_xxx` = production.
+
+---
+
+## Verify (anyone, anywhere, offline)
+
+```bash
+pip install primust-verify
+
+primust verify vpec.json
+primust verify vpec.json --trust-root key.pem   # zero network — works forever
+primust verify vpec.json --production            # reject sandbox VPECs
+```
+
+Works forever. Primust offline = irrelevant.
+
+---
+
+## Framework Adapters
+
+| Package | Framework | Registry | Status |
+|---|---|---|---|
+| `primust` | Core SDK | PyPI | Live 1.0.0 |
+| `primust-ai` | autoinstrument() meta-package | PyPI | Live 1.0.0 |
+| `primust-verify` | Standalone verifier (Apache-2.0) | PyPI | Live 1.0.0 |
+| `primust-checks` | Open source checks harness (Apache-2.0) | PyPI | Live 1.0.0 |
+| `primust-langgraph` | LangGraph adapter | PyPI | Live 1.0.0 |
+| `primust-openai-agents` | OpenAI Agents SDK | PyPI | Live 1.0.0 |
+| `primust-google-adk` | Google ADK adapter | PyPI | Live 1.0.0 |
+| `primust-otel` | OpenTelemetry bridge | PyPI | Live 1.0.0 |
+| `@primust/sdk` | JavaScript/TypeScript SDK | npm | Live 1.0.0 |
+| `@primust/otel` | JS OpenTelemetry bridge | npm | Live 1.0.0 |
+
+## Rule Engine Adapters (Mathematical Ceiling)
+
+| Package | Target | Registry |
+|---|---|---|
+| `primust-cedar` | AWS Cedar | Maven Central |
+| `primust-drools` | Red Hat Drools | Maven Central |
+| `primust-odm` | IBM ODM | Maven Central |
+| `primust-opa` | Open Policy Agent | pkg.go.dev |
+
+## Regulated Industry Connectors
+
+```bash
+pip install primust-connectors   # Apache-2.0
+```
+
+7 Python REST connectors (321 tests): ComplyAdvantage, NICE Actimize, FICO Blaze, IBM ODM, FICO Falcon, Pega CDH, Wolters Kluwer UpToDate, Guidewire ClaimCenter. All Attestation ceiling (REST wrappers). See [primust-connectors](https://github.com/primust-dev/primust-connectors) for details.
+
+---
+
+## What Never Leaves Your Environment
+
+- Raw input data (documents, agent outputs, API payloads)
+- Model weights or parameters
+- PII or PHI
+- Credentials or API keys
+- Display content or rationale text (only commitment hashes transit)
+
+Only commitment hashes (`poseidon2:hex` or `sha256:hex`) and bounded metadata reach `api.primust.com`.
+
+---
+
+## Documentation
+
+- [docs.primust.com](https://docs.primust.com) — Full documentation
+- [verify.primust.com](https://verify.primust.com) — Online verification (you don't need this website)
+- [app.primust.com](https://app.primust.com) — Dashboard + Policy Center
+
+---
+
+## License
+
+- `primust-verify` and `primust-checks`: Apache-2.0
+- `primust-connectors`: Apache-2.0
+- All other packages: Proprietary — see LICENSE in each package directory
+
+## Security
+
+Report vulnerabilities to security@primust.com.

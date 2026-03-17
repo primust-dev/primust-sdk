@@ -375,13 +375,13 @@ class Run:
             workflow_id=self.workflow_id,
             org_id=self.org_id,
             issued_at=closed_at,
-            proof_level=proof_level,
-            proof_level_breakdown=ProofLevelBreakdown(),
-            coverage_verified_pct=0.0,
+            proof_level_floor=proof_level,
+            provable_surface=0.0,
+            provable_surface_breakdown=ProofLevelBreakdown(),
             total_checks_run=len(self._record_ids),
             checks_passed=0,
             checks_failed=0,
-            governance_gaps=[GovernanceGap(
+            gaps=[GovernanceGap(
                 gap_id=f"gap_{uuid.uuid4().hex}",
                 gap_type="system_unavailable",
                 severity="high",
@@ -391,23 +391,21 @@ class Run:
             merkle_root="",
             signature="",
             timestamp_rfc3161="",
-            test_mode=self._test_mode,
+            environment="sandbox" if self._test_mode else "production",
             raw={"status": "pending", "run_id": self.run_id},
         )
 
     def _parse_vpec(self, data: dict, local_proof_level: str) -> VPEC:
-        # API returns "proof_distribution", SDK model uses "proof_level_breakdown"
-        breakdown_raw = data.get("proof_distribution", data.get("proof_level_breakdown", {}))
+        breakdown_raw = data.get("provable_surface_breakdown", {})
         breakdown = ProofLevelBreakdown(
-            mathematical=breakdown_raw.get("mathematical", 0),
-            verifiable_inference=breakdown_raw.get("verifiable_inference", 0),
-            execution=breakdown_raw.get("execution", 0),
-            witnessed=breakdown_raw.get("witnessed", 0),
-            attestation=breakdown_raw.get("attestation", 0),
+            mathematical=breakdown_raw.get("mathematical", 0.0),
+            verifiable_inference=breakdown_raw.get("verifiable_inference", 0.0),
+            execution=breakdown_raw.get("execution", 0.0),
+            witnessed=breakdown_raw.get("witnessed", 0.0),
+            attestation=breakdown_raw.get("attestation", 0.0),
         )
 
-        # API returns "gaps", SDK model uses "governance_gaps"
-        gaps_raw = data.get("gaps", data.get("governance_gaps", []))
+        gaps_raw = data.get("gaps", [])
         gaps = [
             GovernanceGap(
                 gap_id=g.get("gap_id", ""),
@@ -420,12 +418,11 @@ class Run:
             for g in gaps_raw
         ]
 
-        # API nests coverage stats under "coverage" dict
         coverage = data.get("coverage", {})
         total_checks = coverage.get("records_total", data.get("total_checks_run", len(self._record_ids)))
         checks_passed = coverage.get("records_pass", data.get("checks_passed", 0))
         checks_failed = coverage.get("records_fail", data.get("checks_failed", 0))
-        coverage_pct = coverage.get("policy_coverage_pct", data.get("coverage_verified_pct", 0.0))
+        provable_surface = coverage.get("provable_surface", data.get("provable_surface", 0.0))
 
         return VPEC(
             vpec_id=data.get("vpec_id", f"vpec_{self.run_id}"),
@@ -433,17 +430,21 @@ class Run:
             workflow_id=self.workflow_id,
             org_id=data.get("org_id", self.org_id),
             issued_at=data.get("issued_at", ""),
-            proof_level=data.get("proof_level", local_proof_level),
-            proof_level_breakdown=breakdown,
-            coverage_verified_pct=coverage_pct,
+            proof_level_floor=data.get("proof_level_floor", local_proof_level),
+            provable_surface=provable_surface,
+            provable_surface_breakdown=breakdown,
             total_checks_run=total_checks,
             checks_passed=checks_passed,
             checks_failed=checks_failed,
-            governance_gaps=gaps,
+            gaps=gaps,
             chain_intact=data.get("chain_intact", True),
             merkle_root=data.get("merkle_root", ""),
             signature=data.get("signature", ""),
             timestamp_rfc3161=data.get("timestamp_rfc3161", ""),
-            test_mode=self._test_mode,
+            environment="sandbox" if self._test_mode else "production",
+            provable_surface_pending=data.get("provable_surface_pending", 0.0),
+            provable_surface_ungoverned=data.get("provable_surface_ungoverned", 0.0),
+            provable_surface_basis=data.get("provable_surface_basis", "executed_records"),
+            provable_surface_suppressed=data.get("provable_surface_suppressed", False),
             raw=data,
         )

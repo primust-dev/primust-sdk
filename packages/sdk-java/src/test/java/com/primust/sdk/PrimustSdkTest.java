@@ -29,7 +29,7 @@ class PrimustSdkTest {
     @DisplayName("Primust.builder() creates Pipeline with correct config")
     void builderCreates() {
         Pipeline p = Primust.builder()
-                .apiKey("pk_test_abc123")
+                .apiKey("pk_sb_abc123")
                 .workflowId("test-workflow")
                 .build();
         assertEquals("test-workflow", p.workflowId());
@@ -44,9 +44,9 @@ class PrimustSdkTest {
     }
 
     @Test
-    @DisplayName("pk_test_ prefix sets test mode")
+    @DisplayName("pk_sb_ prefix sets test mode")
     void testModeFromKeyPrefix() {
-        Pipeline p = Primust.builder().apiKey("pk_test_xyz").build();
+        Pipeline p = Primust.builder().apiKey("pk_sb_xyz").build();
         assertTrue(p.testMode());
     }
 
@@ -282,7 +282,7 @@ class PrimustSdkTest {
 
     static class MockTransport extends HttpTransport {
         MockTransport() {
-            super("pk_test_mock", "https://mock.primust.com");
+            super("pk_sb_mock", "https://mock.primust.com");
         }
 
         @Override

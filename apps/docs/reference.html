@@ -20,6 +20,7 @@
   </a>
   <div class="topnav-links">
     <a href="quickstart.html">Quickstart</a>
+    <a href="sdks.html">SDKs</a>
     <a href="audit.html">Audit Guide</a>
     <a href="reference.html">API Reference</a>
     <a href="https://primust.com" target="_blank" rel="noopener">primust.com</a>
@@ -41,6 +42,18 @@
     <a href="index.html#proof-levels">Proof Levels</a>
     <a href="index.html#provable-surface">Provable Surface</a>
     <a href="index.html#bundles">Policy Bundles</a>
+  </div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-label">SDK Reference</div>
+    <a href="sdks.html">Overview</a>
+    <a href="sdks.html#install" class="indent">Installation</a>
+    <a href="sdks.html#lifecycle" class="indent">Run Lifecycle</a>
+    <a href="sdks.html#pipeline" class="indent">Pipeline</a>
+    <a href="sdks.html#run" class="indent">Run</a>
+    <a href="sdks.html#check-result" class="indent">CheckResult</a>
+    <a href="sdks.html#privacy" class="indent">Privacy Model</a>
+    <a href="sdks.html#errors" class="indent">Error Handling</a>
+    <a href="sdks.html#logger" class="indent">Logger / SIEM</a>
   </div>
   <div class="sidebar-group">
     <div class="sidebar-group-label">Guides</div>
@@ -106,7 +119,7 @@
   </tbody>
 </table>
 
-<p>The VPEC's overall <code>proof_level</code> is the weakest level seen across all records (weakest-link rule).</p>
+<p>The VPEC's overall <code>proof_level_floor</code> is the weakest level seen across all records (weakest-link rule).</p>
 
 <!-- DATA FLOW -->
 <h2>Data Flow — What Transits Primust</h2>
@@ -140,7 +153,7 @@
 <!-- API ENDPOINTS -->
 <h2 id="api">API Endpoints</h2>
 
-<p>Base URL: <code>https://api.primust.com</code>. SDK endpoints use <code>X-API-Key</code> header (<code>pk_live_*</code> production, <code>pk_test_*</code> sandbox). Dashboard endpoints use JWT (Clerk).</p>
+<p>Base URL: <code>https://api.primust.com</code>. SDK endpoints use <code>X-API-Key</code> header (<code>pk_live_*</code> production, <code>pk_sb_*</code> sandbox). Dashboard endpoints use JWT (Clerk).</p>
 
 <h3>Run Lifecycle (SDK)</h3>
 <table>
@@ -171,7 +184,7 @@
     <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>POST</strong></td><td><code>/api/v1/packs</code></td><td>Assemble an Evidence Pack from one or more VPEC artifact IDs. Computes Merkle root over commitment hashes. Returns <code>pack_id</code>, <code>merkle_root</code>, <code>proof_distribution</code>, <code>coverage_verified_pct</code>, <code>gap_summary</code>.</td></tr>
+    <tr><td><strong>POST</strong></td><td><code>/api/v1/packs</code></td><td>Assemble an Evidence Pack from one or more VPEC artifact IDs. Computes Merkle root over commitment hashes. Returns <code>pack_id</code>, <code>merkle_root</code>, <code>provable_surface_breakdown</code>, <code>provable_surface</code>, <code>gap_summary</code>.</td></tr>
     <tr><td><strong>POST</strong></td><td><code>/api/v1/evidence-packs/:pack_id/report</code></td><td>Generate a signed PDF audit report from an Evidence Pack. Ed25519-signed (BYOK or platform KMS). P1 reports watermarked "INTERNAL REVIEW ONLY". Returns <code>report_id</code>, <code>download_url</code>.</td></tr>
     <tr><td><strong>GET</strong></td><td><code>/api/v1/reports/:id</code></td><td>Download a signed audit report PDF. Returns 410 if expired (90-day TTL).</td></tr>
   </tbody>
@@ -317,8 +330,8 @@
   "policy_basis": "P2_baseline_aligned",
   "partial": false,
   "state": "signed",
-  "proof_level": "execution",
-  "proof_distribution": {
+  "proof_level_floor": "execution",
+  "provable_surface_breakdown": {
     "mathematical": 0,
     "verifiable_inference": 0,
     "execution": 5,
@@ -362,7 +375,7 @@
     "value": "base64..."
   },
   "issued_at": "2026-03-12T14:23:01Z",
-  "test_mode": false,
+  "environment": "production",
   "pending_flags": {
     "zk_pending": false,
     "signature_pending": false,
@@ -376,7 +389,7 @@
     <tr><th>Field</th><th>Valid Values</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>proof_level</code></td><td><code>mathematical</code>, <code>verifiable_inference</code>, <code>execution</code>, <code>witnessed</code>, <code>attestation</code></td></tr>
+    <tr><td><code>proof_level_floor</code></td><td><code>mathematical</code>, <code>verifiable_inference</code>, <code>execution</code>, <code>witnessed</code>, <code>attestation</code></td></tr>
     <tr><td><code>state</code></td><td><code>provisional</code>, <code>signed</code>, <code>final</code></td></tr>
     <tr><td><code>policy_basis</code></td><td><code>P1_self_declared</code>, <code>P2_baseline_aligned</code>, <code>P3_baseline_plus_deviations</code></td></tr>
     <tr><td><code>commitment_algorithm</code></td><td><code>poseidon2</code>, <code>sha256</code></td></tr>
@@ -581,6 +594,7 @@ primust-verify --json vpec.json</code></pre>
     <tr><td><strong>primust</strong></td><td>Python</td><td>Python SDK — <code>Pipeline</code>, <code>Run</code>, <code>record()</code>, <code>close()</code> &rarr; VPEC. Includes built-in CrewAI and Pydantic AI adapters.</td><td>Proprietary</td></tr>
     <tr><td><strong>@primust/sdk</strong></td><td>TypeScript</td><td>TypeScript SDK — same Pipeline + Run API for Node.js / edge runtimes</td><td>Proprietary</td></tr>
     <tr><td><strong>com.primust:primust-sdk</strong></td><td>Java</td><td>Java SDK — Pipeline instrumentation for JVM applications. Maven Central v1.0.0.</td><td>Proprietary</td></tr>
+    <tr><td><strong>Primust.SDK</strong></td><td>C#</td><td>C# SDK — Pipeline + Run API for .NET applications. NuGet v0.1.0. 22 tests.</td><td>Proprietary</td></tr>
   </tbody>
 </table>
 
@@ -629,7 +643,7 @@ primust-verify --json vpec.json</code></pre>
     <tr><th>Package</th><th>Language</th><th>Description</th><th>License</th></tr>
   </thead>
   <tbody>
-    <tr><td><strong>primust-connectors</strong></td><td>Python</td><td>Regulated industry connectors — instruments decisioning workflows to produce VPECs without disclosing data. 204 tests across 8 connectors:</td><td>Proprietary</td></tr>
+    <tr><td><strong>primust-connectors</strong></td><td>Python</td><td>Regulated industry connectors — instruments decisioning workflows to produce VPECs without disclosing data. 321 tests across 8 connectors:</td><td>Apache-2.0</td></tr>
   </tbody>
 </table>
 

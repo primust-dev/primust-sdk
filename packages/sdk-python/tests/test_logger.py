@@ -65,11 +65,11 @@ def transport() -> MockTransport:
 def pipeline(transport: MockTransport) -> Pipeline:
     client = httpx.Client(
         base_url="https://api.primust.com",
-        headers={"X-API-Key": "pk_live_org001_us_secret"},
+        headers={"X-API-Key": "pk_sb_placeholder_123"},
         transport=transport,
     )
     return Pipeline(
-        api_key="pk_live_org001_us_secret",
+        api_key="pk_sb_placeholder_123",
         workflow_id="wf_test",
         http_client=client,
     )
